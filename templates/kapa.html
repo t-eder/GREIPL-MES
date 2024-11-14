@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/style.css') }}">
+</head>
+<body>
+{% include 'header.html' %}
+<div class="container">
+   <table class="calender"
+          style="display: block;
+          overflow-x: auto;
+          white-space: nowrap;">
+       <tr>
+           <td>SMD</td>
+           <td></td>
+       </tr>
+       <tr>
+           <td>THT</td>
+           <td></td>
+       </tr>
+       <tr>
+           <td>HA</td>
+           <td></td>
+       </tr>
+
+       <tr>
+           <th >FA</th>
+           <th>AG</th>
+           {% for i in range(52)%}
+                <th style="border: 1px solid black">KW {{i}}</th>
+           {% endfor %}
+       </tr>
+       <tr>
+           <td rowspan="5" style="border-right: 1px solid black">300815</td>
+       </tr>
+       <tr>
+           <td>SMD</td>
+       </tr>
+       <tr>
+           <td>THT</td>
+       </tr>
+       <tr>
+           <td>HA</td>
+       </tr>
+       <tr>
+           <td>PF</td>
+       </tr>
+
+       <tr>
+           {% for i in range(25)%}
+                <td></td>
+           {% endfor %}
+           <td style="background-color: red"></td>
+           <td style="background-color: red"></td>
+       </tr>
+   </table>
+
+</div>
+
+
+</body>
+</html>

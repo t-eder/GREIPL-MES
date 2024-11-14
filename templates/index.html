@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>GREIPL-MES</title>
+    <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/style.css') }}">
+</head>
+<body>
+{% include 'header.html' %}
+    <div class="container">
+        <h2>Fertigungsaufträge E1</h2>
+
+            <table class="table1" >
+                <tr>
+                    <th>STAT</th>
+                    <th>FA</th>
+                    <th>GREIPL-Nr</th>
+                    <th>Bezeichnung</th>
+                    <th>Menge</th>
+                    <th>Start möglich</th>
+                    <th>Start</th>
+                    <th>Ende</th>
+                    <th>Bemerkung Produktion</th>
+                    <th>Bemerkung PPS</th>
+                    <th>SMT-Linie</th>
+                    <th>AOI-Rework</th>
+                    <th>THT-Welle</th>
+                    <th>Handarbeit</th>
+                    <th>Prüfung E1</th>
+                   </tr>
+                {% for week, orders in orders_by_week_and_year.items() %}
+                <tr><th style="background-color: orange; text-align:left;" colspan="20" >{{ week }}</th></tr>
+                {% for order in orders%}
+                    <tr>
+                        <td>{{ order[0] }}</td>
+                        <td>{{ order[1] }}</td>
+                        <td>{{ order[2] }}</td>
+                        <td>{{ order[3] }}</td>
+                        <td>{{ order[4]|round|int }}</td>
+                        <td>12.12.2022</td>
+                        <td>{{ order[5].strftime('%d.%m.%Y') }}</td>
+                        <td>{{ order[6].strftime('%d.%m.%Y') }}</td>
+                        <td>{{ order[7] }}</td>
+                        <td>{{ order[8] }}</td>
+                        <td style="border-left: 2px solid black;">Summe</td>
+                        <td>Summe</td>
+                        <td>Summe</td>
+                        <td>Summe</td>
+                        <td>Summe</td>
+                    </tr>
+                {% endfor %}
+                <tr><td></td></tr>
+            {% endfor %}
+            </table>
+
+
+        <p style="font-size:8px; float: right; color: lightgrey">Tobias Eder 2023</p>
+    </div>
+
+</body>
+</html>

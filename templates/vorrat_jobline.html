@@ -1,0 +1,54 @@
+<tr>
+                        <td>
+                        {% if job.delay | int < -3 %}
+                            <img class="blink" src="{{ url_for('static', filename='late.png') }}" alt="Icon" height="20px" style="filter: invert(0%);">
+                        {% endif %}
+                        </td>
+                        <td>
+                        {% if job.ZeitIst | int > 0  %}
+                            <img class="icon" src="{{ url_for('static', filename='spanner.png') }}" alt="Icon" height="20px" style="filter: invert(0%);">
+                        {% endif %}
+                        </td>
+                        <td>{{ job.StartTermPlan.strftime('%d.%m.%Y') }}</td>
+                        <td>
+                                <div style="border-radius: 25px; height: 50px; width:50px; line-height: 50px; text-align: center;
+                            background-color:
+                            {% if job.job_ahead_zustand == '30' %}
+                                #B0B0B0;
+                            {% endif %}
+                            {% if job.job_ahead_zustand == '40' %}
+                                #B0B0B0;
+                            {% endif %}
+                            {% if job.job_ahead_zustand == '50' %}
+                                #5A8FDC;
+                            {% endif %}
+                            {% if job.job_ahead_zustand == '60' %}
+                                #6C9E6F;
+                            {% endif %}
+                            {% if not job.job_ahead_zustand  %}
+                                #6C9E6F;
+                            {% endif %}
+                            ">
+                                    {{ job.job_ahead }}
+                            </div>
+                        </td>
+                        <td>{{ job.posbez }}</td>
+                        <td>{{ job.Auftrag }}</td>
+                        <td>{{ job.Zustand }}</td>
+                        <td>{{ job.Teil }}</td>
+                        <td>{{ job.Bez }}</td>
+
+                        <td>-</td>
+                        <td>{{ job.EndTermPlan.strftime('%d.%m.%Y') }}</td>
+                        <td style="border-left: 2px solid black;">{{ (job.ZeitIst / 60) | round(1) }} h</td>
+                        <td>{{ (job.Zeit / 60) | round(1) }} h</td>
+                        <td>
+                         {% if job.Zeit and job.Zeit != 0 %}
+                            {{ (job.ZeitIst / job.Zeit * 100) | round(1) }} %
+                         {% else %}
+                              0 %
+                         {% endif %}
+                        </td>
+                        <td>{{ job.MngRest }}</td>
+
+ </tr>

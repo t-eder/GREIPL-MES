@@ -1,0 +1,22 @@
+<div class="header">
+        <div style="float: left; padding-left: 50px; padding-top: 35px;"><img src="{{ url_for('static', filename='logo-weiss.svg') }}" alt="Greipl Logo" height="75"></div>
+        <div style="height:80; float: left; padding-left: 50px; padding-top: 43px;"><img src="{{ url_for('static', filename='.png') }}" alt="MES" height="80"></div>
+
+        <div class="navbar">
+                <a href="/" id="{% if request.path == '/' %}active-link{% endif %}">Kapazitätsplanung</a>
+                <a href="/vorrat" id="{% if request.path == '/add_mask' %}active-link{% endif %}">Arbeitsvorratsliste</a>
+        </div>
+</div>
+
+{% with messages = get_flashed_messages() %}
+        {% if messages %}
+                {% for msg in messages %}
+                        <div style="float: bottom; height: 35px; width: 1400px; padding-left: 20px; padding-right: 20px;
+                                margin: 0 auto; margin-top: 1px; background-color: #0082da; display: flex;align-items: center;
+                                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);">
+                                <span>{{ msg }}</span>
+                        </div>
+                {% endfor %}
+        {% endif %}
+{% endwith %}
+
