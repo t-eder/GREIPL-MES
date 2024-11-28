@@ -4,7 +4,8 @@
 
         <div class="navbar">
                 <a href="/" id="{% if request.path == '/' %}active-link{% endif %}">Kapazitätsplanung</a>
-                <a href="/vorrat" id="{% if request.path == '/add_mask' %}active-link{% endif %}">Arbeitsvorratsliste</a>
+                <a href="/vorrat" id="{% if request.path == '/vorrat' %}active-link{% endif %}">Arbeitsvorratsliste</a>
+                <a href="/settings" id="{% if request.path == '/settings' %}active-link{% endif %}"><img class="icon" src="{{ url_for('static', filename='gear.png') }}" alt="Icon" height="40px" style="filter: invert(100%);"></a>
         </div>
 </div>
 

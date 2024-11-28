@@ -4,45 +4,16 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="7d186514-fd06-41ff-8b8f-744ab137ced3" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/MES.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/model.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/static/Header.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/static/Logo.jpg" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/static/Prozess.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/static/add.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/static/calculator.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/static/calendar.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/static/cancel.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/static/chat.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/static/check.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/static/edit.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/static/file.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/static/folder.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/static/help.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/static/late.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/static/list.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/static/logo-weiss.svg" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/static/maintain.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/static/meeting.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/static/package.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/static/settings.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/static/signature.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/static/spanner.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/static/styles/style.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/static/user.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/static/wrench.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/header.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/index.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/kapa.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/vorrat.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/vorrat_jobline.html" afterDir="false" />
+    <list default="true" id="7d186514-fd06-41ff-8b8f-744ab137ced3" name="Changes" comment="Vorratlist erstellt">
+      <change afterPath="$PROJECT_DIR$/static/gear.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/settings.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/styles/style.css" beforeDir="false" afterPath="$PROJECT_DIR$/static/styles/style.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/header.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/header.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/vorrat.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/vorrat.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/vorrat_jobline.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/vorrat_jobline.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -156,6 +127,30 @@
       <option name="presentableId" value="Default" />
       <updated>1716922625828</updated>
     </task>
+    <task id="LOCAL-00001" summary="Vorratlist erstellt">
+      <option name="closed" value="true" />
+      <created>1731601330088</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1731601330088</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Vorratlist erstellt" />
+    <option name="LAST_COMMIT_MESSAGE" value="Vorratlist erstellt" />
   </component>
 </project>

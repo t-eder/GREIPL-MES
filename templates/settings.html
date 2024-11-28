@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>GREIPL-MES</title>
+    <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/style.css') }}">
+</head>
+<body>
+{% include 'header.html' %}
+    <div class="container">
+        <h2>Einstellungen</h2>
+
+        <h3>Kapazitätsplanung:</h3>
+        <label>Aufträge von:</label>
+        <input type="date">
+        <label>Aufträge bis:</label>
+        <input type="date">
+        <br>
+        <label>Status von:</label>
+        <input type="text">
+        <label>Status bis:</label>
+        <input type="text">
+        <br>
+
+        <h3>Feinplanung:</h3>
+
+        <h3>Arbeitsvorratslisten:</h3>
+        <label>Aufträge von:</label>
+        <input type="date">
+        <label>Aufträge bis:</label>
+        <input type="date">
+        <br>
+        <label>Status von:</label>
+        <input type="text">
+        <label>Status bis:</label>
+        <input type="text">
+        <br>
+
+
+        <p style="font-size:8px; float: right; color: lightgrey">Tobias Eder 2023</p>
+    </div>
+
+</body>
+</html>

@@ -1,6 +1,6 @@
 <tr>
                         <td>
-                        {% if job.delay | int < -3 %}
+                        {% if job.delay | int < -1 %}
                             <img class="blink" src="{{ url_for('static', filename='late.png') }}" alt="Icon" height="20px" style="filter: invert(0%);">
                         {% endif %}
                         </td>
@@ -9,7 +9,8 @@
                             <img class="icon" src="{{ url_for('static', filename='spanner.png') }}" alt="Icon" height="20px" style="filter: invert(0%);">
                         {% endif %}
                         </td>
-                        <td>{{ job.StartTermPlan.strftime('%d.%m.%Y') }}</td>
+                        <td  style="white-space: nowrap;">{{ job.StartTermPlan.strftime('%a %d.%m.%y') }}</td>
+
                         <td>
                                 <div style="border-radius: 25px; height: 50px; width:50px; line-height: 50px; text-align: center;
                             background-color:
@@ -39,7 +40,7 @@
                         <td>{{ job.Bez }}</td>
 
                         <td>-</td>
-                        <td>{{ job.EndTermPlan.strftime('%d.%m.%Y') }}</td>
+                        <td>{{ job.EndTermPlan.strftime('%d.%m.%y') }}</td>
                         <td style="border-left: 2px solid black;">{{ (job.ZeitIst / 60) | round(1) }} h</td>
                         <td>{{ (job.Zeit / 60) | round(1) }} h</td>
                         <td>

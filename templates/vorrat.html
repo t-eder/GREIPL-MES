@@ -2,13 +2,53 @@
 <html>
 <head>
     <title>GREIPL-MES</title>
-    <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/style.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='styles/style.css') }}">
+    <style>
+        /* Tab-Bereich */
+        .tab-container {
+            display: flex;
+            border-bottom: 2px solid #ccc;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: #f1f1f1;
+            border: 1px solid #ccc;
+            border-bottom: none;
+            margin-right: 5px;
+        }
+        .tab.active {
+            background-color: white;
+            font-weight: bold;
+            border-top: 2px solid orange;
+        }
+        .tab-content {
+            display: none;
+            padding: 20px;
+            border: 1px solid #ccc;
+            background-color: white;
+        }
+        .tab-content.active {
+            display: block;
+        }
+    </style>
 </head>
 <body>
-{% include 'header.html' %}
+    {% include 'header.html' %}
     <div class="container">
-        <h2>Fertigungsaufträge E1</h2>
-            <table class="table1" >
+        <h2>Arbeitsvorratslisten E1</h2>
+
+        <!-- Tab-Navigation -->
+        <div class="tab-container">
+            <div class="tab active" data-tab="smd-tab">2410-01 SMD-Bestückung</div>
+            <div class="tab" data-tab="tht-tab">2410-03 THT-Bestückung</div>
+            <div class="tab" data-tab="man-tab">2410-04 Manuelle Handarbeit</div>
+            <div class="tab" data-tab="pruef-tab">2450-01 Prüfung E1</div>
+        </div>
+
+        <!-- Tab-Inhalte -->
+        <div class="tab-content active" id="smd-tab">
+            <table class="table1">
                 <tr>
                     <th></th>
                     <th></th>
@@ -26,26 +66,108 @@
                     <th>Abgeschlossen</th>
                     <th>Gut Menge</th>
                     <th></th>
-
-                   </tr>
-                <tr><th style="background-color: orange; text-align:left;" colspan="20" >2410-01 SMD-Bestückung</th></tr>
-                {% for job in smd_jobs%}
+                </tr>
+                {% for job in smd_jobs %}
                     {% include 'vorrat_jobline.html' %}
                 {% endfor %}
-                <tr><th style="background-color: orange; text-align:left;" colspan="20" >2410-03 THT-Bestückung</th></tr>
-                {% for job in tht_jobs %}
-                   {% include 'vorrat_jobline.html' %}
-                {% endfor %}
-                <tr><th style="background-color: orange; text-align:left;" colspan="20" >2410-04 manuelle Handarbeit</th></tr>
-                {% for job in man_jobs %}
-                   {% include 'vorrat_jobline.html' %}
-                {% endfor %}
-
             </table>
+        </div>
+
+        <div class="tab-content" id="tht-tab">
+            <table class="table1">
+                <tr>
+                    <th></th>
+                    <th></th>
+                    <th>Start</th>
+                    <th>Vorgänger</th>
+                    <th>Tätigkeit</th>
+                    <th>Auftrag</th>
+                    <th>Zustand</th>
+                    <th>GREIPL Nummer</th>
+                    <th>Bezeichnung</th>
+                    <th>Start</th>
+                    <th>Ende</th>
+                    <th>Ist Zeit</th>
+                    <th>Soll Zeit</th>
+                    <th>Abgeschlossen</th>
+                    <th>Gut Menge</th>
+                    <th></th>
+                </tr>
+                {% for job in tht_jobs %}
+                    {% include 'vorrat_jobline.html' %}
+                {% endfor %}
+            </table>
+        </div>
+
+        <div class="tab-content" id="man-tab">
+            <table class="table1">
+                <tr>
+                    <th></th>
+                    <th></th>
+                    <th>Start</th>
+                    <th>Vorgänger</th>
+                    <th>Tätigkeit</th>
+                    <th>Auftrag</th>
+                    <th>Zustand</th>
+                    <th>GREIPL Nummer</th>
+                    <th>Bezeichnung</th>
+                    <th>Start</th>
+                    <th>Ende</th>
+                    <th>Ist Zeit</th>
+                    <th>Soll Zeit</th>
+                    <th>Abgeschlossen</th>
+                    <th>Gut Menge</th>
+                    <th></th>
+                </tr>
+                {% for job in man_jobs %}
+                    {% include 'vorrat_jobline.html' %}
+                {% endfor %}
+            </table>
+        </div>
+
+        <div class="tab-content" id="pruef-tab">
+            <table class="table1">
+                <tr>
+                    <th></th>
+                    <th></th>
+                    <th>Start</th>
+                    <th>Vorgänger</th>
+                    <th>Tätigkeit</th>
+                    <th>Auftrag</th>
+                    <th>Zustand</th>
+                    <th>GREIPL Nummer</th>
+                    <th>Bezeichnung</th>
+                    <th>Start</th>
+                    <th>Ende</th>
+                    <th>Ist Zeit</th>
+                    <th>Soll Zeit</th>
+                    <th>Abgeschlossen</th>
+                    <th>Gut Menge</th>
+                    <th></th>
+                </tr>
+                {% for job in pruef_jobs %}
+                    {% include 'vorrat_jobline.html' %}
+                {% endfor %}
+            </table>
+        </div>
 
 
         <p style="font-size:8px; float: right; color: lightgrey">Tobias Eder 2023</p>
     </div>
 
+    <script>
+        // Tab-Logik
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                // Tabs zurücksetzen
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+                // Aktive Tab setzen
+                this.classList.add('active');
+                document.getElementById(this.dataset.tab).classList.add('active');
+            });
+        });
+    </script>
 </body>
 </html>
