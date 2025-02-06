@@ -1,11 +1,14 @@
 <div class="header">
-        <div style="float: left; padding-left: 50px; padding-top: 35px;"><img src="{{ url_for('static', filename='logo-weiss.svg') }}" alt="Greipl Logo" height="75"></div>
-        <div style="height:80; float: left; padding-left: 50px; padding-top: 43px;"><img src="{{ url_for('static', filename='.png') }}" alt="MES" height="80"></div>
+        <div style="float: left; padding-left: 50px; padding-top: 35px;"><img src="{{ url_for('static', filename='logo-weiss.png') }}" alt="Greipl Logo" height="75"></div>
 
         <div class="navbar">
                 <a href="/" id="{% if request.path == '/' %}active-link{% endif %}">Kapazitätsplanung</a>
                 <a href="/vorrat" id="{% if request.path == '/vorrat' %}active-link{% endif %}">Arbeitsvorratsliste</a>
+                <a href="/personal" id="{% if request.path == '/personal' %}active-link{% endif %}">Personal</a>
+                <a href="/kpi" id="{% if request.path == '/kpi' %}active-link{% endif %}">Kennzahlen</a>
                 <a href="/settings" id="{% if request.path == '/settings' %}active-link{% endif %}"><img class="icon" src="{{ url_for('static', filename='gear.png') }}" alt="Icon" height="40px" style="filter: invert(100%);"></a>
+
+
         </div>
 </div>
 

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>GREIPL-MES</title>
+    <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/style.css') }}">
+</head>
+<body>
+{% include 'header.html' %}
+    <div class="container">
+        <h2>Personal</h2>
+
+
+        <form action="/personal/add" method="POST" style="border: 1px solid black; padding-left: 10px; width: 80%;">
+            <h3>Neuen Mitarbeiter anlegen</h3>
+            <input type="text" name="pers_nr" placeholder="Personalnummer">
+            <input type="text" name="gruppe" placeholder="Gruppe">
+            <input type="text" name="name" placeholder="Name">
+            <input type="text" name="vorname" placeholder="Vorname">
+            <input type="text" name="stunden_tag" placeholder="Stunden je Tag">
+            <input type="text" name="tage_woche" placeholder="Tage je Woche">
+
+                <button type="submit">Anlegen</button>
+        </form>
+
+        <h3>Mitarbeiter:</h3>
+            <table class="table1" >
+                <tr>
+                    <th>Pers-Nr.</th>
+                    <th>Gruppe</th>
+                    <th>Name</th>
+                    <th>Vorname</th>
+                    <th>Wochenstunden</th>
+                    <th>Stunden je Tag</th>
+                    <th>Tage je Woche</th>
+                </tr>
+                {% for pers in team %}
+                    <tr>
+                        <td>{{ pers.pers_nr }}</td>
+                        <td>{{ pers.gruppe }}</td>
+                        <td>{{ pers.name }}</td>
+                        <td>{{ pers.vorname }}</td>
+                        <td>{{ pers.stunden_tag * pers.tage_woche }}</td>
+                        <td>{{ pers.stunden_tag }}</td>
+                        <td>{{ pers.tage_woche }}</td>
+                    </tr>
+                {% endfor %}
+            </table>
+
+        <h3>Anwesenheit nach KW:</h3>
+<form method="POST" action="/update_stunden_korr">  <!-- Das Formular sendet POST-Anfragen an den Server -->
+    <button type="submit">Änderungen speichern</button>
+    <table class="table1">
+        <tr>
+            <th>Jahr</th>
+            <th>KW</th>
+            <th>Gruppe</th>
+            <th>Pers-Nr.</th>
+            <th>Name</th>
+            <th>Stunden </br> in KW</th>
+            <th>Korrektur </br> [minus]</th>
+            <th>Bemerkung </br> Korrektur</th><!-- Neue Spalte für Stunden Korrektur -->
+        </tr>
+
+        {% for st in stunden %}
+            <tr style="{%if st.kw is even %} background-color:lightgrey {% else %} background-color:white {% endif %}">
+                <td>{{ st.jahr }}</td>
+                <td>{{ st.kw }}</td>
+                <td>
+                    {% for pers in team %}
+                        {% if pers.pers_nr == st.pers_nr %}
+                            {{ pers.gruppe }}
+                        {% endif %}
+                    {% endfor %}
+                </td>
+                <td>{{ st.pers_nr }}</td>
+                <td>
+                    {% for pers in team %}
+                        {% if pers.pers_nr == st.pers_nr %}
+                            {{ pers.name }} {{ pers.vorname }}
+                        {% endif %}
+                    {% endfor %}
+                </td>
+                <td>{{ st.stunden_kw }}</td>
+                <td><input type="text" style="width:30px;" name="stunden_korr_{{ st.id }}" value="{{ st.stunden_korr }}" /></td>
+                <td><input type="text" name="korr_bemerk_{{ st.id }}" value="{{ st.korr_bemerk }}" /></td>
+            </tr>
+        {% endfor %}
+
+    </table>
+</form>
+
+
+        <p style="font-size:8px; float: right; color: lightgrey">Tobias Eder 2023</p>
+    </div>
+
+</body>
+</html>

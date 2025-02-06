@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>GREIPL-MES</title>
+    <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<style>
+    canvas {
+        display: block;
+        margin: 0 auto;
+        background-color: #ffffff;
+    }
+</style>
+<body>
+{% include 'header.html' %}
+    <div class="container">
+        <h3 id="currentKW" style="text-align:right;"></h3>
+        <h1>Auftragskennzahlen</h1>
+        <h3>Jahreübersicht Produktion</h3>
+        <p style="font-size:25px;">Produzierte Platinen 2025:
+            {% if 2025 in fa_fertig_jahr %}
+                <b style="font-size:25px;">{{ fa_fertig_jahr[2025]|float }} Stück</b>
+            {% else %}
+                Keine Daten für 2025
+            {% endif %}
+        <canvas id="fertigmeldungenChart_jahr" width="1000" height="500" ></canvas>
+
+        <h3>Fertigmeldungen</h3>
+        <canvas id="fertigmeldungenChart" width="1000" height="500"></canvas>
+
+        <h3>Aufträge nach Status</h3>
+        <!-- Aufträge nach Status -->
+        <canvas id="auftragChart" width="1000" height="500"></canvas>
+
+
+
+
+        <br><br><br>
+        <h1>Materialwirtschaft</h1>
+        <h3>Materialmengen</h3>
+
+        <!-- Materialbuchungen nach Lager -->
+        <canvas id="buchungenChart" width="1000" height="500"></canvas>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+        <p style="font-size:8px; float: right; color: lightgrey">Tobias Eder 2025</p>
+    </div>
+
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Die dynamischen Daten aus Flask (fa_fertig_jahr)
+        let fa_fertig_jahr = {{ fa_fertig_jahr | tojson }};  // Die Daten werden als JSON eingebunden
+
+        // Jahreszahlen und die entsprechenden Fertigmeldungen
+        let labels = Object.keys(fa_fertig_jahr);  // Extrahiere die Jahreszahlen
+        let daten = Object.values(fa_fertig_jahr); // Extrahiere die Mengen der Fertigmeldungen
+
+        // Farben für jedes Jahr (zum besseren Unterscheiden)
+        let colors = [
+            'rgba(36, 62, 255, 0.5)',  // Himmelblau (Sky Blue)
+            'rgba(36, 62, 255, 0.5)',  // Himmelblau (Sky Blue)
+            'rgba(36, 62, 255, 0.5)',  // Himmelblau (Sky Blue)
+            'rgba(36, 62, 255, 0.5)',  // Himmelblau (Sky Blue)
+            'rgba(36, 62, 255, 0.5)',  // Himmelblau (Sky Blue)
+            'rgba(36, 62, 255, 1)',    // Himmelblau (Sky Blue)
+        ];
+
+        // Canvas für das Diagramm
+        var ctx = document.getElementById('fertigmeldungenChart_jahr').getContext('2d');
+        var fertigmeldungenChart = new Chart(ctx, {
+            type: 'bar',  // Balkendiagramm
+            data: {
+                labels: labels,  // Jahre als Labels auf der x-Achse
+                datasets: [{
+                    label: 'Fertigmeldungen',
+                    data: daten,  // Die Mengen pro Jahr
+                    backgroundColor: colors.slice(0, daten.length),  // Dynamisch Farben zuweisen
+                    borderColor: colors.slice(0, daten.length),  // gleiche Farben für Border
+                    borderWidth: 1
+                }, {
+                    label: 'Fertigmeldungen Linie',
+                    data: daten,  // Die gleichen Daten wie bei den Balken
+                    type: 'line',  // Linie statt Balken
+                    borderColor: 'rgba(0, 0, 0, 1)',  // Farbe der Linie (z.B. Rot)
+                    fill: false,  // Keine Fläche unter der Linie
+                    borderWidth: 2,
+                    tension: 0.1  // Linienweichheit
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: {
+                        title: {
+                            display: false,
+                            text: ''
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: false,
+                            text: ''
+                        },
+                        beginAtZero: true
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(tooltipItem) {
+                                return tooltipItem.dataset.label + ': ' + tooltipItem.raw.toFixed(0);  // Zeigt die Anzahl ohne Dezimalstellen
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script><!-- Fertigmeldungen nach Jahr -->
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Daten aus Flask übergeben
+        let fa_fertig_wochenweise = {{ fa_fertig_wochenweise|tojson }};
+
+        // Kalenderwochen als Labels (x-Achse)
+        let labels = Object.keys(fa_fertig_wochenweise).map(kw => "KW " + kw);
+
+        // Mengen für jedes Lager
+        let daten = Object.values(fa_fertig_wochenweise);
+
+        // Erstellen des Liniendiagramms
+        var ctx = document.getElementById('fertigmeldungenChart').getContext('2d');
+        var fertigmeldungenChart = new Chart(ctx, {
+            type: 'line',  // Diagrammtyp: Linie
+            data: {
+                labels: labels,  // Kalenderwochen als Labels
+                datasets: [{
+                    label: 'Fertigmeldungen Menge',
+                    data: daten,  // Die Mengen der Fertigmeldungen pro Woche
+                    fill: false,  // Keine Fläche unter der Linie
+                    borderColor: 'rgba(54, 162, 235, 1)',  // Blaue Linie
+                    tension: 0.1,  // Glätte der Linie
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: {
+                        beginAtZero: true
+                    },
+                    y: {
+                        beginAtZero: true
+                    }
+                },
+                elements: {
+                    line: {
+                        borderWidth: 2  // Breite der Linie
+                    }
+                }
+            }
+        });
+    });
+</script><!-- Fertigmeldungen nach Kalenderwoche -->
+
+<script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Prepare the data for the stacked column chart from fa_wochenweise
+            let fa_wochenweise = {{ fa_wochenweise|tojson }};
+
+            // Labels for Kalenderwochen
+            let labels = Object.keys(fa_wochenweise).map(kw => "KW " + kw);
+
+            // Prepare the data for each status (10, 20, 30, 40, 50, 60)
+            let dataStatus10 = Object.values(fa_wochenweise).map(entry => entry[10]);
+            let dataStatus20 = Object.values(fa_wochenweise).map(entry => entry[20]);
+            let dataStatus30 = Object.values(fa_wochenweise).map(entry => entry[30]);
+            let dataStatus40 = Object.values(fa_wochenweise).map(entry => entry[40]);
+            let dataStatus50 = Object.values(fa_wochenweise).map(entry => entry[50]);
+            let dataStatus60 = Object.values(fa_wochenweise).map(entry => entry[60]);
+
+            // Stacked column chart configuration
+            var ctx = document.getElementById('auftragChart').getContext('2d');
+            var auftragChart = new Chart(ctx, {
+                type: 'bar',  // Stacked column chart
+                data: {
+                    labels: labels,  // Kalenderwochen
+                    datasets: [
+                        {
+                            label: 'Status 10',
+                            data: dataStatus10,
+                            backgroundColor: 'rgba(201, 201, 201, 0.5)',  // Light Grey
+                        },
+                        {
+                            label: 'Status 20',
+                            data: dataStatus20,
+                            backgroundColor: 'rgba(54, 162, 235, 0.5)',  // Light Blue
+                        },
+                        {
+                            label: 'Status 30',
+                            data: dataStatus30,
+                            backgroundColor: 'rgba(153, 102, 255, 0.5)',  // Light Purple
+                        },
+                        {
+                            label: 'Status 40',
+                            data: dataStatus40,
+                            backgroundColor: 'rgba(255, 206, 86, 0.5)',  // Light Yellow
+                        },
+                        {
+                            label: 'Status 50',
+                            data: dataStatus50,
+                            backgroundColor: 'rgba(255, 197, 143, 0.5)',  // Light Orange
+                        },
+                        {
+                            label: 'Status 60',
+                            data: dataStatus60,
+                            backgroundColor: 'rgba(150, 247, 126, 0.5)',  // Light Green
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: {
+                            stacked: true,
+                        },
+                        y: {
+                            stacked: true,
+                            beginAtZero: true
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(tooltipItem) {
+                                    return tooltipItem.dataset.label + ': ' + tooltipItem.raw;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script><!-- Aufträge nach Status -->
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        let buchungen_wochenweise = {{ buchungen_wochenweise|tojson }};
+
+        console.log("Daten aus Flask:", buchungen_wochenweise);
+
+        // Kalenderwochen als Labels
+        let labels = Object.keys(buchungen_wochenweise).map(kw => "KW " + kw);
+        // Mengen für Lager A und Lager E
+        let datenLagerA = Object.values(buchungen_wochenweise).map(entry => entry["A"]);
+        let datenLagerE = Object.values(buchungen_wochenweise).map(entry => entry["E"]);
+
+        // Liniendiagramm erstellen
+        var ctx = document.getElementById('buchungenChart').getContext('2d');
+        var buchungenChart = new Chart(ctx, {
+            type: 'line',  // Diagrammtyp: Linie
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Lager A (THT)',
+                        data: datenLagerA,
+                        fill: false,  // Keine Fläche unter der Linie
+                        borderColor: 'rgba(54, 162, 235, 1)',  // Blaue Linie
+                        tension: 0.1,  // Glätte der Linie
+                        borderWidth: 2
+                    },
+                    {
+                        label: 'Lager E (SMD)',
+                        data: datenLagerE,
+                        fill: false,  // Keine Fläche unter der Linie
+                        borderColor: 'rgba(255, 99, 132, 1)',  // Rote Linie
+                        tension: 0.1,  // Glätte der Linie
+                        borderWidth: 2
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: {
+                        beginAtZero: true
+                    },
+                    y: {
+                        beginAtZero: true
+                    }
+                },
+                elements: {
+                    line: {
+                        borderWidth: 2  // Breite der Linie
+                    }
+                }
+            }
+        });
+    });
+</script><!-- Materialbuchungen nach Lager -->
+
+<script>
+        // Verbesserte Berechnungsfunktion für die Kalenderwoche
+        function getISOWeek(date) {
+            const currentDate = new Date(date);
+            currentDate.setHours(0, 0, 0, 0);
+
+            // Setze das Datum auf den ersten Montag des Jahres
+            const startOfYear = new Date(currentDate.getFullYear(), 0, 1);
+            const days = (currentDate - startOfYear) / (24 * 60 * 60 * 1000);
+            const weekNumber = Math.ceil((days + 1) / 7);
+
+            return weekNumber;
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const today = new Date(); // Heute
+            const currentWeek = getISOWeek(today); // Berechnung der aktuellen KW
+
+            // Kalenderwoche auf der Webseite anzeigen
+            document.getElementById('currentKW').innerText = "Aktuelle KW: " + currentWeek;
+        });
+    </script><!-- Aktuelle KW berechnen -->
+
+</body>
+</html>

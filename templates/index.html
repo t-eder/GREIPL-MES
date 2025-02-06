@@ -27,14 +27,38 @@
                     <th>Prüfung E1</th>
                 </tr>
                 {% for (year, week), jobs in grouped_jobs.items() %}
+
                     <tr style="background-color: orange; height: 15px; font-weight:bold;" >
                         <td style="text-align:left;" colspan="11">{{ year }}, KW: {{ week }}</td>
                         {% for AG in ['2410-01', '2410-50', '2410-03', '2410-04', '2450-01'] %}
-                            {% set workload = kw_workload.get((year, week, AG), 0) %}
-                            <td style="background-color: #5fde7f;
-                                {% if (((workload[0]/60)/40)*100) > 100 %}background-color: #fa6f50;{% endif %}
-                                {% if (((workload[0]/60)/40)*100) < 20 %}background-color: #5A8FDC;{% endif %}
-                            ">{{ (((workload[0]/60)/40)*100) | round(1) }}%<br> {{ (workload[0]/60) | round(1) }} h</td>  <!-- Hier wird der Workload für die aktuelle Maschine angezeigt -->
+                            <td style="
+                            {% for wl in workload %}
+                                {% if (wl.gruppe == AG) and (wl.year == year) and (wl.kw == week) %}
+                                    {% if (((wl.h_plan / (wl.h_ist + 1)) * 100)) > 110 %}
+                                       background-color: #ff8f8f;
+                                    {% elif (((wl.h_plan / (wl.h_ist + 1)) * 100)) > 80 %}
+                                        background-color: #a4ff8f;
+                                    {% elif (((wl.h_plan / (wl.h_ist + 1)) * 100)) < 80 %}
+                                        background-color: #8fe5ff;
+                                    {% endif %}
+                                {% endif %}
+                            {% endfor %}
+                            ">
+                                {{ AG }} </br>
+                                {% for wl in workload %}
+                                    {% if (wl.gruppe == AG) and (wl.year == year) and (wl.kw == week) %}
+                                        {% if wl.h_ist < 1 %}
+                                            IST {{ wl.h_ist }}</br>
+                                            PLAN {{ wl.h_plan }}</br
+                                            <b>-----</b>
+                                        {% else %}
+                                            IST {{ wl.h_ist }}</br>
+                                            PLAN {{ wl.h_plan }}</br>
+                                            {{  ((wl.h_plan / (wl.h_ist + 1)) * 100) | round(1) }}%
+                                        {% endif %}
+                                    {% endif %}
+                                {% endfor %}
+                            </td>  <!-- Hier wird der Workload für die aktuelle Maschine angezeigt -->
                         {% endfor %}
                     </tr>
                     {% for job in jobs %}
