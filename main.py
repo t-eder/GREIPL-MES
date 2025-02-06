@@ -3,6 +3,7 @@ from model import app, db, Personal, StundenKW, WorkLoad
 import json
 from flask import render_template, redirect, request, Flask, render_template, jsonify
 import datetime as dt
+from datetime import datetime, timedelta
 from collections import defaultdict
 from config import connectionString
 from sqlalchemy import asc
@@ -313,7 +314,7 @@ def index():
     gruppe = "E1"
     zustand_min = "20"
     zustand_max = "60"
-    date_min = "2025-01-01 00:00:00"
+    date_min = (datetime.now() - timedelta(weeks=6)).strftime("%Y-%d-%m %H:%M:%S")
     date_max = "2099-30-12 00:00:00"
     masch_gruppe = 0
 

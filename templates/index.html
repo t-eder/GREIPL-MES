@@ -62,7 +62,11 @@
                         {% endfor %}
                     </tr>
                     {% for job in jobs %}
-                    <tr class="job-row">
+                    <tr class="job-row"
+                        {% if job.Zustand == "60" %}
+                        style="background-color: lightgreen;"
+                        {% endif %}
+                    >
                         <td>{{ job.Zustand }}</td>
                         <td class="auftrag-num" data-auftrag="{{ job.Auftrag }}">{{ job.Auftrag }}</td>
                         <td>{{ job.StartTermPlan.strftime('%d.%m-') }}</td>
@@ -92,30 +96,29 @@
 </html>
 
 <script>
-    // Event-Listener hinzufügen, um auf Auftragsnummern zu klicken
-        document.querySelectorAll('.auftrag-num').forEach(function(cell) {
-        cell.addEventListener('click', function() {
-            const clickedAuftrag = cell.getAttribute('data-auftrag'); // Auftragsnummer der angeklickten Zelle
+    document.querySelectorAll('.auftrag-num').forEach(function(cell) {
+    cell.addEventListener('click', function() {
+        const clickedAuftrag = cell.getAttribute('data-auftrag');
 
-            // Alle Zeilen durchsuchen und hervorheben, wenn die Auftragsnummer übereinstimmt
-            document.querySelectorAll('.job-row').forEach(function(row) {
-                const rowAuftrag = row.querySelector('.auftrag-num').getAttribute('data-auftrag');
-                if (rowAuftrag === clickedAuftrag) {
-                    // Markiere die Zeile und setze Textfarbe auf Weiß
-                    row.style.backgroundColor = '#0b2945'; // Hintergrund auf Gelb setzen
-                    row.style.color = 'white'; // Textfarbe auf Weiß setzen
-                    row.querySelectorAll('td').forEach(function(td) {
-                        td.style.color = 'white'; // Stelle sicher, dass alle Zellen den Text in Weiß anzeigen
-                    });
-                } else {
-                    // Entferne die Markierung und setze Textfarbe zurück
-                    row.style.backgroundColor = ''; // Hintergrund zurücksetzen
-                    row.style.color = ''; // Textfarbe zurücksetzen
-                    row.querySelectorAll('td').forEach(function(td) {
-                        td.style.color = ''; // Setze die Textfarbe in den Zellen zurück
-                    });
-                }
-            });
+        document.querySelectorAll('.job-row').forEach(function(row) {
+            const rowAuftrag = row.querySelector('.auftrag-num').getAttribute('data-auftrag');
+
+            // Speichert die ursprüngliche Hintergrundfarbe, falls nicht bereits gespeichert
+            if (!row.dataset.originalBgColor) {
+                row.dataset.originalBgColor = row.style.backgroundColor || 'white';
+            }
+
+            if (rowAuftrag === clickedAuftrag) {
+                row.style.backgroundColor = '#0b2945';
+                row.style.color = 'white';
+                row.querySelectorAll('td').forEach(td => td.style.color = 'white');
+            } else {
+                row.style.backgroundColor = row.dataset.originalBgColor; // Setzt die ursprüngliche Farbe zurück
+                row.style.color = '';
+                row.querySelectorAll('td').forEach(td => td.style.color = '');
+            }
         });
     });
+});
+
 </script>
