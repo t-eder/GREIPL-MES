@@ -238,12 +238,12 @@
 
         .table1 tr,td{
            border: 1px solid lightgrey;
+           border-left: 0px;
            border-collapse: separate;
            text-align: left;
            font-size: 14px;
-           color: black;
            height: 30px;
-
+           color: inherit;
         }
 
         .table1 td{
@@ -254,12 +254,12 @@
 
         .table1 th {
             text-align: left;
-            background-color: lightgrey;
             border: 0px;
             border-bottom: 1px black;
-            color: black;
             font-weight: bold;
             text-align: center;
+            background-color: #f0f0f0;
+            color: black;
         }
 
         #active-link {

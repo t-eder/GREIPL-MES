@@ -1,5 +1,5 @@
 import pyodbc
-from model import app, db, Personal, StundenKW, WorkLoad
+from model import app, db, Personal, StundenKW, WorkLoad, AuftragInfo
 import json
 from flask import render_template, redirect, request, Flask, render_template, jsonify
 import datetime as dt
@@ -7,7 +7,6 @@ from datetime import datetime, timedelta
 from collections import defaultdict
 from config import connectionString
 from sqlalchemy import asc
-
 
 def data_FA(Gruppe, ZustandMin, ZustandMax, DateMin, DateMax, Typ):
     with app.app_context():
@@ -310,6 +309,7 @@ def index():
     team = Personal.query.all()
     stunden = StundenKW.query.all()
     workload = WorkLoad.query.all()
+    auftrag_info = AuftragInfo.query.all()
 
     gruppe = "E1"
     zustand_min = "20"
@@ -322,7 +322,38 @@ def index():
     grouped_jobs = group_by_calendar_week(jobs)
     get_kw_workload(grouped_jobs)
 
-    return render_template('index.html', jobs=jobs, grouped_jobs=grouped_jobs, workload=workload, stunden=stunden, team=team)
+    return render_template('index.html', jobs=jobs, grouped_jobs=grouped_jobs, workload=workload, stunden=stunden, team=team, auftrag_info=auftrag_info)
+
+
+@app.route('/update_comment', methods=['POST'])
+def update_comment():
+    data = request.get_json()
+    fa_nr = data.get('fa_nr')
+    comment = data.get('comment')
+    fa_mat = data.get('fa_mat', 0) #Checkbox 1 oder 0
+
+    if not fa_nr:
+        return jsonify({'success': False, 'message': 'Keine FA-Nummer übermittelt'}), 400
+
+    # Verwende hier die korrekte Klassenbezeichnung
+    auftraginfo = AuftragInfo.query.get(fa_nr)
+
+    if not auftraginfo:
+        # Wenn kein Eintrag existiert, erstelle einen neuen
+        auftraginfo = AuftragInfo(fa_nr=fa_nr)
+
+    # Aktualisiere den Kommentar
+    auftraginfo.fa_bemerk = comment
+    auftraginfo.fa_mat = fa_mat
+
+    try:
+        db.session.add(auftraginfo)
+        db.session.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
 
 @app.route('/personal')
 def personal():

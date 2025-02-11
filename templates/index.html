@@ -3,6 +3,53 @@
 <head>
     <title>GREIPL-MES</title>
     <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/style.css') }}">
+
+
+    <style>
+        /* Styling für das Modal */
+        #modal {
+            display: none; /* Verstecke das Modal standardmäßig */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        #modalContent {
+            position: relative;
+            margin: 10% auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 5px;
+            width: 300px;
+        }
+
+        #closeModalBtn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+        }
+
+        label {
+            display: block;
+            margin: 10px 0 5px;
+        }
+
+        select, input[type="checkbox"], button {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+        }
+
+        button {
+            cursor: pointer;
+        }
+    </style>
+
 </head>
 <body>
 {% include 'header.html' %}
@@ -10,7 +57,9 @@
         <h2>Fertigungsaufträge E1</h2>
 
             <table class="table1" >
+                <thead style="position: sticky; top: 0; z-index: 2; ">
                 <tr>
+                    <th></th>
                     <th>STAT</th>
                     <th colspan="3">Fertigungsauftrag</th>
                     <th>Pos</th>
@@ -20,31 +69,33 @@
                     <th>Menge</th>
                     <th>Start</th>
                     <th>Ende</th>
-                    <th>SMT-Linie</th>
-                    <th>AOI-Rework</th>
-                    <th>THT-Welle</th>
-                    <th>Manuell</th>
-                    <th>Prüfung E1</th>
+                    <th>SMT-Linie <br> 2410-01</th>
+                    <th>AOI-Rework <br> 2410-50 </th>
+                    <th>THT-Welle <br> 2410-03</th>
+                    <th>Manuell <br> 2410-04</th>
+                    <th>Prüfung E1 <br> 2450-01 </th>
+                    <th>Bemerkung</th>
                 </tr>
+                </thead>
                 {% for (year, week), jobs in grouped_jobs.items() %}
 
-                    <tr style="background-color: orange; height: 15px; font-weight:bold;" >
+                    <tr style="background-color: #0b2945; color: white; height: 15px; font-weight:bold;" >
+                        <td></td>
                         <td style="text-align:left;" colspan="11">{{ year }}, KW: {{ week }}</td>
                         {% for AG in ['2410-01', '2410-50', '2410-03', '2410-04', '2450-01'] %}
                             <td style="
                             {% for wl in workload %}
                                 {% if (wl.gruppe == AG) and (wl.year == year) and (wl.kw == week) %}
-                                    {% if (((wl.h_plan / (wl.h_ist + 1)) * 100)) > 110 %}
+                                    {% if (((wl.h_plan / (wl.h_ist + 1)) * 100)) >= 110 %}
                                        background-color: #ff8f8f;
                                     {% elif (((wl.h_plan / (wl.h_ist + 1)) * 100)) > 80 %}
-                                        background-color: #a4ff8f;
-                                    {% elif (((wl.h_plan / (wl.h_ist + 1)) * 100)) < 80 %}
-                                        background-color: #8fe5ff;
+                                        background-color: #63eba7;
+                                    {% elif (((wl.h_plan / (wl.h_ist + 1)) * 100)) <= 80 %}
+                                        background-color: #b8eeff;
                                     {% endif %}
                                 {% endif %}
                             {% endfor %}
-                            ">
-                                {{ AG }} </br>
+                            color: black;">
                                 {% for wl in workload %}
                                     {% if (wl.gruppe == AG) and (wl.year == year) and (wl.kw == week) %}
                                         {% if wl.h_ist < 1 %}
@@ -52,21 +103,28 @@
                                             PLAN {{ wl.h_plan }}</br
                                             <b>-----</b>
                                         {% else %}
-                                            IST {{ wl.h_ist }}</br>
-                                            PLAN {{ wl.h_plan }}</br>
+
+                                {{ wl.h_plan }}h </br> {{ wl.h_ist }}h</br>
                                             {{  ((wl.h_plan / (wl.h_ist + 1)) * 100) | round(1) }}%
                                         {% endif %}
                                     {% endif %}
                                 {% endfor %}
                             </td>  <!-- Hier wird der Workload für die aktuelle Maschine angezeigt -->
                         {% endfor %}
+                        <td></td>
                     </tr>
                     {% for job in jobs %}
                     <tr class="job-row"
                         {% if job.Zustand == "60" %}
-                        style="background-color: lightgreen;"
-                        {% endif %}
-                    >
+                        style="background-color: #cceddf; color: grey;"
+                        {% endif %} >
+                        <td>
+                            {% for info in auftrag_info %}
+                                {% if info.fa_mat | int == 1 and info.fa_nr | int == job.Auftrag %}
+                                    <img src="{{ url_for('static', filename='goods.png') }}" alt="Icon" height="30px" style="filter: invert(0%);">
+                                {% endif %}
+                            {% endfor %}
+                        </td>
                         <td>{{ job.Zustand }}</td>
                         <td class="auftrag-num" data-auftrag="{{ job.Auftrag }}">{{ job.Auftrag }}</td>
                         <td>{{ job.StartTermPlan.strftime('%d.%m-') }}</td>
@@ -74,19 +132,41 @@
                         <td>{{ job.Pos }}</td>
                         <td>{{ job.ArbBez[:3] }}</td>
                         <td>{{ job.Teil }}</td>
-                        <td>{{ job.Bez }}</td>
+                        <td>{{ job.Bez[:15] }}</td>
                         <td>{{ job.Mng }}</td>
-                        <td>{{ job.StartTermPlan.strftime('%d.%m.%Y') }}</td>
+                        <td>{{ job.StartTermPlan.strftime('%d.%m-') }}</td>
                         <td>{{ job.EndTermPlan.strftime('%d.%m.%Y') }}</td>
                         <td>{% if job.PmNr == "2410-01" %} {{ (job.Zeit / 60) | round(1) }} h {% endif %}</td>
                         <td>{% if job.PmNr == "2410-50" %} {{ (job.Zeit / 60) | round(1) }} h {% endif %}</td>
                         <td>{% if job.PmNr == "2410-03" %} {{ (job.Zeit / 60) | round(1) }} h {% endif %}</td>
                         <td>{% if job.PmNr == "2410-04" %} {{ (job.Zeit / 60) | round(1) }} h {% endif %}</td>
                         <td>{% if job.PmNr == "2450-01" %} {{ (job.Zeit / 60) | round(1) }} h {% endif %}</td>
+                        <td>
+                        {% for info in auftrag_info%}
+                            {% if info.fa_nr | int == job.Auftrag %}
+                            <p style="margin: 0px 20px 0px 20px;" class="data-comment" data-comment="{{ info.fa_bemerk }}" >
+                                {{ info.fa_bemerk }}</p>
+                            {% endif %}
+                        {% endfor %}
+                        </td>
                     </tr>
                     {% endfor %}
                 {% endfor %}
             </table>
+
+            <!-- Das Modal -->
+ <!-- Das Modal -->
+    <div id="modal">
+        <div id="modalContent">
+            <span id="closeModalBtn">✖</span>
+            <label for="comment">Kommentar eingeben:</label>
+            <input type="text" id="comment" style="width: 250px">
+            <label for="checkbox">Material komplett:</label>
+            <input type="checkbox" id="checkbox">
+            <button id="saveBtn">Speichern</button>
+            <button id="cancelBtn">Abbrechen</button>
+        </div>
+    </div>
 
 
         <p style="font-size:8px; float: right; color: lightgrey">Tobias Eder 2023</p>
@@ -97,28 +177,123 @@
 
 <script>
     document.querySelectorAll('.auftrag-num').forEach(function(cell) {
-    cell.addEventListener('click', function() {
-        const clickedAuftrag = cell.getAttribute('data-auftrag');
+        cell.addEventListener('click', function() {
+            const clickedAuftrag = cell.getAttribute('data-auftrag');
 
-        document.querySelectorAll('.job-row').forEach(function(row) {
-            const rowAuftrag = row.querySelector('.auftrag-num').getAttribute('data-auftrag');
+            document.querySelectorAll('.job-row').forEach(function(row) {
+                const rowAuftrag = row.querySelector('.auftrag-num').getAttribute('data-auftrag');
 
-            // Speichert die ursprüngliche Hintergrundfarbe, falls nicht bereits gespeichert
-            if (!row.dataset.originalBgColor) {
-                row.dataset.originalBgColor = row.style.backgroundColor || 'white';
-            }
+                // Speichert die ursprüngliche Hintergrund- und Textfarbe der Zeile
+                if (!row.dataset.originalBgColor) {
+                    row.dataset.originalBgColor = row.style.backgroundColor || 'white';
+                }
+                if (!row.dataset.originalTextColor) {
+                    row.dataset.originalTextColor = row.style.color || getComputedStyle(row).color;
+                }
+                if (!row.dataset.originalFontWeight) {
+                    row.dataset.originalFontWeight = row.style.fontWeight || getComputedStyle(row).fontWeight;
+                }
 
-            if (rowAuftrag === clickedAuftrag) {
-                row.style.backgroundColor = '#0b2945';
-                row.style.color = 'white';
-                row.querySelectorAll('td').forEach(td => td.style.color = 'white');
-            } else {
-                row.style.backgroundColor = row.dataset.originalBgColor; // Setzt die ursprüngliche Farbe zurück
-                row.style.color = '';
-                row.querySelectorAll('td').forEach(td => td.style.color = '');
-            }
+                // Iteriere über jede Zelle und speichere deren ursprüngliche Textfarbe und Schriftstärke
+                row.querySelectorAll('td').forEach(td => {
+                    if (!td.dataset.originalTextColor) {
+                        td.dataset.originalTextColor = td.style.color || getComputedStyle(td).color;
+                    }
+                    if (!td.dataset.originalFontWeight) {
+                        td.dataset.originalFontWeight = td.style.fontWeight || getComputedStyle(td).fontWeight;
+                    }
+                });
+
+                if (rowAuftrag === clickedAuftrag) {
+                    row.style.backgroundColor = '#99ceff';
+                    row.style.color = 'black';
+                    row.style.fontWeight = 'bold';
+                    row.querySelectorAll('td').forEach(td => {
+                        td.style.color = 'black';
+                        td.style.fontWeight = 'bold';
+                    });
+                } else {
+                    row.style.backgroundColor = row.dataset.originalBgColor;
+                    row.style.color = row.dataset.originalTextColor;
+                    row.style.fontWeight = row.dataset.originalFontWeight;
+                    row.querySelectorAll('td').forEach(td => {
+                        td.style.color = td.dataset.originalTextColor;
+                        td.style.fontWeight = td.dataset.originalFontWeight;
+                    });
+                }
+            });
         });
     });
-});
-
 </script>
+
+
+
+<script>
+    // Doppelklick-Eventlistener auf alle Elemente mit der Klasse 'auftrag-num'
+    document.querySelectorAll('.auftrag-num').forEach(function(cell) {
+        cell.addEventListener('dblclick', function() {
+            // Hole die FA-Nummer aus dem data-Attribut
+            const fa_nr = cell.getAttribute('data-auftrag');
+            // Finde die gesamte Zeile, in der sich das Element befindet
+            const row = cell.closest('tr');
+            // Suche in der gleichen Zeile nach der Zelle, die den Kommentar enthält
+            const commentCell = row.querySelector('.data-comment');
+            // Falls vorhanden, lese den aktuellen Kommentar aus dem data-comment-Attribut aus
+            const currentComment = commentCell ? commentCell.getAttribute('data-comment') : "";
+            // Prüfe, ob in der Zeile ein <img> vorhanden ist
+            const hasImage = row.querySelector('img') !== null;
+
+            // Öffne das Modal und setze den Kommentar und die Checkbox
+            document.getElementById('modal').style.display = 'block';
+            document.getElementById('comment').value = currentComment;  // Setze den Kommentar in das Eingabefeld
+            document.getElementById('checkbox').checked = hasImage;  // Checkbox setzen, falls Bild vorhanden
+
+            // Speichern-Button-Event
+            document.getElementById('saveBtn').addEventListener('click', function() {
+                const enteredComment = document.getElementById('comment').value;
+                const checkboxChecked = document.getElementById('checkbox').checked;
+
+                // Sende die Daten via AJAX an den Flask-Endpoint
+                fetch('/update_comment', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        fa_nr: fa_nr,
+                        comment: enteredComment,
+                        fa_mat: checkboxChecked ? 1 : 0
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.reload();  // Seite neu laden
+                    } else {
+                        alert("Fehler beim Aktualisieren.");
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+
+                // Schließe das Modal
+                document.getElementById('modal').style.display = 'none';
+            });
+
+            // Abbrechen-Button-Event
+            document.getElementById('cancelBtn').addEventListener('click', function() {
+                document.getElementById('modal').style.display = 'none';  // Schließe das Modal
+            });
+        });
+    });
+
+    // Modal schließen, wenn der Benutzer auf das "X" klickt
+    document.getElementById('closeModalBtn').addEventListener('click', function() {
+        document.getElementById('modal').style.display = 'none';
+    });
+</script>
+
+
+
+

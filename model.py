@@ -46,3 +46,9 @@ class WorkLoad(db.Model):
     gruppe = db.Column(db.Integer, nullable=False)
     h_ist = db.Column(db.Integer, nullable=True)
     h_plan = db.Column(db.Integer, nullable=True)
+
+
+class AuftragInfo(db.Model):
+    fa_nr = db.Column(db.Integer, primary_key=True)
+    fa_mat = db.Column(db.Boolean, default=False)
+    fa_bemerk = db.Column(db.String(200), default="")
