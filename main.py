@@ -318,15 +318,15 @@ def index():
     auftrag_info = AuftragInfo.query.all()
 
     gruppe = "E1"
-    zustand_min = "20"
+    zustand_min = "10"
     zustand_max = "60"
     date_min = (datetime.now() - timedelta(weeks=6)).strftime("%Y-%d-%m %H:%M:%S")
     date_max = "2099-30-12 00:00:00"
     masch_gruppe = 0
 
-    jobs = get_jobs(gruppe, masch_gruppe, zustand_min, zustand_max, date_min, date_max)
-    grouped_jobs = group_by_calendar_week(jobs)
-    get_kw_workload(grouped_jobs)
+    jobs = get_jobs(gruppe, masch_gruppe, zustand_min, zustand_max, date_min, date_max)  # Arbeitsgänge auslesen
+    grouped_jobs = group_by_calendar_week(jobs)  # Gruppieren der Arbeitsgänge nach KW
+    get_kw_workload(grouped_jobs)  # Summieren der Arbeitsgang-Zeiten nach Gruppe und KW
 
     return render_template('index.html', jobs=jobs, grouped_jobs=grouped_jobs, workload=workload, stunden=stunden, team=team, auftrag_info=auftrag_info)
 
@@ -336,19 +336,17 @@ def update_comment():
     data = request.get_json()
     fa_nr = data.get('fa_nr')
     comment = data.get('comment')
-    fa_mat = data.get('fa_mat', 0) #Checkbox 1 oder 0
+    fa_mat = data.get('fa_mat', 0)  # Checkbox Material (1 oder 0)
 
     if not fa_nr:
         return jsonify({'success': False, 'message': 'Keine FA-Nummer übermittelt'}), 400
 
-    # Verwende hier die korrekte Klassenbezeichnung
     auftraginfo = AuftragInfo.query.get(fa_nr)
 
     if not auftraginfo:
-        # Wenn kein Eintrag existiert, erstelle einen neuen
         auftraginfo = AuftragInfo(fa_nr=fa_nr)
 
-    # Aktualisiere den Kommentar
+    # Felder aktualisieren
     auftraginfo.fa_bemerk = comment
     auftraginfo.fa_mat = fa_mat
 
@@ -385,6 +383,7 @@ def personal():
     db.session.commit()
     stunden = StundenKW.query.order_by(asc(StundenKW.jahr), asc(StundenKW.kw), asc(StundenKW.pers_nr)).all()
     return render_template('personal.html', team=team, stunden=stunden)
+
 
 @app.route('/personal/add', methods=['POST'])
 def personal_add():
@@ -468,7 +467,6 @@ def vorrat():
 
 @app.route('/kpi')
 def kpi():
-
 ## Auftragskennzahlen
 # Status Aufträge nach KW
     # Auftragsdaten abrufen

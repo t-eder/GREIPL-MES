@@ -4,11 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="7d186514-fd06-41ff-8b8f-744ab137ced3" name="Changes" comment="Kommentarfunktion und Materialicon">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    <list default="true" id="7d186514-fd06-41ff-8b8f-744ab137ced3" name="Changes" comment="Bugfix job_ahead 3DAOI Nacharbeit">
       <change beforePath="$PROJECT_DIR$/instance/Databank.db" beforeDir="false" afterPath="$PROJECT_DIR$/instance/Databank.db" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/vorrat.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/vorrat.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -163,7 +160,15 @@
       <option name="project" value="LOCAL" />
       <updated>1739284342467</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="Bugfix job_ahead 3DAOI Nacharbeit">
+      <option name="closed" value="true" />
+      <created>1739374344805</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1739374344805</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -183,6 +188,7 @@
     <MESSAGE value="Kennzahlen ergänzt" />
     <MESSAGE value="Kapazitätsplanung Aufträge 60 jetzt grün" />
     <MESSAGE value="Kommentarfunktion und Materialicon" />
-    <option name="LAST_COMMIT_MESSAGE" value="Kommentarfunktion und Materialicon" />
+    <MESSAGE value="Bugfix job_ahead 3DAOI Nacharbeit" />
+    <option name="LAST_COMMIT_MESSAGE" value="Bugfix job_ahead 3DAOI Nacharbeit" />
   </component>
 </project>

@@ -48,13 +48,96 @@
         button {
             cursor: pointer;
         }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;  /* Vertikal zentrieren */
+            gap: 8px;  /* Abstand zwischen Checkbox und Label */
+            margin-left: 8px;
+        }
+
+        .checkbox-container input[type="checkbox"] {
+            width: 16px;  /* Standardgröße */
+            height: 16px;
+            margin: 0;  /* Keine unnötigen Abstände */
+            cursor: pointer;
+        }
+
+        .checkbox-container label {
+            display: flex;
+            align-items: center;  /* Icon & Text vertikal zentrieren */
+            gap: 5px;  /* Abstand zwischen Icon und Text */
+        }
+
+        .checkbox-container img {
+            height: 24px;  /* Größe des Icons */
+        }
+
+        .filter-container {
+            display: flex;
+            margin-bottom: 5px;  /* Abstand zur Tabelle */
+            font-weight: bold;
+        }
+
+        .filter-container label {
+            display: flex;
+            align-items: center;
+        }
+
+        #filter-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background: rgba(11, 41, 69, 0.9); /* Dunkles Blau mit Transparenz */
+        color: white;
+        padding: 5px 15px;  /* Weniger Innenabstand */
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        font-size: 14px; /* Etwas kleinere Schrift */
+        font-weight: bold;
+        box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.3);
+        height: 35px; /* Fixierte Höhe für eine schmale Leiste */
+        align-items: center; /* Elemente vertikal zentrieren */
+        white-space: nowrap; /* Verhindert den Zeilenumbruch */
+    }
+
+    #filter-bar label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    #filter-bar input[type="checkbox"] {
+        transform: scale(1.1); /* Leicht größere Checkbox */
+        cursor: pointer;
+    }
+
+    #filter-bar button {
+        background-color: #1a60a1; /* Blauen Hintergrund für den Button */
+        color: white;
+        border: none;
+        padding: 6px 12px;
+        font-size: 14px;
+        cursor: pointer;
+        border-radius: 5px;
+        height: 30px; /* Gleiche Höhe wie die anderen Elemente */
+        width: 100px;
+        margin: 10px;
+    }
+
+    #filter-bar button:hover {
+        background-color: #0082da;; /* Dunklerer Grünton bei Hover */
+    }
     </style>
 
 </head>
 <body>
 {% include 'header.html' %}
-    <div class="container">
-        <h2>Fertigungsaufträge E1</h2>
+<div class="container">
+
+        <h2>Fertigungsaufträge E1</h2><br>
 
             <table class="table1" >
                 <thead style="position: sticky; top: 0; z-index: 2; ">
@@ -154,20 +237,38 @@
                 {% endfor %}
             </table>
 
-            <!-- Das Modal -->
- <!-- Das Modal -->
-    <div id="modal">
-        <div id="modalContent">
-            <span id="closeModalBtn">✖</span>
-            <label for="comment">Kommentar eingeben:</label>
-            <input type="text" id="comment" style="width: 250px">
-            <label for="checkbox">Material komplett:</label>
+<div id="filter-bar">
+    <label>
+        <input type="checkbox" id="hideStatus10"> Status 10 ausblenden
+    </label>
+    <label>
+        <input type="checkbox" id="hideStatus60"> Status 60 ausblenden
+    </label>
+    <button id="jumpToCurrentWeek">Aktuelle KW</button>
+</div>
+
+
+
+<!-- Modal -->
+<div id="modal" class="modal">
+    <div id="modalContent" class="modal-content">
+        <span id="closeModalBtn" class="close-btn">✖</span>
+
+        <label for="comment">Kommentar eingeben:</label>
+        <input type="text" id="comment" class="input-field" style="width:260px;">
+        <br> <br>
+        <div class="checkbox-container">
             <input type="checkbox" id="checkbox">
+            <label for="checkbox"><img src="{{ url_for('static', filename='goods.png') }}" alt="Icon" height="30px" style="filter: invert(0%);"> Material komplett</label>
+        </div>
+
+        <br>
+        <div class="button-container">
             <button id="saveBtn">Speichern</button>
             <button id="cancelBtn">Abbrechen</button>
         </div>
     </div>
-
+</div>
 
         <p style="font-size:8px; float: right; color: lightgrey">Tobias Eder 2023</p>
     </div>
@@ -224,7 +325,7 @@
             });
         });
     });
-</script>
+</script> <!-- Farbige Kennzeichnung gleicher FA-Nummer beim auswählen -->
 
 
 
@@ -292,8 +393,50 @@
     document.getElementById('closeModalBtn').addEventListener('click', function() {
         document.getElementById('modal').style.display = 'none';
     });
-</script>
+</script> <!-- Popup Fenster mit Bemerkung und Material-->
 
+<script>
+    function updateVisibility() {
+        const hide60 = document.getElementById('hideStatus60').checked;
+        const hide10 = document.getElementById('hideStatus10').checked;
 
+        document.querySelectorAll('.job-row').forEach(row => {
+            const statusCell = row.querySelector('td:nth-child(2)');
+            if (statusCell) {
+                const status = statusCell.textContent.trim();
+                if ((hide60 && status === '60') || (hide10 && status === '10')) {
+                    row.style.display = 'none';
+                } else {
+                    row.style.display = '';
+                }
+            }
+        });
+    }
 
+    document.getElementById('hideStatus60').addEventListener('change', updateVisibility);
+    document.getElementById('hideStatus10').addEventListener('change', updateVisibility);
+</script> <!-- Zeilen mit Status 60 oder 10 ausblenden -->
 
+<script>
+document.getElementById('jumpToCurrentWeek').addEventListener('click', function() {
+    // Berechne die aktuelle Kalenderwoche
+    const currentDate = new Date();
+    const currentWeek = getWeekNumber(currentDate);
+
+    // Suche die Zeile mit der entsprechenden Kalenderwoche
+    const weekRows = document.querySelectorAll('tr');
+    weekRows.forEach(row => {
+        const weekCell = row.querySelector('td[colspan="11"]'); // Angenommen, die Kalenderwoche steht in einer speziellen Zelle
+        if (weekCell && weekCell.textContent.includes('KW: ' + currentWeek)) {
+            row.scrollIntoView({ behavior: 'smooth', block: 'center' }); // Scrolle zur Zeile der aktuellen KW
+        }
+    });
+});
+
+// Funktion zur Berechnung der Kalenderwoche
+function getWeekNumber(date) {
+    const startDate = new Date(date.getFullYear(), 0, 1);
+    const days = Math.floor((date - startDate) / (24 * 60 * 60 * 1000));
+    return Math.ceil((days + 1) / 7);
+}
+</script><!-- Zur aktuellen KW springen -->
