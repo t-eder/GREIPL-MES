@@ -43,6 +43,7 @@
             <div class="tab active" data-tab="smd-tab">2410-01 SMD-Bestückung</div>
             <div class="tab" data-tab="tht-tab">2410-03 THT-Bestückung</div>
             <div class="tab" data-tab="man-tab">2410-04 Manuelle Handarbeit</div>
+            <div class="tab" data-tab="aoi-tab">2410-50 3DAOI Nacharbeit</div>
             <div class="tab" data-tab="pruef-tab">2450-01 Prüfung E1</div>
         </div>
 
@@ -124,6 +125,33 @@
                 {% endfor %}
             </table>
         </div>
+
+        <div class="tab-content" id="aoi-tab">
+            <table class="table1">
+                <tr>
+                    <th></th>
+                    <th></th>
+                    <th>Start</th>
+                    <th>Vorgänger</th>
+                    <th>Tätigkeit</th>
+                    <th>Auftrag</th>
+                    <th>Zustand</th>
+                    <th>GREIPL Nummer</th>
+                    <th>Bezeichnung</th>
+                    <th>Start</th>
+                    <th>Ende</th>
+                    <th>Ist Zeit</th>
+                    <th>Soll Zeit</th>
+                    <th>Abgeschlossen</th>
+                    <th>Gut Menge</th>
+                    <th></th>
+                </tr>
+                {% for job in aoi_jobs %}
+                    {% include 'vorrat_jobline.html' %}
+                {% endfor %}
+            </table>
+        </div>
+
 
         <div class="tab-content" id="pruef-tab">
             <table class="table1">

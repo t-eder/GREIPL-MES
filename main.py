@@ -176,38 +176,44 @@ def get_mat_buchungen(Buchungsdatum_min, Buchungsdatum_max, Erfassende, Teilegru
         return mat_buchungen
 
 
-
 def get_job_ahead(jobs):
-    conn = pyodbc.connect(connectionString)
+    conn = pyodbc.connect(connectionString)  # Ensure connection is defined
     typ = "A"  # Auftrag = E; Arbeitsgang = A; Material = M;
 
     for job in jobs:
         auftrag = job['Auftrag']
         pos = job['Pos']
-        # print(auftrag, pos)
-        SQL_QUERY = f"""
-                                    SELECT 
-                                    FAPOS.Zustand, FAPOS.Auftrag, ARBPLATZ.Bez, FAPOS.Pos
-                                    FROM 
-                                    INFRADB.dbo.FAPOS FAPOS, INFRADB.dbo.TEILE TEILE, INFRADB.dbo.ARBPLATZ ARBPLATZ
-                                    WHERE
-                                    FAPOS.Teil = TEILE.Teil AND FAPOS.PmNr = ARBPLATZ.PmNr AND FAPOS.Typ = '{typ}' AND FAPOS.Auftrag = '{auftrag}'
-                                    ORDER BY
-                                    FAPOS.Pos
-                                    """
 
-        cursor = conn.cursor()
-        cursor.execute(SQL_QUERY)
-        records = cursor.fetchall()
-        # print(records)
+        SQL_QUERY = """
+            SELECT TOP 1 
+                FAPOS.Zustand, 
+                ARBPLATZ.Bez, 
+                FAPOS.Pos
+            FROM 
+                INFRADB.dbo.FAPOS AS FAPOS
+            JOIN 
+                INFRADB.dbo.TEILE AS TEILE ON FAPOS.Teil = TEILE.Teil
+            JOIN 
+                INFRADB.dbo.ARBPLATZ AS ARBPLATZ ON FAPOS.PmNr = ARBPLATZ.PmNr
+            WHERE 
+                FAPOS.Typ = ? 
+                AND FAPOS.Auftrag = ? 
+                AND FAPOS.Pos < ? 
+            ORDER BY 
+                FAPOS.Pos DESC  -- Gets the closest smaller Pos
+        """
 
-        for r in records:
-            if r[3] < pos:
-                job['job_ahead'] = r[2][:3]
-                job['job_ahead_zustand']= r[0]
-                # print(job)
-                break
+        with conn.cursor() as cursor:
+            cursor.execute(SQL_QUERY, (typ, auftrag, pos))
+            record = cursor.fetchone()
+
+            if record:
+                job['job_ahead'] = record[1][:3]  # First 3 chars of ARBPLATZ.Bez
+                job['job_ahead_zustand'] = record[0]  # Zustand
+
+    conn.close()
     return jobs
+
 
 
 def get_delay(jobs):
@@ -432,7 +438,6 @@ def vorrat():
     date_min = "2010-01-01 00:00:00"
     date_max = "2099-31-12 00:00:00"
 
-
     masch_gruppe = "2410-01"  # SMT
     smd_jobs = get_jobs(gruppe, masch_gruppe, zustand_min, zustand_max, date_min, date_max)
     get_job_ahead(smd_jobs)
@@ -448,12 +453,17 @@ def vorrat():
     get_job_ahead(man_jobs)
     get_delay(man_jobs)
 
-    masch_gruppe = "2450-01"  # Manuelle Handarbeit
+    masch_gruppe = "2410-50"  # 3DAOI Nacharbeit
+    aoi_jobs = get_jobs(gruppe, masch_gruppe, zustand_min, zustand_max, date_min, date_max)
+    get_job_ahead(aoi_jobs)
+    get_delay(aoi_jobs)
+
+    masch_gruppe = "2450-01"  # Prüfung E1
     pruef_jobs = get_jobs(gruppe, masch_gruppe, zustand_min, zustand_max, date_min, date_max)
     get_job_ahead(pruef_jobs)
     get_delay(pruef_jobs)
 
-    return render_template('vorrat.html', smd_jobs=smd_jobs, tht_jobs=tht_jobs, man_jobs=man_jobs, pruef_jobs=pruef_jobs)
+    return render_template('vorrat.html', smd_jobs=smd_jobs, tht_jobs=tht_jobs, man_jobs=man_jobs, pruef_jobs=pruef_jobs, aoi_jobs=aoi_jobs)
 
 
 @app.route('/kpi')
