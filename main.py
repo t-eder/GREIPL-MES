@@ -107,6 +107,7 @@ def get_jobs(gruppe, masch_gruppe ,zustand_min, zustand_max, date_min, date_max)
                                 WHERE
                                 FAPOS.Teil = TEILE.Teil AND TEILE.Gruppe = '{gruppe}' AND FAPOS.Zustand <= '{zustand_max}' AND FAPOS.Zustand >= '{zustand_min}' AND FAPOS.PmNr = ARBPLATZ.PmNr AND FAPOS.Typ = '{typ}'
                                 AND FAPOS.StartTermPlan > '{date_min}' AND FAPOS.StartTermPlan < '{date_max}'
+                                AND NOT (FAPOS.Stat = 'E' AND (FAPOS.Zustand = '10' OR FAPOS.Zustand = '20'))
                                 ORDER BY
                                 FAPOS.StartTermPlan, FAPOS.EndTermPlan, FAPOS.Pos
                                 """
@@ -121,6 +122,7 @@ def get_jobs(gruppe, masch_gruppe ,zustand_min, zustand_max, date_min, date_max)
                                 WHERE
                                 FAPOS.Teil = TEILE.Teil AND TEILE.Gruppe = '{gruppe}' AND FAPOS.Zustand <= '{zustand_max}' AND FAPOS.Zustand >= '{zustand_min}' AND FAPOS.PmNr = ARBPLATZ.PmNr AND FAPOS.Typ = '{typ}'
                                 AND FAPOS.StartTermPlan > '{date_min}' AND FAPOS.StartTermPlan < '{date_max}' AND FAPOS.PmNr = '{masch_gruppe}'
+                                AND NOT (FAPOS.Stat = 'E' AND (FAPOS.Zustand = '10' OR FAPOS.Zustand = '20'))
                                 ORDER BY
                                 FAPOS.StartTermPlan, FAPOS.EndTermPlan, FAPOS.Pos
                                 """
