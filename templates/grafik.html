@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gantt-Diagramm</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+    <h1>Gantt-Diagramm</h1>
+    <canvas id="ganttChart"></canvas>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const ctx = document.getElementById("ganttChart").getContext("2d");
+
+            const jobs = {{ jobs|tojson }};  // Daten aus Flask
+
+            const labels = jobs.map(job => job.ArbBez);  // Job-Namen
+            const startDates = jobs.map(job => new Date(job.StartTermPlan));
+            const endDates = jobs.map(job => new Date(job.EndTermPlan));
+
+            const datasets = jobs.map((job, index) => ({
+                label: job.ArbBez,
+                backgroundColor: `rgba(${Math.random()*255}, ${Math.random()*255}, ${Math.random()*255}, 0.7)`,
+                borderColor: "black",
+                borderWidth: 1,
+                data: [{
+                    x: [startDates[index], endDates[index]],
+                    y: index
+                }]
+            }));
+
+            new Chart(ctx, {
+                type: "bar",
+                data: {
+                    labels: labels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: { type: "time", time: { unit: "day" } },
+                        y: { ticks: { autoSkip: false } }
+                    }
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>

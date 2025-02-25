@@ -328,6 +328,8 @@ def index():
 
     jobs = get_jobs(gruppe, masch_gruppe, zustand_min, zustand_max, date_min, date_max)  # Arbeitsgänge auslesen
     grouped_jobs = group_by_calendar_week(jobs)  # Gruppieren der Arbeitsgänge nach KW
+    #  print(grouped_jobs)
+
     get_kw_workload(grouped_jobs)  # Summieren der Arbeitsgang-Zeiten nach Gruppe und KW
 
     return render_template('index.html', jobs=jobs, grouped_jobs=grouped_jobs, workload=workload, stunden=stunden, team=team, auftrag_info=auftrag_info)
@@ -544,6 +546,31 @@ def kpi():
 def settings():
 
     return render_template('settings.html')
+
+
+@app.route('/tools')
+def tools():
+
+    return render_template('tools.html')
+
+
+@app.route('/grafik')
+def grafik():
+
+    gruppe = "E1"
+    zustand_min = "10"
+    zustand_max = "60"
+    date_min = (datetime.now() - timedelta(weeks=6)).strftime("%Y-%d-%m %H:%M:%S")
+    date_max = "2099-30-12 00:00:00"
+    masch_gruppe = 0
+
+    jobs = get_jobs(gruppe, masch_gruppe, zustand_min, zustand_max, date_min, date_max)  # Arbeitsgänge auslesen
+    grouped_jobs = group_by_calendar_week(jobs)  # Gruppieren der Arbeitsgänge nach KW
+    #  print(grouped_jobs)
+
+    get_kw_workload(grouped_jobs)  # Summieren der Arbeitsgang-Zeiten nach Gruppe und KW
+
+    return render_template('index.html', jobs=jobs, grouped_jobs=grouped_jobs)
 
 
 # Press the green button in the gutter to run the script.

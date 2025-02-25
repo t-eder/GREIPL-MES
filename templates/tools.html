@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>GREIPL-MES</title>
+    <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/style.css') }}">
+</head>
+<body>
+{% include 'header.html' %}
+<div class="container">
+    <h1 style="text-align:left;">E1 Tools</h1>
+
+    <div class="tiles">
+        <div class="tile">
+            <a href="/progplan">
+                <img class="tile-icon" src="{{ url_for('static', filename='monitoring.png') }}" alt="E1 Programmierliste">
+                <p class="tile-text">E1 Programmierliste</p>
+            </a>
+        </div>
+        <div class="tile">
+            <a href="/">
+                <img class="tile-icon" src="{{ url_for('static', filename='smd-file.png') }}" alt="ISM-Infra Abgleich">
+                <p class="tile-text">ISM-Infra Abgleich</p>
+            </a>
+        </div>
+        <div class="tile">
+            <a href="/tempcheck">
+                <img class="tile-icon" src="{{ url_for('static', filename='high-temperature.png') }}" alt="Reflow Temperatur Check">
+                <p class="tile-text">Reflow Temperatur Check</p>
+            </a>
+        </div>
+        <div class="tile">
+            <a href="">
+                <img class="tile-icon" src="{{ url_for('static', filename='purchase.png') }}" alt="Verbrauchsmaterial">
+                <p class="tile-text">Verbrauchsmaterial</p>
+            </a>
+        </div>
+    </div>
+
+    <p style="font-size:8px; float: right; color: lightgrey">Tobias Eder 2023</p>
+</div>
+
+
+</body>
+
+<!-- Add the CSS styles -->
+<style>
+    .container {
+        width: 100%;
+        text-align: center;
+        padding: 20px;
+    }
+
+    .tiles {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        justify-content: center;
+        margin-top: 20px;
+    }
+
+    .tile {
+        background-color: #f4f4f4;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        text-align: center;
+        padding: 20px;
+    }
+
+    .tile:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    .tile-icon {
+        width: 100px;
+        height: 100px;
+        margin-bottom: 15px;
+    }
+
+    .tile-text {
+        font-size: 14px;
+        font-weight: bold;
+        color: #333;
+    }
+</style>
+</html>
