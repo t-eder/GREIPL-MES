@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="de">
+  <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Temp Check</title>
+      <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='styles/style.css') }}">
+      <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body>
+    {% include 'header.html' %}
+    <div class="container">
+      <h1>Temperaturprofil Analyse</h1>
+
+      <!-- Dropdown für Dateiauswahl -->
+      <label for="fileSelect">Wählen Sie eine Datei:</label>
+      <select id="fileSelect">
+          <!-- Optionale Optionen dynamisch laden -->
+      </select>
+
+      <!-- Hier die Flash-Nachrichten anzeigen -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="flash-messages">
+            {% for category, message in messages %}
+              <div class="flash {{ category }}">
+                {{ message }}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      <!-- Formular zur Auswahl der Datei -->
+      <form id="uploadForm" method="POST" action="/tempcheck/render" enctype="multipart/form-data">
+          <p><input type="file" name="file" id="fileInput" /></p>
+          <p><input type="submit" value="Hochladen"></p>
+      </form>
+
+      <!-- Hier wird das Diagramm gerendert -->
+      <p id="filename"></p>
+      <canvas id="temperatureChart" width="400" height="200"></canvas>
+    </div>
+
+    <script src="{{ url_for('static', filename='scripts/main.js') }}"></script>
+  </body>
+</html>
+
+<script>
+    // Fetch der verfügbaren Dateien vom Server
+    fetch('/tempcheck/files')
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert(data.error);
+                return;
+            }
+
+            // Dropdown mit Dateinamen füllen
+            const fileSelect = document.getElementById('fileSelect');
+            data.files.forEach(file => {
+                const option = document.createElement('option');
+                option.value = file;
+                option.textContent = file;
+                fileSelect.appendChild(option);
+            });
+        })
+        .catch(error => {
+            alert('Fehler beim Laden der Dateien: ' + error);
+        });
+
+    // Fetch der CSV-Daten für die ausgewählte Datei
+    document.getElementById('fileSelect').addEventListener('change', function() {
+        const selectedFile = this.value;
+        fetch(`/tempcheck/render?file=${selectedFile}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+
+                // Zeige den Dateinamen an
+                document.getElementById('filename').textContent = "Anzeige der Datei: " + data.file_name;
+
+                // Wenn ein Chart-Objekt existiert, zerstöre es, bevor ein neues erstellt wird
+                if (window.chart) {
+                    window.chart.destroy();
+                }
+
+                // Diagramm erstellen
+                const ctx = document.getElementById('temperatureChart').getContext('2d');
+                window.chart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.timestamps,
+                        datasets: [{
+                            label: 'Temperatur (°C)',
+                            data: data.temperatures,
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            fill: false,
+                            tension: 0.1
+                        },
+                        {
+                            label: 'Max. Temperatur (°C)',
+                            data: data.max_temperatures,
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            fill: false,
+                            tension: 0.1,
+                            borderDash: [5, 5]
+                        },
+                        {
+                            label: 'Min. Temperatur (°C)',
+                            data: data.min_temperatures,
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            fill: false,
+                            tension: 0.1,
+                            borderDash: [5, 5]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Zeit (Sekunden)'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: 'Temperatur (°C)'
+                                }
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(error => {
+                alert('Fehler beim Laden der Daten: ' + error);
+            });
+    });
+</script>
+
+
