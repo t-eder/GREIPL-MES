@@ -38,6 +38,12 @@
     <div class="container">
         <h2>Arbeitsvorratslisten E1</h2>
 
+        <span><img src="{{ url_for('static', filename='goods.png') }}" alt="Icon" height="20px" style="filter: invert(0%);"> Material komplett</span>
+        <span style="margin-left:15px;"><img class="icon" src="{{ url_for('static', filename='spanner.png') }}" alt="Icon" height="20px" style="filter: invert(0%);"> Arbeitsgang in Arbeit</span>
+        <span style="margin-left:15px;"><img src="{{ url_for('static', filename='late.png') }}" alt="Icon" height="20px" style="filter: invert(0%);"> Start verspätet</span>
+        </br>
+
+
         <!-- Tab-Navigation -->
         <div class="tab-container">
             <div class="tab active" data-tab="smd-tab">2410-01 SMD-Bestückung</div>
@@ -50,24 +56,7 @@
         <!-- Tab-Inhalte -->
         <div class="tab-content active" id="smd-tab">
             <table class="table1">
-                <tr>
-                    <th></th>
-                    <th></th>
-                    <th>Start</th>
-                    <th>Vorgänger</th>
-                    <th>Tätigkeit</th>
-                    <th>Auftrag</th>
-                    <th>Zustand</th>
-                    <th>GREIPL Nummer</th>
-                    <th>Bezeichnung</th>
-                    <th>Start</th>
-                    <th>Ende</th>
-                    <th>Ist Zeit</th>
-                    <th>Soll Zeit</th>
-                    <th>Abgeschlossen</th>
-                    <th>Gut Menge</th>
-                    <th></th>
-                </tr>
+                {% include 'vorrat_table_header.html' %}
                 {% for job in smd_jobs %}
                     {% include 'vorrat_jobline.html' %}
                 {% endfor %}
@@ -76,24 +65,7 @@
 
         <div class="tab-content" id="tht-tab">
             <table class="table1">
-                <tr>
-                    <th></th>
-                    <th></th>
-                    <th>Start</th>
-                    <th>Vorgänger</th>
-                    <th>Tätigkeit</th>
-                    <th>Auftrag</th>
-                    <th>Zustand</th>
-                    <th>GREIPL Nummer</th>
-                    <th>Bezeichnung</th>
-                    <th>Start</th>
-                    <th>Ende</th>
-                    <th>Ist Zeit</th>
-                    <th>Soll Zeit</th>
-                    <th>Abgeschlossen</th>
-                    <th>Gut Menge</th>
-                    <th></th>
-                </tr>
+                {% include 'vorrat_table_header.html' %}
                 {% for job in tht_jobs %}
                     {% include 'vorrat_jobline.html' %}
                 {% endfor %}
@@ -102,50 +74,17 @@
 
         <div class="tab-content" id="man-tab">
             <table class="table1">
-                <tr>
-                    <th></th>
-                    <th></th>
-                    <th>Start</th>
-                    <th>Vorgänger</th>
-                    <th>Tätigkeit</th>
-                    <th>Auftrag</th>
-                    <th>Zustand</th>
-                    <th>GREIPL Nummer</th>
-                    <th>Bezeichnung</th>
-                    <th>Start</th>
-                    <th>Ende</th>
-                    <th>Ist Zeit</th>
-                    <th>Soll Zeit</th>
-                    <th>Abgeschlossen</th>
-                    <th>Gut Menge</th>
-                    <th></th>
-                </tr>
+                {% include 'vorrat_table_header.html' %}
                 {% for job in man_jobs %}
                     {% include 'vorrat_jobline.html' %}
                 {% endfor %}
             </table>
         </div>
 
+
         <div class="tab-content" id="aoi-tab">
             <table class="table1">
-                <tr>
-                    <th></th>
-                    <th></th>
-                    <th>Start</th>
-                    <th>Vorgänger</th>
-                    <th>Tätigkeit</th>
-                    <th>Auftrag</th>
-                    <th>Zustand</th>
-                    <th>GREIPL Nummer</th>
-                    <th>Bezeichnung</th>
-                    <th>Start</th>
-                    <th>Ende</th>
-                    <th>Ist Zeit</th>
-                    <th>Soll Zeit</th>
-                    <th>Abgeschlossen</th>
-                    <th>Gut Menge</th>
-                    <th></th>
-                </tr>
+                {% include 'vorrat_table_header.html' %}
                 {% for job in aoi_jobs %}
                     {% include 'vorrat_jobline.html' %}
                 {% endfor %}
@@ -155,24 +94,7 @@
 
         <div class="tab-content" id="pruef-tab">
             <table class="table1">
-                <tr>
-                    <th></th>
-                    <th></th>
-                    <th>Start</th>
-                    <th>Vorgänger</th>
-                    <th>Tätigkeit</th>
-                    <th>Auftrag</th>
-                    <th>Zustand</th>
-                    <th>GREIPL Nummer</th>
-                    <th>Bezeichnung</th>
-                    <th>Start</th>
-                    <th>Ende</th>
-                    <th>Ist Zeit</th>
-                    <th>Soll Zeit</th>
-                    <th>Abgeschlossen</th>
-                    <th>Gut Menge</th>
-                    <th></th>
-                </tr>
+               {% include 'vorrat_table_header.html' %}
                 {% for job in pruef_jobs %}
                     {% include 'vorrat_jobline.html' %}
                 {% endfor %}
@@ -199,3 +121,8 @@
     </script>
 </body>
 </html>
+
+
+
+
+

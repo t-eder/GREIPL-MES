@@ -1,20 +1,35 @@
 <tr>
                         <td>
-                        {% if job.delay | int < -1 %}
-                            <img class="blink" src="{{ url_for('static', filename='late.png') }}" alt="Icon" height="20px" style="filter: invert(0%);">
-                        {% endif %}
-                        </td>
-                        <td>
-                        {% if job.ZeitIst | int > 0  %}
-                            <img class="icon" src="{{ url_for('static', filename='spanner.png') }}" alt="Icon" height="20px" style="filter: invert(0%);">
-                        {% endif %}
-                        </td>
-                        <td  style="white-space: nowrap;">{{ job.StartTermPlan.strftime('%a %d.%m.%y') }}</td>
+                            <!-- {{ job.delay }}
+                            {{ job.Pos }} -->
+                            {% if job.delay | int < -1 and job.Zustand  | int < 50 %}
+                                <img class="blink" src="{{ url_for('static', filename='late.png') }}" alt="Icon" height="20px" style="filter: invert(0%);">
+                                {% else %}
+                                <img src="{{ url_for('static', filename='late.png') }}" alt="Icon" height="20px" style="filter: invert(100%);">
+                            {% endif %}
 
+                            {% set match_found = auftrag_info | selectattr("fa_mat", "equalto", 1)
+                                      | selectattr("fa_nr", "equalto", job.Auftrag | int)
+                                      | list
+                                      | length > 0 %}
+                            {% if match_found %}
+                                <img src="{{ url_for('static', filename='goods.png') }}" alt="Icon" height="20px" style="filter: invert(0%);">
+                            {% else %}
+                                <img src="{{ url_for('static', filename='goods.png') }}" alt="Icon" height="20px" style="filter: invert(80%);">
+                            {% endif %}
+
+                        {% if job.Zustand | int > 40 %}
+                            <img class="icon" src="{{ url_for('static', filename='spanner.png') }}" alt="Icon" height="20px" style="filter: invert(0%);">
+                            {% else %}
+                            <img class="icon" src="{{ url_for('static', filename='spanner.png') }}" alt="Icon" height="20px" style="filter: invert(80%);">
+                        {% endif %}
+                        </td>
+
+                        <td  style="white-space: nowrap; text-align: left;">{{ job.StartTermPlan.strftime('%d.%m.%y %a') }}</td>
                         <td>
                                 <div style="border-radius: 25px; height: 50px; width:50px; line-height: 50px; text-align: center;
                             background-color:
-                            {% if job.job_ahead_zustand == '30' %}
+                            {% if job.job_ahead_zustand == '10' or job.job_ahead_zustand == '20' or job.job_ahead_zustand == '30'%}
                                 #B0B0B0;
                             {% endif %}
                             {% if job.job_ahead_zustand == '40' %}
@@ -33,22 +48,22 @@
                                     {{ job.job_ahead }}
                             </div>
                         </td>
-                        <td>{{ job.posbez }}</td>
+
                         <td>{{ job.Auftrag }}</td>
                         <td>{{ job.Zustand }}</td>
                         <td>{{ job.Teil }}</td>
-                        <td>{{ job.Bez }}</td>
+                        <td style="text-align: left;">{{ job.Bez | truncate(20, True, '') }}</td>
+                        <td>{{ job.posbez }}</td>
+                        <td style="border-left: 2px solid black; text-align: left;">
+                            <b>
+                                {% if job.Zeit and job.Zeit != 0 %}
+                                {{ (job.ZeitIst / job.Zeit * 100) | round(0) }} %
+                                {% else %}
+                                0 %
+                                {% endif %}
+                            </b>|
+                            {{ (job.ZeitIst / 60) | round(0) }}/{{ (job.Zeit / 60) | round(0) }}h
 
-                        <td>-</td>
-                        <td>{{ job.EndTermPlan.strftime('%d.%m.%y') }}</td>
-                        <td style="border-left: 2px solid black;">{{ (job.ZeitIst / 60) | round(1) }} h</td>
-                        <td>{{ (job.Zeit / 60) | round(1) }} h</td>
-                        <td>
-                         {% if job.Zeit and job.Zeit != 0 %}
-                            {{ (job.ZeitIst / job.Zeit * 100) | round(1) }} %
-                         {% else %}
-                              0 %
-                         {% endif %}
                         </td>
                         <td>{{ job.MngRest }}</td>
 
