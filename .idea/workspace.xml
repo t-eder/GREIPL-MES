@@ -4,16 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="7d186514-fd06-41ff-8b8f-744ab137ced3" name="Changes" comment="Add tools menue and Reflow Tempcheck">
-      <change afterPath="$PROJECT_DIR$/tempcheck.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/tempcheck.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/uploads/JEDEC_temp_max.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/uploads/JEDEC_temp_min.csv" afterDir="false" />
+    <list default="true" id="7d186514-fd06-41ff-8b8f-744ab137ced3" name="Changes" comment="Datenbank von git ausgeschlossen">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/instance/Databank.db" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/model.py" beforeDir="false" afterPath="$PROJECT_DIR$/model.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/vorrat.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/vorrat.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/instance/Databank.db" beforeDir="false" afterPath="$PROJECT_DIR$/instance/Databank.db" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/vorrat_jobline.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/vorrat_jobline.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -23,13 +17,14 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
-        <option value="HTML File" />
         <option value="Python Script" />
+        <option value="HTML File" />
       </list>
     </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="RESET_MODE" value="MIXED" />
   </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 7
@@ -212,7 +207,23 @@
       <option name="project" value="LOCAL" />
       <updated>1740480899554</updated>
     </task>
-    <option name="localTasksCounter" value="11" />
+    <task id="LOCAL-00011" summary="Überarbeitung Vorratslisten">
+      <option name="closed" value="true" />
+      <created>1750696296376</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1750696296376</updated>
+    </task>
+    <task id="LOCAL-00012" summary="Datenbank von git ausgeschlossen">
+      <option name="closed" value="true" />
+      <created>1750696486086</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1750696486086</updated>
+    </task>
+    <option name="localTasksCounter" value="13" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -237,6 +248,8 @@
     <MESSAGE value="Farben nach PPS AA angepasst" />
     <MESSAGE value="bugfix E10 und E20 werden jetzt rausgefiltert" />
     <MESSAGE value="Add tools menue and Reflow Tempcheck" />
-    <option name="LAST_COMMIT_MESSAGE" value="Add tools menue and Reflow Tempcheck" />
+    <MESSAGE value="Überarbeitung Vorratslisten" />
+    <MESSAGE value="Datenbank von git ausgeschlossen" />
+    <option name="LAST_COMMIT_MESSAGE" value="Datenbank von git ausgeschlossen" />
   </component>
 </project>

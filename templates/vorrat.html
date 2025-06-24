@@ -37,12 +37,19 @@
     {% include 'header.html' %}
     <div class="container">
         <h2>Arbeitsvorratslisten E1</h2>
+        <span ><b style="color: #A0A0A0">&#9646</b></span><span>10</span>
+        <span ><b style="color: #a4e2eb">&#9646</b></span><span>20</span>
+        <span ><b style="color: #60A5FA">&#9646</b></span><span>30</span>
+        <span ><b style="color: #34D399">&#9646</b></span><span>40</span>
+        <span ><b style="color: #FB923C">&#9646</b></span><span>50</span>
 
-        <span><img src="{{ url_for('static', filename='goods.png') }}" alt="Icon" height="20px" style="filter: invert(0%);"> Material komplett</span>
+        <span style="margin-left: 30px;"><img src="{{ url_for('static', filename='goods.png') }}" alt="Icon" height="20px" style="filter: invert(0%);"> Material komplett</span>
         <span style="margin-left:15px;"><img class="icon" src="{{ url_for('static', filename='spanner.png') }}" alt="Icon" height="20px" style="filter: invert(0%);"> Arbeitsgang in Arbeit</span>
         <span style="margin-left:15px;"><img src="{{ url_for('static', filename='late.png') }}" alt="Icon" height="20px" style="filter: invert(0%);"> Start verspätet</span>
-        </br>
 
+
+
+        <br>
 
         <!-- Tab-Navigation -->
         <div class="tab-container">

@@ -1,5 +1,17 @@
 <tr>
-                        <td>
+                            <td style="
+                            {% if job.Zustand == '10' %}
+                                border-left: 4px solid #A0A0A0;
+                            {% elif job.Zustand == '20' %}
+                                border-left: 4px solid #a4e2eb;
+                            {% elif job.Zustand == '30' %}
+                                border-left: 4px solid #60A5FA;
+                            {% elif job.Zustand == '40' %}
+                                border-left: 4px solid #34D399;
+                            {% elif job.Zustand == '50' %}
+                                border-left: 4px solid #FB923C;
+                            {% endif %}
+                            ">
                             <!-- {{ job.delay }}
                             {{ job.Pos }} -->
                             {% if job.delay | int < -1 and job.Zustand  | int < 50 %}
@@ -53,7 +65,7 @@
                         <td>{{ job.Zustand }}</td>
                         <td>{{ job.Teil }}</td>
                         <td style="text-align: left;">{{ job.Bez | truncate(20, True, '') }}</td>
-                        <td>{{ job.posbez }}</td>
+                        <td style="width: 350px;">{{ job.posbez }}</td>
                         <td style="border-left: 2px solid black; text-align: left;">
                             <b>
                                 {% if job.Zeit and job.Zeit != 0 %}
