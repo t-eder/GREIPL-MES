@@ -634,7 +634,7 @@ def adjust_time_to_50C(timestamps, temperatures):
     return adjusted_timestamps, temperatures[start_index:]
 
 
-@app.route('/tempcheck/files', methods=['GET'])
+@app.route('/tempcheck/files', methods=['GET', 'POST'])
 def get_available_files():
     try:
         # Listet alle CSV-Dateien im Upload-Ordner auf
@@ -643,15 +643,29 @@ def get_available_files():
     except Exception as e:
         return jsonify({'error': f'Fehler beim Laden der Dateien: {str(e)}'}), 500
 
-@app.route('/tempcheck/render', methods=['GET'])
+@app.route('/tempcheck/render', methods=['GET', 'POST'])
 def render_tempcheck_data():
-    main_file_name = request.args.get('file')
+    if request.method == 'GET':
+        main_file_name = request.args.get('file')
+    elif request.method == 'POST':
+        # Prüfe, ob Datei-Upload oder nur Dateiname
+        if 'file' in request.form:
+            main_file_name = request.form.get('file')
+        elif request.is_json:
+            data = request.get_json(silent=True)
+            main_file_name = data.get('file') if data else None
+        elif 'file' in request.files:
+            uploaded_file = request.files['file']
+            main_file_name = uploaded_file.filename
+            save_path = os.path.join(app.config['UPLOAD_FOLDER'], main_file_name)
+            uploaded_file.save(save_path)
+        else:
+            main_file_name = None
+
     if not main_file_name:
         return jsonify({'error': 'Keine Datei ausgewählt'}), 400
-    file_path = os.path.join(app.config['UPLOAD_FOLDER'], main_file_name)
 
-    if not os.path.exists(file_path):
-        return jsonify({'error': 'Datei nicht gefunden'}), 404
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'], main_file_name)
 
     temperatures = []
     timestamps = []
@@ -665,8 +679,8 @@ def render_tempcheck_data():
             next(csvreader)  # Kopfzeile überspringen
             for row in csvreader:
                 timestamp_value = row[0].replace(',', '.')
-                timestamps.append(timestamp_value)  # Zeitstempel hinzufügen
                 temp_value = row[1].replace(',', '.')
+                timestamps.append(timestamp_value)
                 temperatures.append(float(temp_value))
 
         # Max-Temperaturdatei einlesen
@@ -674,7 +688,7 @@ def render_tempcheck_data():
         if os.path.exists(max_file_path):
             with open(max_file_path, newline='', encoding='utf-8') as csvfile:
                 csvreader = csv.reader(csvfile, delimiter=';')
-                next(csvreader)  # Kopfzeile überspringen
+                next(csvreader)
                 for row in csvreader:
                     max_temp_value = row[1].replace(',', '.')
                     max_temperatures.append(float(max_temp_value))
@@ -686,7 +700,7 @@ def render_tempcheck_data():
         if os.path.exists(min_file_path):
             with open(min_file_path, newline='', encoding='utf-8') as csvfile:
                 csvreader = csv.reader(csvfile, delimiter=';')
-                next(csvreader)  # Kopfzeile überspringen
+                next(csvreader)
                 for row in csvreader:
                     min_temp_value = row[1].replace(',', '.')
                     min_temperatures.append(float(min_temp_value))
@@ -699,20 +713,24 @@ def render_tempcheck_data():
     # Zeit und Temperaturen der Hauptkurve anpassen
     adjusted_timestamps, adjusted_temperatures = adjust_time_to_50C(timestamps, temperatures)
 
-    # Max- und Min-Zeitstempel ebenfalls anpassen (nur X-Achse)
+    # Max-/Min-Zeitachsen ebenso verschieben
     adjusted_max_timestamps, _ = adjust_time_to_50C(timestamps, max_temperatures)
     adjusted_min_timestamps, _ = adjust_time_to_50C(timestamps, min_temperatures)
 
-    # Gebe die Daten als JSON zurück
+    # Schneide Min-/Max-Werte passend auf gleiche Länge wie adjusted_x
+    max_offset = len(temperatures) - len(adjusted_max_timestamps)
+    min_offset = len(temperatures) - len(adjusted_min_timestamps)
+
     return jsonify({
         'file_name': main_file_name,
         'timestamps': adjusted_timestamps,
         'temperatures': adjusted_temperatures,
-        'max_temperatures': max_temperatures[len(temperatures) - len(adjusted_max_timestamps):],
+        'max_temperatures': max_temperatures[max_offset:] if max_temperatures else [],
         'max_timestamps': adjusted_max_timestamps,
-        'min_temperatures': min_temperatures[len(temperatures) - len(adjusted_min_timestamps):],
+        'min_temperatures': min_temperatures[min_offset:] if min_temperatures else [],
         'min_timestamps': adjusted_min_timestamps
     })
+
 
 
 

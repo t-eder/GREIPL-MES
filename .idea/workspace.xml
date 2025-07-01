@@ -4,10 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="7d186514-fd06-41ff-8b8f-744ab137ced3" name="Changes" comment="Datenbank von git ausgeschlossen">
+    <list default="true" id="7d186514-fd06-41ff-8b8f-744ab137ced3" name="Changes" comment="TempCheck jetzt funktionsfähig">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/instance/Databank.db" beforeDir="false" afterPath="$PROJECT_DIR$/instance/Databank.db" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/vorrat_jobline.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/vorrat_jobline.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/uploads/JEDEC_temp_max.csv" beforeDir="false" afterPath="$PROJECT_DIR$/uploads/JEDEC_temp_max_org.csv" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -250,6 +251,7 @@
     <MESSAGE value="Add tools menue and Reflow Tempcheck" />
     <MESSAGE value="Überarbeitung Vorratslisten" />
     <MESSAGE value="Datenbank von git ausgeschlossen" />
-    <option name="LAST_COMMIT_MESSAGE" value="Datenbank von git ausgeschlossen" />
+    <MESSAGE value="TempCheck jetzt funktionsfähig" />
+    <option name="LAST_COMMIT_MESSAGE" value="TempCheck jetzt funktionsfähig" />
   </component>
 </project>
