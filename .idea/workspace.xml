@@ -4,11 +4,16 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="7d186514-fd06-41ff-8b8f-744ab137ced3" name="Changes" comment="TempCheck jetzt funktionsfähig">
+    <list default="true" id="7d186514-fd06-41ff-8b8f-744ab137ced3" name="Changes" comment="Bugfix">
+      <change afterPath="$PROJECT_DIR$/static/fa_end.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/static/fa_start.png" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/instance/Databank.db" beforeDir="false" afterPath="$PROJECT_DIR$/instance/Databank.db" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/uploads/JEDEC_temp_max.csv" beforeDir="false" afterPath="$PROJECT_DIR$/uploads/JEDEC_temp_max_org.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/header.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/header.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/vorrat_jobline.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/vorrat_jobline.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/vorrat_table_header.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/vorrat_table_header.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/uploads/JEDEC_temp_max_org.csv" beforeDir="false" afterPath="$PROJECT_DIR$/uploads/JEDEC_temp_max.csv" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -54,8 +59,8 @@
       <recent name="C:\Users\teder\PycharmProjects\MES\templates" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
-      <recent name="C:\Users\teder\PycharmProjects\MES\uploads" />
       <recent name="C:\Users\teder\PycharmProjects\MES\static" />
+      <recent name="C:\Users\teder\PycharmProjects\MES\uploads" />
       <recent name="C:\Users\teder\PycharmProjects\MES\instance" />
       <recent name="C:\Users\teder\PycharmProjects\MES\templates" />
     </key>
@@ -224,7 +229,23 @@
       <option name="project" value="LOCAL" />
       <updated>1750696486086</updated>
     </task>
-    <option name="localTasksCounter" value="13" />
+    <task id="LOCAL-00013" summary="TempCheck jetzt funktionsfähig">
+      <option name="closed" value="true" />
+      <created>1751388368520</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1751388368520</updated>
+    </task>
+    <task id="LOCAL-00014" summary="Bugfix">
+      <option name="closed" value="true" />
+      <created>1751390704278</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1751390704278</updated>
+    </task>
+    <option name="localTasksCounter" value="15" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -252,6 +273,7 @@
     <MESSAGE value="Überarbeitung Vorratslisten" />
     <MESSAGE value="Datenbank von git ausgeschlossen" />
     <MESSAGE value="TempCheck jetzt funktionsfähig" />
-    <option name="LAST_COMMIT_MESSAGE" value="TempCheck jetzt funktionsfähig" />
+    <MESSAGE value="Bugfix" />
+    <option name="LAST_COMMIT_MESSAGE" value="Bugfix" />
   </component>
 </project>

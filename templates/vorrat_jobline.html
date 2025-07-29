@@ -7,7 +7,7 @@
                             {% elif job.Zustand == '30' %}
                                 border-left: 4px solid #60A5FA;
                             {% elif job.Zustand == '40' %}
-                                border-left: 4px solid #34D399;
+                                border-left: 4px solid #fcd703;
                             {% elif job.Zustand == '50' %}
                                 border-left: 4px solid #FB923C;
                             {% endif %}
@@ -39,7 +39,7 @@
 
                         <td  style="white-space: nowrap; text-align: left;">{{ job.StartTermPlan.strftime('%d.%m.%y %a') }}</td>
                         <td>
-                                <div style="border-radius: 25px; height: 50px; width:50px; line-height: 50px; text-align: center;
+                            <div style="border-radius: 25px; height: 50px; width:50px; line-height: 50px; text-align: center;
                             background-color:
                             {% if job.job_ahead_zustand == '10' or job.job_ahead_zustand == '20' or job.job_ahead_zustand == '30'%}
                                 #B0B0B0;
@@ -77,6 +77,6 @@
                             {{ (job.ZeitIst / 60) | round(0) }}/{{ (job.Zeit / 60) | round(0) }}h
 
                         </td>
-                        <td>{{ job.MngRest }}</td>
+                        <td>{{ job.MngRest | round(0) }}</td>
 
  </tr>

@@ -137,105 +137,82 @@
 {% include 'header.html' %}
 <div class="container">
 
-        <h2>Fertigungsaufträge E1</h2><br>
-
-            <table class="table1" >
-                <thead style="position: sticky; top: 0; z-index: 2; ">
-                <tr>
-                    <th></th>
-                    <th>STAT</th>
-                    <th colspan="3">Fertigungsauftrag</th>
-                    <th>Pos</th>
-                    <th></th>
-                    <th>GREIPL-Nr</th>
-                    <th>Bezeichnung</th>
-                    <th>Menge</th>
-                    <th>Start</th>
-                    <th>Ende</th>
-                    <th>SMT-Linie <br> 2410-01</th>
-                    <th>AOI-Rework <br> 2410-50 </th>
-                    <th>THT-Welle <br> 2410-03</th>
-                    <th>Manuell <br> 2410-04</th>
-                    <th>Prüfung E1 <br> 2450-01 </th>
-                    <th>Bemerkung</th>
-                </tr>
+        <h2>Auftragsbestand</h2>
+            <span ><b style="color: #A0A0A0">&#9646</b></span><span>10</span>
+            <span ><b style="color: #a4e2eb">&#9646</b></span><span>20</span>
+            <span ><b style="color: #60A5FA">&#9646</b></span><span>30</span>
+            <span ><b style="color: #fcd703">&#9646</b></span><span>40</span>
+            <span ><b style="color: #FB923C">&#9646</b></span><span>50</span>
+            <span ><b style="color: #00b542">&#9646</b></span><span>60</span>
+            <table class="table1">
+                <thead style="position: sticky; top: 0; z-index: 2;">
+                    <tr>
+                        <th></th>
+                        <th>STAT</th>
+                        <th>FA</th>
+                        <th>GREIPL-Nr</th>
+                        <th>Bezeichnung</th>
+                        <th>Menge</th>
+                        <th>Start</th>
+                        <th>Ende</th>
+                        <th>Produktionszeit</th>
+                        <th>Bemerkung</th>
+                    </tr>
                 </thead>
                 {% for (year, week), jobs in grouped_jobs.items() %}
+                    <tr style=" background-color: #0b2945; color: white; height: 15px; font-weight:bold;">
+                        <td style="text-align: left;" colspan="10">{{ year }}, KW: {{ week }}</td>
+                    </tr>
 
-                    <tr style="background-color: #0b2945; color: white; height: 15px; font-weight:bold;" >
-                        <td></td>
-                        <td style="text-align:left;" colspan="11">{{ year }}, KW: {{ week }}</td>
-                        {% for AG in ['2410-01', '2410-50', '2410-03', '2410-04', '2450-01'] %}
-                            <td style="
-                            {% for wl in workload %}
-                                {% if (wl.gruppe == AG) and (wl.year == year) and (wl.kw == week) %}
-
-                                    {% if (((wl.h_plan / (wl.h_ist + 1)) * 100)) >= 110 %}
-                                       background-color: #ff8f8f;
-                                    {% elif (((wl.h_plan / (wl.h_ist + 1)) * 100)) >= 101 %}
-                                       background-color: #ffd48f;
-                                    {% elif (((wl.h_plan / (wl.h_ist + 1)) * 100)) > 90 %}
-                                        background-color: #63eba7;
-                                    {% elif (((wl.h_plan / (wl.h_ist + 1)) * 100)) <= 90%}
-                                        background-color: #fcfcb3;
-                                    {% endif %}
+                    {% for job in jobs %}
+                        <tr class="job-row"
+                            {% if job.Zustand == "60" %}
+                                style="background-color: #cceddf; color: grey;"
+                            {% endif %}>
+                            <td
+                            style="
+                            {% if job.Zustand == '10' %}
+                                border-left: 4px solid #A0A0A0;
+                            {% elif job.Zustand == '20' %}
+                                border-left: 4px solid #a4e2eb;
+                            {% elif job.Zustand == '30' %}
+                                border-left: 4px solid #60A5FA;
+                            {% elif job.Zustand == '40' %}
+                                border-left: 4px solid #fcd703;
+                            {% elif job.Zustand == '50' %}
+                                border-left: 4px solid #FB923C;
+                            {% elif job.Zustand == '60' %}
+                                border-left: 4px solid #00b542;
+                            {% endif %}"
+                            >
+                                {% if job.Typ == 'Start' %}
+                                    <img src="{{ url_for('static', filename='fa_start.png') }}" alt="Icon" height="30px" style="filter: invert(0%);">
+                                {% elif job.Typ == 'Ende' %}
+                                    <img src="{{ url_for('static', filename='fa_end.png') }}" alt="Icon" height="30px" style="filter: invert(0%);">
                                 {% endif %}
-                            {% endfor %}
-                            color: black;">
-                                {% for wl in workload %}
-                                    {% if (wl.gruppe == AG) and (wl.year == year) and (wl.kw == week) %}
-                                        {% if wl.h_ist < 1 %}
-                                            IST {{ wl.h_ist }}</br>
-                                            PLAN {{ wl.h_plan }}</br
-                                            <b>-----</b>
-                                        {% else %}
-
-                                {{ wl.h_plan }}h </br> {{ wl.h_ist }}h</br>
-                                            {{  ((wl.h_plan / (wl.h_ist + 1)) * 100) | round(1) }}%
-                                        {% endif %}
+                            </td>
+                            <td>
+                                {% for info in auftrag_info %}
+                                    {% if info.fa_mat | int == 1 and info.fa_nr | int == job.Auftrag %}
+                                        <img src="{{ url_for('static', filename='goods.png') }}" alt="Icon" height="30px" style="filter: invert(0%);">
                                     {% endif %}
                                 {% endfor %}
-                            </td>  <!-- Hier wird der Workload für die aktuelle Maschine angezeigt -->
-                        {% endfor %}
-                        <td></td>
-                    </tr>
-                    {% for job in jobs %}
-                    <tr class="job-row"
-                        {% if job.Zustand == "60" %}
-                        style="background-color: #cceddf; color: grey;"
-                        {% endif %} >
-                        <td>
-                            {% for info in auftrag_info %}
-                                {% if info.fa_mat | int == 1 and info.fa_nr | int == job.Auftrag %}
-                                    <img src="{{ url_for('static', filename='goods.png') }}" alt="Icon" height="30px" style="filter: invert(0%);">
-                                {% endif %}
-                            {% endfor %}
-                        </td>
-                        <td>{{ job.Zustand }}</td>
-                        <td class="auftrag-num" data-auftrag="{{ job.Auftrag }}">{{ job.Auftrag }}</td>
-                        <td>{{ job.StartTermPlan.strftime('%d.%m-') }}</td>
-                        <td>{{ job.EndTermPlan.strftime('%d.%m.%y') }}</td>
-                        <td>{{ job.Pos }}</td>
-                        <td>{{ job.ArbBez[:3] }}</td>
-                        <td>{{ job.Teil }}</td>
-                        <td>{{ job.Bez[:15] }}</td>
-                        <td>{{ job.Mng }}</td>
-                        <td>{{ job.StartTermPlan.strftime('%d.%m-') }}</td>
-                        <td>{{ job.EndTermPlan.strftime('%d.%m.%Y') }}</td>
-                        <td>{% if job.PmNr == "2410-01" %} {{ (job.Zeit / 60) | round(1) }} h {% endif %}</td>
-                        <td>{% if job.PmNr == "2410-50" %} {{ (job.Zeit / 60) | round(1) }} h {% endif %}</td>
-                        <td>{% if job.PmNr == "2410-03" %} {{ (job.Zeit / 60) | round(1) }} h {% endif %}</td>
-                        <td>{% if job.PmNr == "2410-04" %} {{ (job.Zeit / 60) | round(1) }} h {% endif %}</td>
-                        <td>{% if job.PmNr == "2450-01" %} {{ (job.Zeit / 60) | round(1) }} h {% endif %}</td>
-                        <td>
-                        {% for info in auftrag_info%}
-                            {% if info.fa_nr | int == job.Auftrag %}
-                            <p style="margin: 0px 20px 0px 20px;" class="data-comment" data-comment="{{ info.fa_bemerk }}" >
-                                {{ info.fa_bemerk }}</p>
-                            {% endif %}
-                        {% endfor %}
-                        </td>
-                    </tr>
+                            </td>
+                            <td>{{ job.Zustand }}</td>
+                            <td class="auftrag-num" data-auftrag="{{ job.Auftrag }}">{{ job.Auftrag }}</td>
+                            <td>{{ job.Teil }}</td>
+                            <td>{{ job.Bez }}</td>
+                            <td>{{ job.Mng }}</td>
+                            <td>{{ job.Datum.strftime('%d.%m.%Y') }}</td>
+                            <td>{{ (job.Zeit / 60) | round(1) }} h</td>
+                            <td style="width: 300px; text-align:left; border: 1px solid #e0e0e0;">
+                                {% for info in auftrag_info %}
+                                    {% if info.fa_nr | int == job.Auftrag %}
+                                        <span class="data-comment" data-comment="{{ info.fa_bemerk }}"> {{ info.fa_bemerk }}</span>
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                        </tr>
                     {% endfor %}
                 {% endfor %}
             </table>
@@ -246,6 +223,12 @@
     </label>
     <label>
         <input type="checkbox" id="hideStatus60"> Status 60 ausblenden
+    </label>
+    <label>
+    <input type="checkbox" id="showOnlyStart"> Nur Start-Zeilen
+    </label>
+    <label>
+        <input type="checkbox" id="showOnlyEnd"> Nur End-Zeilen
     </label>
     <button id="jumpToCurrentWeek">Aktuelle KW</button>
 </div>
@@ -334,30 +317,48 @@
 
 <script>
     // Doppelklick-Eventlistener auf alle Elemente mit der Klasse 'auftrag-num'
-    document.querySelectorAll('.auftrag-num').forEach(function(cell) {
-        cell.addEventListener('dblclick', function() {
-            // Hole die FA-Nummer aus dem data-Attribut
+    document.querySelectorAll('.auftrag-num').forEach(function (cell) {
+        cell.addEventListener('dblclick', function () {
             const fa_nr = cell.getAttribute('data-auftrag');
-            // Finde die gesamte Zeile, in der sich das Element befindet
             const row = cell.closest('tr');
-            // Suche in der gleichen Zeile nach der Zelle, die den Kommentar enthält
             const commentCell = row.querySelector('.data-comment');
-            // Falls vorhanden, lese den aktuellen Kommentar aus dem data-comment-Attribut aus
             const currentComment = commentCell ? commentCell.getAttribute('data-comment') : "";
-            // Prüfe, ob in der Zeile ein <img> vorhanden ist
-            const hasImage = row.querySelector('img') !== null;
 
-            // Öffne das Modal und setze den Kommentar und die Checkbox
+            // Prüfen, ob das Material-Icon vorhanden ist
+            const imgs = row.querySelectorAll('img');
+            let hasMaterialIcon = false;
+            imgs.forEach(img => {
+                if (img.src.includes('goods.png') && img.style.filter === 'invert(0%)') {
+                    hasMaterialIcon = true;
+                }
+            });
+
+            // Öffne das Modal und setze Kommentar + Checkbox
             document.getElementById('modal').style.display = 'block';
-            document.getElementById('comment').value = currentComment;  // Setze den Kommentar in das Eingabefeld
-            document.getElementById('checkbox').checked = hasImage;  // Checkbox setzen, falls Bild vorhanden
+            document.getElementById('comment').value = currentComment;
+            document.getElementById('checkbox').checked = hasMaterialIcon;
 
-            // Speichern-Button-Event
-            document.getElementById('saveBtn').addEventListener('click', function() {
+            // Bestehende Listener entfernen durch Cloning
+            const oldSaveBtn = document.getElementById('saveBtn');
+            const newSaveBtn = oldSaveBtn.cloneNode(true);
+            oldSaveBtn.parentNode.replaceChild(newSaveBtn, oldSaveBtn);
+
+            const oldCancelBtn = document.getElementById('cancelBtn');
+            const newCancelBtn = oldCancelBtn.cloneNode(true);
+            oldCancelBtn.parentNode.replaceChild(newCancelBtn, oldCancelBtn);
+
+            // Speichern-Button-Logik
+            newSaveBtn.addEventListener('click', function () {
                 const enteredComment = document.getElementById('comment').value;
                 const checkboxChecked = document.getElementById('checkbox').checked;
 
-                // Sende die Daten via AJAX an den Flask-Endpoint
+                // 🧠 Filterzustände vor Reload speichern
+                localStorage.setItem('filter_hideStatus10', document.getElementById('hideStatus10').checked);
+                localStorage.setItem('filter_hideStatus60', document.getElementById('hideStatus60').checked);
+                localStorage.setItem('filter_showOnlyStart', document.getElementById('showOnlyStart').checked);
+                localStorage.setItem('filter_showOnlyEnd', document.getElementById('showOnlyEnd').checked);
+
+                // AJAX-POST an Flask
                 fetch('/update_comment', {
                     method: 'POST',
                     headers: {
@@ -369,56 +370,77 @@
                         fa_mat: checkboxChecked ? 1 : 0
                     })
                 })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        window.location.reload();  // Seite neu laden
-                    } else {
-                        alert("Fehler beim Aktualisieren.");
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                });
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            window.location.reload(); // Seite neu laden, Filter wird danach rekonstruiert
+                        } else {
+                            alert("Fehler beim Aktualisieren.");
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
 
-                // Schließe das Modal
                 document.getElementById('modal').style.display = 'none';
             });
 
-            // Abbrechen-Button-Event
-            document.getElementById('cancelBtn').addEventListener('click', function() {
-                document.getElementById('modal').style.display = 'none';  // Schließe das Modal
+            // Abbrechen
+            newCancelBtn.addEventListener('click', function () {
+                document.getElementById('modal').style.display = 'none';
             });
         });
     });
 
-    // Modal schließen, wenn der Benutzer auf das "X" klickt
-    document.getElementById('closeModalBtn').addEventListener('click', function() {
+    // Modal schließen per X-Button
+    document.getElementById('closeModalBtn').addEventListener('click', function () {
         document.getElementById('modal').style.display = 'none';
     });
-</script> <!-- Popup Fenster mit Bemerkung und Material-->
+</script>
+
+
 
 <script>
-    function updateVisibility() {
-        const hide60 = document.getElementById('hideStatus60').checked;
-        const hide10 = document.getElementById('hideStatus10').checked;
+function applyFilters() {
+    const hide60 = document.getElementById('hideStatus60').checked;
+    const hide10 = document.getElementById('hideStatus10').checked;
+    const showOnlyStart = document.getElementById('showOnlyStart').checked;
+    const showOnlyEnd = document.getElementById('showOnlyEnd').checked;
 
-        document.querySelectorAll('.job-row').forEach(row => {
-            const statusCell = row.querySelector('td:nth-child(2)');
-            if (statusCell) {
-                const status = statusCell.textContent.trim();
-                if ((hide60 && status === '60') || (hide10 && status === '10')) {
-                    row.style.display = 'none';
-                } else {
-                    row.style.display = '';
-                }
+    document.querySelectorAll('.job-row').forEach(row => {
+        const statusCell = row.querySelector('td:nth-child(3)');
+        const typeImg = row.querySelector('td img');
+        let shouldHide = false;
+
+        // Status-Filter
+        if (statusCell) {
+            const status = statusCell.textContent.trim();
+            if ((hide60 && status === '60') || (hide10 && status === '10')) {
+                shouldHide = true;
             }
-        });
-    }
+        }
 
-    document.getElementById('hideStatus60').addEventListener('change', updateVisibility);
-    document.getElementById('hideStatus10').addEventListener('change', updateVisibility);
-</script> <!-- Zeilen mit Status 60 oder 10 ausblenden -->
+        // Typ-Filter: prüft das 'fa_start.png' oder 'fa_end.png' im <img>-Tag
+        if (showOnlyStart && (!typeImg || !typeImg.src.includes('fa_start.png'))) {
+            shouldHide = true;
+        }
+
+        if (showOnlyEnd && (!typeImg || !typeImg.src.includes('fa_end.png'))) {
+            shouldHide = true;
+        }
+
+        row.style.display = shouldHide ? 'none' : '';
+    });
+}
+
+// Event Listener
+document.getElementById('hideStatus60').addEventListener('change', applyFilters);
+document.getElementById('hideStatus10').addEventListener('change', applyFilters);
+document.getElementById('showOnlyStart').addEventListener('change', applyFilters);
+document.getElementById('showOnlyEnd').addEventListener('change', applyFilters);
+document.getElementById('applyFilters').addEventListener('click', applyFilters);
+</script>
+
 
 <script>
 document.getElementById('jumpToCurrentWeek').addEventListener('click', function() {
@@ -429,7 +451,7 @@ document.getElementById('jumpToCurrentWeek').addEventListener('click', function(
     // Suche die Zeile mit der entsprechenden Kalenderwoche
     const weekRows = document.querySelectorAll('tr');
     weekRows.forEach(row => {
-        const weekCell = row.querySelector('td[colspan="11"]'); // Angenommen, die Kalenderwoche steht in einer speziellen Zelle
+        const weekCell = row.querySelector('td[colspan="10"]'); // Angenommen, die Kalenderwoche steht in einer speziellen Zelle
         if (weekCell && weekCell.textContent.includes('KW: ' + currentWeek)) {
             row.scrollIntoView({ behavior: 'smooth', block: 'center' }); // Scrolle zur Zeile der aktuellen KW
         }
@@ -443,3 +465,30 @@ function getWeekNumber(date) {
     return Math.ceil((days + 1) / 7);
 }
 </script><!-- Zur aktuellen KW springen -->
+
+<script>
+    window.addEventListener('load', () => {
+        // Zustand aus localStorage wiederherstellen
+        const restore = (id, value) => {
+            if (localStorage.getItem(value) !== null) {
+                document.getElementById(id).checked = localStorage.getItem(value) === 'true';
+            }
+        };
+
+        restore('hideStatus10', 'filter_hideStatus10');
+        restore('hideStatus60', 'filter_hideStatus60');
+        restore('showOnlyStart', 'filter_showOnlyStart');
+        restore('showOnlyEnd', 'filter_showOnlyEnd');
+
+        // Filter anwenden
+        if (typeof applyFilters === 'function') {
+            applyFilters();
+        }
+
+        // Optional: Speicher löschen (wenn du möchtest, dass es nur für einen Reload gilt)
+        // localStorage.removeItem('filter_hideStatus10');
+        // localStorage.removeItem('filter_hideStatus60');
+        // localStorage.removeItem('filter_showOnlyStart');
+        // localStorage.removeItem('filter_showOnlyEnd');
+    });
+</script>
