@@ -384,25 +384,22 @@ def programmierliste():
         conn = pyodbc.connect(connectionString)
         SQL_QUERY = f"""
                                            SELECT 
-                                           TEILE.Bez, TEILE.AendIxSL, KUNDE.Bez, FKOPF.StartTerm
+                                           TEILE.Bez, TEILE.AendIxSL
                                            FROM 
-                                           INFRADB.dbo.TEILE TEILE, INFRADB.dbo.FKOPF FKOPF, INFRADB.dbo.KUNDE KUNDE 
+                                           INFRADB.dbo.TEILE TEILE
                                            WHERE
-                                           TEILE.Teil = '{GreiplNr}' AND TEILE.Teil = FKOPF.Teil AND FKOPF.Knd = KUNDE.Knd
+                                           TEILE.Teil = '{GreiplNr}'
                                            """
 
-        with pyodbc.connect(connectionString) as conn:
-            cursor = conn.cursor()
-            cursor.execute(SQL_QUERY)
-            record = cursor.fetchone()
-            if record and len(record) >= 3:
-                InfraBez = record[0]
-                InfraRev = record[1]
-                InfraKnd = record[2]
-                print(str(record[3]))
-            else:
-                print("Keine gültigen Daten aus der Datenbank.")
-                return 0
+        cursor = conn.cursor()
+        cursor.execute(SQL_QUERY)
+        record = cursor.fetchone()
+        if record and len(record):
+            InfraBez = record[0]
+            InfraRev = record[1]
+        else:
+            # print("Keine gültigen Daten aus der Datenbank.")
+            return "Keine gültigen Daten aus der Datenbank.", 404
 
         if request.form.getlist('SMT'):
             SMT = "Offen"
@@ -423,7 +420,6 @@ def programmierliste():
             GNR=request.form['GNR'],
             BEZ=InfraBez,
             REV=InfraRev,
-            KND=InfraKnd,
             SMT=SMT,
             STC=STC,
             AOI=AOI,
@@ -450,7 +446,7 @@ def update_fa_start_from_infra():
             greipl_nr = task.GNR
 
             cursor.execute("""
-                SELECT TOP 1 StartTerm
+                SELECT TOP 1 StartTerm, Knd
                 FROM INFRADB.dbo.FKOPF
                 WHERE Teil = ?
                   AND StartTerm >= GETDATE()
@@ -465,12 +461,27 @@ def update_fa_start_from_infra():
                 except AttributeError:
                     start_term = str(record[0])
 
+                # FKOPF.Knd aus dem record
+                knd = record[1]
+
+                # FA_start aktualisieren
                 task.FA_start = start_term
+
+                # Jetzt den Kunden-Bez (Name) holen
+                cursor.execute("""
+                    SELECT TOP 1 Bez
+                    FROM INFRADB.dbo.KUNDE
+                    WHERE Knd = ?
+                """, (knd,))
+                kunde_record = cursor.fetchone()
+                if kunde_record:
+                    task.KND = kunde_record[0]  # Feld in ProgrammierListe für Kundenbezeichnung
+
                 updated_count += 1
 
         db.session.commit()
 
-    print(f"{updated_count} Einträge wurden mit dem nächsten zukünftigen FA_start aktualisiert.")
+    return f"{updated_count} Einträge wurden aktualisiert."
 
 @app.route('/update_comment_prog/<int:task_id>', methods=['POST'])
 def update_comment_prog(task_id):
