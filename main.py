@@ -404,12 +404,30 @@ def programmierliste():
                 print("Keine gültigen Daten aus der Datenbank.")
                 return 0
 
+        if request.form.getlist('SMT'):
+            SMT = "Offen"
+            STC = "Offen"
+            AOI = "Offen"
+        else:
+            SMT = "nb"
+            STC = "nb"
+            AOI = "nb"
+
+        if request.form.getlist('THT'):
+            THT = "Offen"
+        else:
+            THT = "nb"
+
         new_task = ProgrammierListe(
             TYP=request.form['TYP'],
             GNR=request.form['GNR'],
             BEZ=InfraBez,
             REV=InfraRev,
             KND=InfraKnd,
+            SMT=SMT,
+            STC=STC,
+            AOI=AOI,
+            THT=THT,
             COM=request.form['COM'],
             PFAD=request.form['PFAD'],
         )
