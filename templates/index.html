@@ -137,7 +137,7 @@
 {% include 'header.html' %}
 <div class="container">
 
-        <h2>Auftragsbestand</h2>
+        <h1>Auftragsbestand</h1>
             <span ><b style="color: #A0A0A0">&#9646</b></span><span>10</span>
             <span ><b style="color: #a4e2eb">&#9646</b></span><span>20</span>
             <span ><b style="color: #60A5FA">&#9646</b></span><span>30</span>
@@ -263,55 +263,108 @@
 </html>
 
 <script>
-    document.querySelectorAll('.auftrag-num').forEach(function(cell) {
-        cell.addEventListener('click', function() {
-            const clickedAuftrag = cell.getAttribute('data-auftrag');
+// Original Styles und HTML der Zellen mit Icons sichern
+document.querySelectorAll('.job-row').forEach(row => {
+    row.dataset.originalBgColor = row.style.backgroundColor || '';
+    row.dataset.originalTextColor = row.style.color || '';
+    row.dataset.originalFontWeight = row.style.fontWeight || '';
 
-            document.querySelectorAll('.job-row').forEach(function(row) {
-                const rowAuftrag = row.querySelector('.auftrag-num').getAttribute('data-auftrag');
+    // Icons-HTML sichern, z.B. im Auftrag-Cell
+    const auftragCell = row.querySelector('.auftrag-num');
+    if (auftragCell) {
+        auftragCell.dataset.originalHtml = auftragCell.innerHTML;
+    }
+});
 
-                // Speichert die ursprüngliche Hintergrund- und Textfarbe der Zeile
-                if (!row.dataset.originalBgColor) {
-                    row.dataset.originalBgColor = row.style.backgroundColor || 'white';
-                }
-                if (!row.dataset.originalTextColor) {
-                    row.dataset.originalTextColor = row.style.color || getComputedStyle(row).color;
-                }
-                if (!row.dataset.originalFontWeight) {
-                    row.dataset.originalFontWeight = row.style.fontWeight || getComputedStyle(row).fontWeight;
-                }
+document.querySelectorAll('.auftrag-num').forEach(function (cell) {
+    cell.addEventListener('click', function () {
+        const clickedRow = cell.closest('tr');
+        const clickedAuftrag = cell.getAttribute('data-auftrag');
+        const isStart = clickedRow.querySelector('img[src*="fa_start.png"]');
+        if (!isStart) return;
 
-                // Iteriere über jede Zelle und speichere deren ursprüngliche Textfarbe und Schriftstärke
-                row.querySelectorAll('td').forEach(td => {
-                    if (!td.dataset.originalTextColor) {
-                        td.dataset.originalTextColor = td.style.color || getComputedStyle(td).color;
-                    }
-                    if (!td.dataset.originalFontWeight) {
-                        td.dataset.originalFontWeight = td.style.fontWeight || getComputedStyle(td).fontWeight;
-                    }
-                });
+        // Alles zurücksetzen (inklusive Icons)
+        resetAll();
 
-                if (rowAuftrag === clickedAuftrag) {
-                    row.style.backgroundColor = '#99ceff';
-                    row.style.color = 'black';
-                    row.style.fontWeight = 'bold';
-                    row.querySelectorAll('td').forEach(td => {
-                        td.style.color = 'black';
-                        td.style.fontWeight = 'bold';
-                    });
-                } else {
-                    row.style.backgroundColor = row.dataset.originalBgColor;
-                    row.style.color = row.dataset.originalTextColor;
-                    row.style.fontWeight = row.dataset.originalFontWeight;
-                    row.querySelectorAll('td').forEach(td => {
-                        td.style.color = td.dataset.originalTextColor;
-                        td.style.fontWeight = td.dataset.originalFontWeight;
-                    });
+        let currentRow = clickedRow;
+        let foundStart = false;
+
+        while (currentRow) {
+            if (!currentRow.classList.contains('job-row')) {
+                currentRow = currentRow.nextElementSibling;
+                continue;
+            }
+
+            const rowAuftragCell = currentRow.querySelector('.auftrag-num');
+            const rowAuftrag = rowAuftragCell?.getAttribute('data-auftrag') || '';
+            const hasStartImg = currentRow.querySelector('img[src*="fa_start.png"]');
+            const hasEndImg = currentRow.querySelector('img[src*="fa_end.png"]');
+
+            // Start-Zeile färben
+            if (hasStartImg && rowAuftrag === clickedAuftrag) {
+                currentRow.style.backgroundColor = '#21cf15';
+                currentRow.style.color = 'black';
+                currentRow.style.fontWeight = 'bold';
+                foundStart = true;
+            }
+            // End-Zeile färben
+            else if (hasEndImg && rowAuftrag === clickedAuftrag && foundStart) {
+                currentRow.style.backgroundColor = '#f56822';
+                currentRow.style.color = 'black';
+                currentRow.style.fontWeight = 'bold';
+                break;
+            }
+            // Zwischenzeilen grau + dunkelgraue Schrift + Icons entfernen
+            else if (foundStart && rowAuftrag !== clickedAuftrag) {
+                currentRow.style.backgroundColor = '#d4d4d4'; // Grau
+                currentRow.style.color = '#444';             // Dunkelgrau
+                currentRow.style.fontWeight = 'normal';
+
+                // Icons aus Auftrag-Zelle entfernen
+                if (rowAuftragCell) {
+                    rowAuftragCell.querySelectorAll('img[src*="fa_start.png"], img[src*="fa_end.png"]').forEach(img => img.remove());
                 }
-            });
-        });
+            }
+
+            currentRow = currentRow.nextElementSibling;
+        }
     });
-</script> <!-- Farbige Kennzeichnung gleicher FA-Nummer beim auswählen -->
+});
+
+// Funktion zum Zurücksetzen aller Styles und Icons
+function resetAll() {
+    document.querySelectorAll('.job-row').forEach(row => {
+        row.style.backgroundColor = row.dataset.originalBgColor || '';
+        row.style.color = row.dataset.originalTextColor || '';
+        row.style.fontWeight = row.dataset.originalFontWeight || '';
+
+        // Icons in Auftrag-Zelle wiederherstellen
+        const auftragCell = row.querySelector('.auftrag-num');
+        if (auftragCell && auftragCell.dataset.originalHtml) {
+            auftragCell.innerHTML = auftragCell.dataset.originalHtml;
+        }
+    });
+}
+
+// ESC zum Zurücksetzen
+document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape') {
+        resetAll();
+    }
+});
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

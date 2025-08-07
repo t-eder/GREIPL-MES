@@ -1,13 +1,15 @@
 import pyodbc
-from model import app, db, Personal, StundenKW, WorkLoad, AuftragInfo, MIN_TEMP_FILE, MAX_TEMP_FILE
+from model import app, db, Personal, StundenKW, WorkLoad, AuftragInfo, MIN_TEMP_FILE, MAX_TEMP_FILE, ProgrammierListe
 from flask import render_template, redirect, request, Flask, render_template, jsonify, flash, url_for
 import datetime as dt
 from datetime import datetime, timedelta
 from collections import defaultdict
 from config import connectionString
+from collections import defaultdict
 from sqlalchemy import asc
 import os
 import csv
+
 
 def data_FA(Gruppe, ZustandMin, ZustandMax, DateMin, DateMax, Typ):
     with app.app_context():
@@ -43,7 +45,6 @@ def data_FA(Gruppe, ZustandMin, ZustandMax, DateMin, DateMax, Typ):
         return records
 
 
-
 def data_MG():
     with app.app_context():
         conn = pyodbc.connect(connectionString)
@@ -71,8 +72,6 @@ def data_MG():
         records = cursor.fetchall()
         return records
 
-
-from collections import defaultdict
 
 def group_jobs_by_week(records):
     grouped_jobs = defaultdict(list)
@@ -119,8 +118,6 @@ def group_jobs_by_week(records):
         grouped_jobs[key].sort(key=lambda j: (j['Auftrag'], 0 if j['Typ'] == 'Start' else 1))
 
     return dict(sorted(grouped_jobs.items()))
-
-
 
 
 def get_jobs(gruppe, masch_gruppe ,zustand_min, zustand_max, date_min, date_max):
@@ -247,7 +244,6 @@ def get_job_ahead(jobs):
     return jobs
 
 
-
 def get_delay(jobs):
     conn = pyodbc.connect(connectionString)
     typ = "A"  # Auftrag = E; Arbeitsgang = A; Material = M;
@@ -371,12 +367,144 @@ def index():
     # get_kw_workload(grouped_jobs)  # Summieren der Arbeitsgang-Zeiten nach Gruppe und KW
 
     records = data_FA(gruppe, zustand_min, zustand_max, date_min, date_max, "E")
-    print(records)
+    # print(records)
     grouped_jobs = group_jobs_by_week(records)
 
 
     return render_template('index.html',grouped_jobs=grouped_jobs
                            , workload=workload, stunden=stunden, team=team, auftrag_info=auftrag_info)
+
+
+@app.route('/programmierliste', methods=['GET', 'POST'])
+def programmierliste():
+    if request.method == 'POST':
+
+        #Bezeichnung, Index und KND aus Infra
+        GreiplNr = request.form['GNR']
+        conn = pyodbc.connect(connectionString)
+        SQL_QUERY = f"""
+                                           SELECT 
+                                           TEILE.Bez, TEILE.AendIxSL, KUNDE.Bez, FKOPF.StartTerm
+                                           FROM 
+                                           INFRADB.dbo.TEILE TEILE, INFRADB.dbo.FKOPF FKOPF, INFRADB.dbo.KUNDE KUNDE 
+                                           WHERE
+                                           TEILE.Teil = '{GreiplNr}' AND TEILE.Teil = FKOPF.Teil AND FKOPF.Knd = KUNDE.Knd
+                                           """
+
+        with pyodbc.connect(connectionString) as conn:
+            cursor = conn.cursor()
+            cursor.execute(SQL_QUERY)
+            record = cursor.fetchone()
+            if record and len(record) >= 3:
+                InfraBez = record[0]
+                InfraRev = record[1]
+                InfraKnd = record[2]
+                print(str(record[3]))
+            else:
+                print("Keine gültigen Daten aus der Datenbank.")
+                return 0
+
+        new_task = ProgrammierListe(
+            TYP=request.form['TYP'],
+            GNR=request.form['GNR'],
+            BEZ=InfraBez,
+            REV=InfraRev,
+            KND=InfraKnd,
+            COM=request.form['COM'],
+            PFAD=request.form['PFAD'],
+        )
+        db.session.add(new_task)
+        db.session.commit()
+        return redirect(url_for('programmierliste'))
+    else:
+        tasks = ProgrammierListe.query.all()
+        update_fa_start_from_infra()
+        return render_template('programmierliste.html', tasks=tasks)
+
+def update_fa_start_from_infra():
+    open_tasks = ProgrammierListe.query.filter_by(Done=False).all()
+    updated_count = 0
+
+    with pyodbc.connect(connectionString) as conn:
+        cursor = conn.cursor()
+
+        for task in open_tasks:
+            greipl_nr = task.GNR
+
+            cursor.execute("""
+                SELECT TOP 1 StartTerm
+                FROM INFRADB.dbo.FKOPF
+                WHERE Teil = ?
+                  AND StartTerm >= GETDATE()
+                  AND Zustand < 40
+                ORDER BY StartTerm ASC
+            """, (greipl_nr,))
+
+            record = cursor.fetchone()
+            if record and record[0]:
+                try:
+                    start_term = record[0].strftime('%d.%m.%y')
+                except AttributeError:
+                    start_term = str(record[0])
+
+                task.FA_start = start_term
+                updated_count += 1
+
+        db.session.commit()
+
+    print(f"{updated_count} Einträge wurden mit dem nächsten zukünftigen FA_start aktualisiert.")
+
+@app.route('/update_comment_prog/<int:task_id>', methods=['POST'])
+def update_comment_prog(task_id):
+    data = request.get_json()
+    comment = data.get('comment', '')
+    task = ProgrammierListe.query.get(task_id)
+    if task:
+        task.COM = comment
+        db.session.commit()
+        return jsonify({'success': True}), 200
+    return jsonify({'error': 'Task not found'}), 404
+
+
+@app.route('/update_status/<int:task_id>', methods=['POST'])
+def update_status(task_id):
+    data = request.get_json()
+    field = data.get('field')
+    value = data.get('value')
+
+    task = ProgrammierListe.query.get(task_id)
+    if not task:
+        return jsonify({'error': 'Task nicht gefunden'}), 404
+
+    if field not in ['DAT', 'SMT', 'AOI', 'AA', 'STC', 'THT']:
+        return jsonify({'error': 'Ungültiges Feld'}), 400
+
+    # Feld aktualisieren
+    setattr(task, field, value)
+
+    # Prüfen, ob alle Felder auf 'Erledigt' oder 'Nicht benötigt' stehen
+    fields = [task.DAT, task.SMT, task.STC, task.AOI, task.THT, task.AA]
+    task.Done = all(f in ["Erledigt", "nb"] for f in fields)
+
+    # Wenn Done True ist, setze das aktuelle Datum + Uhrzeit im gewünschten Format
+    if task.Done:
+        task.Done_date = datetime.now().strftime("%d.%m.%Y %H:%M")
+    else:
+        # Optional: Wenn nicht erledigt, das Datum zurücksetzen (kannst du weglassen, wenn nicht gewünscht)
+        task.Done_date = None
+
+    db.session.commit()
+    return jsonify({'success': True, 'done': task.Done})
+
+
+@app.route('/delete_task/<int:task_id>', methods=['DELETE'])
+def delete_task(task_id):
+    task = ProgrammierListe.query.get(task_id)
+    if not task:
+        return jsonify({'error': 'Nicht gefunden'}), 404
+    db.session.delete(task)
+    db.session.commit()
+    return jsonify({'success': True})
 
 
 @app.route('/update_comment', methods=['POST'])
@@ -405,32 +533,6 @@ def update_comment():
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'message': str(e)}), 500
-
-
-@app.route('/personal')
-def personal():
-    team = Personal.query.all()
-    for jahr in range(2024, 2026):
-        for kw in range(1, 52):
-            for pers in team:
-                stunden_eintrag = StundenKW.query.filter_by(pers_nr=pers.pers_nr, jahr=jahr, kw=kw).first()
-                h_kw = pers.stunden_tag * pers.tage_woche
-                if stunden_eintrag:
-                    # Wenn ein Eintrag existiert, korrigierte Stunden berechnen
-                    stunden_eintrag.stunden_kw = h_kw - stunden_eintrag.stunden_korr
-                else:
-                    # Neuen Eintrag erstellen, falls keiner existiert
-                    neuer_eintrag = StundenKW(
-                        pers_nr=pers.pers_nr,
-                        jahr=jahr,
-                        kw=kw,
-                        stunden_kw=h_kw,  # Anfangswert ohne Korrektur
-                        stunden_korr=0  # Keine Korrektur für neuen Eintrag
-                    )
-                    db.session.add(neuer_eintrag)
-    db.session.commit()
-    stunden = StundenKW.query.order_by(asc(StundenKW.jahr), asc(StundenKW.kw), asc(StundenKW.pers_nr)).all()
-    return render_template('personal.html', team=team, stunden=stunden)
 
 
 @app.route('/personal/add', methods=['POST'])
@@ -676,6 +778,7 @@ def get_available_files():
     except Exception as e:
         return jsonify({'error': f'Fehler beim Laden der Dateien: {str(e)}'}), 500
 
+
 @app.route('/tempcheck/render', methods=['GET', 'POST'])
 def render_tempcheck_data():
     if request.method == 'GET':
@@ -770,6 +873,3 @@ if __name__ == '__main__':
     with app.app_context():  # Erstellt einen Anwendungscontext
         db.create_all()  # Erstellt die Datenbanktabellen
     app.run(host="0.0.0.0", port=5000, debug=True)
-
-
-

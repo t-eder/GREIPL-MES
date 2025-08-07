@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>GREIPL-MES</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='styles/style.css') }}">
+    <style>
+        table, th, td {
+            border: 1px solid black;
+            border-collapse: collapse;
+            padding: 5px;
+        }
+
+        .status-select {
+            padding: 10px 2px 10px 2px;
+            font-weight: bold;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            width: 75px;
+        }
+
+        .status-select.offen {
+            background-color: orange;
+        }
+
+        .status-select.in-arbeit {
+            background-color: blue;
+        }
+
+        .status-select.srf-in-arbeit {
+            background-color: blue;
+        }
+
+        .status-select.srf-erstellt {
+            background-color: blue;
+        }
+
+        .status-select.bestellt {
+            background-color: blue;
+        }
+
+        .status-select.erledigt {
+            background-color: green;
+        }
+
+        .status-select.nb {
+            background-color: lightgray;
+            color: white;
+        }
+
+        #popupForm {
+            display: none;
+            position: fixed;
+            top: 20%;
+            left: 35%;
+            width: 25%;
+            background-color: #f9f9f9;
+            border: 1px solid #888;
+            padding: 20px;
+            z-index: 10;
+        }
+
+        #overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 5;
+        }
+
+        /* Tab-Bereich */
+        .tab-container {
+            display: flex;
+            border-bottom: 2px solid #ccc;
+            margin-bottom: 15px;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: #f1f1f1;
+            border: 1px solid #ccc;
+            border-bottom: none;
+            margin-right: 5px;
+            user-select: none;
+        }
+        .tab.active {
+            background-color: white;
+            font-weight: bold;
+            border-top: 2px solid orange;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        table {
+            width: 100%;          /* Maximal 100% Breite vom Container */
+            word-wrap: break-word; /* lange Texte umbrechen */
+        }
+    </style>
+    <script>
+            function openForm() {
+                document.getElementById("popupForm").style.display = "block";
+                document.getElementById("overlay").style.display = "block";
+            }
+
+            function closeForm() {
+                document.getElementById("popupForm").style.display = "none";
+                document.getElementById("overlay").style.display = "none";
+            }
+
+            function updateStatus(taskId, field, value) {
+                fetch(`/update_status/${taskId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ field: field, value: value })
+                })
+                .then(response => {
+                    if (response.ok) {
+                        location.reload();
+                    } else {
+                        alert("Fehler beim Aktualisieren.");
+                    }
+                });
+            }
+
+            function deleteTask(taskId) {
+                if (confirm("Eintrag wirklich löschen?")) {
+                    fetch(`/delete_task/${taskId}`, {
+                        method: 'DELETE'
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            location.reload();
+                        } else {
+                            alert("Löschen fehlgeschlagen.");
+                        }
+                    });
+                }
+            }
+
+            // Tab-Logik
+            document.addEventListener("DOMContentLoaded", function() {
+                const tabs = document.querySelectorAll('.tab');
+                const contents = document.querySelectorAll('.tab-content');
+
+                tabs.forEach(tab => {
+                    tab.addEventListener('click', function() {
+                        tabs.forEach(t => t.classList.remove('active'));
+                        contents.forEach(c => c.classList.remove('active'));
+
+                        this.classList.add('active');
+                        document.getElementById(this.dataset.tab).classList.add('active');
+                    });
+                });
+            });
+
+            function updateComment(taskId, comment) {
+                fetch(`/update_comment_prog/${taskId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ comment: comment })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        alert("Fehler beim Speichern der Bemerkung.");
+                    }
+                });
+            }
+
+            document.addEventListener('DOMContentLoaded', function () {
+            const getCellValue = (row, index) => {
+                const cell = row.children[index];
+                const select = cell.querySelector('select');
+                if (select) {
+                    return select.options[select.selectedIndex].text || select.value;
+                }
+                return cell.innerText || cell.textContent;
+            };
+
+            const comparer = (index, asc) => (a, b) => ((v1, v2) =>
+                v1 !== '' && v2 !== '' && !isNaN(v1) && !isNaN(v2) ?
+                    v1 - v2 : v1.toString().localeCompare(v2)
+            )(getCellValue(asc ? a : b, index), getCellValue(asc ? b : a, index));
+
+            document.querySelectorAll('table').forEach(table => {
+                const headers = table.querySelectorAll('th');
+
+                headers.forEach((th, i) => {
+                    th.style.cursor = 'pointer';
+
+                    th.addEventListener('click', function () {
+                        const tbody = table.querySelector('tbody') || table;
+                        const rows = Array.from(tbody.querySelectorAll('tr:nth-child(n+2)'));
+
+                        const asc = !this.asc;
+                        this.asc = asc;
+
+                        headers.forEach(header => {
+                            header.textContent = header.textContent.replace(/[\u2191\u2193]/g, '');
+                            header.asc = undefined;
+                        });
+
+                        rows.sort(comparer(i, asc));
+                        rows.forEach(row => tbody.appendChild(row));
+                        this.textContent += asc ? ' \u2191' : ' \u2193';
+                        this.asc = asc;
+                    });
+                });
+            });
+        });
+
+        // Diese Funktion wird direkt zum Kopieren aufgerufen (optional)
+        function copyToClipboard(text) {
+            if (!navigator.clipboard) {
+                // Fallback für ältere Browser
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+
+                try {
+                    document.execCommand('copy');
+                    alert("Pfad in Zwischenablage kopiert: " + text);
+                } catch (err) {
+                    alert('Kopieren fehlgeschlagen');
+                }
+
+                document.body.removeChild(textArea);
+                return;
+            }
+
+            navigator.clipboard.writeText(text).then(function () {
+                alert("Pfad in Zwischenablage kopiert: " + text);
+            }, function (err) {
+                alert('Kopieren fehlgeschlagen');
+            });
+        }
+
+        // Event-Handler auf alle Buttons mit data-path setzen
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('.copy-btn').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    const path = this.getAttribute('data-path');
+                    copyToClipboard(path); // zentrale Funktion nutzen
+                });
+            });
+        });
+</script>
+
+</head>
+<body>
+    {% include 'header.html' %}
+    <div class="container">
+        <h1>Programmierliste</h1>
+        <button onclick="openForm()">Neuer Eintrag</button>
+
+        <!-- Tab Navigation -->
+        <div class="tab-container">
+            <div class="tab active" data-tab="offen-tab">Offene Einträge</div>
+            <div class="tab" data-tab="erledigt-tab">Erledigte Einträge</div>
+        </div>
+
+        <!-- Offene Einträge -->
+        <div id="offen-tab" class="tab-content active">
+            <p style="margin-left: 10px; color: grey; font-size:12px;">nb = nicht benötigt</p>
+            <table>
+                <tr>
+                    <th>FA Start</th><th>Typ</th><th>Greipl-Nr</th><th>Bezeichnung</th><th>Index</th><th>Kunde</th>
+                    <th></th><th>Daten</th><th>JaNets</th><th>Schablone</th><th>AOI</th><th>Selektiv</th><th>AA</th>
+                    <th>Bemerkung</th><th>Löschen</th>
+                </tr>
+                {% for task in tasks %}
+                {% if not task.Done %}
+                <tr>
+                    <td>{{ task.FA_start }}</td>
+                    <td>{{ task.TYP }}</td>
+                    <td>{{ task.GNR }}</td>
+                    <td>{{ task.BEZ }}</td>
+                    <td>{{ task.REV }}</td>
+                    <td>{{ task.KND }}</td>
+
+                    <td style="text-align: center;">
+                        <button class="copy-btn"
+                                data-path="{{ task.PFAD|e }}"
+                                style="background: none; border: none; cursor: pointer; padding: 0;">
+                            <img src="{{ url_for('static', filename='folder.png') }}" alt="Pfad" height="30px" style="filter: invert(0%);">
+                        </button>
+                    </td>
+
+
+
+                    <td>
+                        <select class="status-select {{ task.DAT|lower|replace(' ', '-') }}"
+                                onchange="updateStatus({{ task.id }}, 'DAT', this.value)">
+                            {% for option in ['nb', 'Offen', 'In Arbeit', 'Erledigt'] %}
+                                <option value="{{ option }}" {% if task.DAT == option %}selected{% endif %}>
+                                    {{ option }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </td>
+
+                    <td>
+                                <select class="status-select {{ task.SMT|lower|replace(' ', '-') }}"
+                                    onchange="updateStatus({{ task.id }}, 'SMT', this.value)">
+                                {% for option in ['nb', 'Offen', 'In Arbeit', 'Erledigt'] %}
+                                    <option value="{{ option }}" {% if task.SMT == option %}selected{% endif %}>
+                                        {{ option }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                    </td>
+
+                    <td>
+                        <select class="status-select {{ task.STC|lower|replace(' ', '-') }}"
+                                onchange="updateStatus({{ task.id }}, 'STC', this.value)">
+                            {% for option in ['nb', 'Offen', 'Bestellt', 'Erledigt'] %}
+                                <option value="{{ option }}" {% if task.STC == option %}selected{% endif %}>
+                                    {{ option }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </td>
+
+                    <td>
+                        <select class="status-select {{ task.AOI|lower|replace(' ', '-') }}"
+                                onchange="updateStatus({{ task.id }}, 'AOI', this.value)">
+                            {% for option in ['nb', 'Offen', 'SRF in Arbeit', 'SRF erstellt', 'Erledigt'] %}
+                                <option value="{{ option }}" {% if task.AOI == option %}selected{% endif %}>
+                                    {{ option }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </td>
+
+                    <td>
+                        <select class="status-select {{ task.THT|lower|replace(' ', '-') }}"
+                                onchange="updateStatus({{ task.id }}, 'THT', this.value)">
+                            {% for option in ['nb', 'Offen', 'In Arbeit', 'Erledigt'] %}
+                                <option value="{{ option }}" {% if task.THT == option %}selected{% endif %}>
+                                    {{ option }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </td>
+
+                    <td>
+                        <select class="status-select {{ task.AA|lower|replace(' ', '-') }}"
+                                onchange="updateStatus({{ task.id }}, 'AA', this.value)">
+                            {% for option in ['nb', 'Offen', 'In Arbeit', 'Erledigt'] %}
+                                <option value="{{ option }}" {% if task.AA == option %}selected{% endif %}>
+                                    {{ option }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </td>
+
+                    <td>
+                        <textarea cols="30" rows="6" onchange="updateComment({{ task.id }}, this.value)">{{ task.COM }}</textarea>
+                    </td>
+
+                    <td style="text-align: center;">
+                        <button onclick="deleteTask({{ task.id }})" style="background: none; border: none; cursor: pointer; padding: 0;">
+                            <img src="{{ url_for('static', filename='cancel.png') }}" alt="Löschen" height="30px" style="filter: invert(0%);">
+                        </button>
+                    </td>
+                </tr>
+                {% endif %}
+                {% endfor %}
+            </table>
+        </div>
+
+        <!-- Erledigte Einträge -->
+        <div id="erledigt-tab" class="tab-content">
+            <p style="margin-left: 10px; color: grey; font-size:12px;">nb = nicht benötigt</p>
+            <table>
+                <tr>
+                    <th>FA Start</th><th>Typ</th><th>Greipl-Nr</th><th>Bezeichnung</th><th>Index</th><th>Kunde</th>
+                    <th>Daten</th><th>JaNets</th><th>Schablone</th><th>AOI</th><th>Selektiv</th><th>AA</th>
+                    <th>Bemerkung</th><th>Erledigt am</th>
+                </tr>
+                {% for task in tasks %}
+                {% if task.Done %}
+                <tr>
+                    <td>{{ task.FA_start }}</td>
+                    <td>{{ task.TYP }}</td>
+                    <td>{{ task.GNR }}</td>
+                    <td>{{ task.BEZ }}</td>
+                    <td>{{ task.REV }}</td>
+                    <td>{{ task.KND }}</td>
+
+                    <td>
+                        <span class="status-select {{ task.DAT|lower|replace(' ', '-') }}">{{ task.DAT }}</span>
+                    </td>
+                    <td>
+                        <span class="status-select {{ task.SMT|lower|replace(' ', '-') }}">{{ task.SMT }}</span>
+                    </td>
+                    <td>
+                        <span class="status-select {{ task.STC|lower|replace(' ', '-') }}">{{ task.STC }}</span>
+                    </td>
+                    <td>
+                        <span class="status-select {{ task.AOI|lower|replace(' ', '-') }}">{{ task.AOI }}</span>
+                    </td>
+                    <td>
+                        <span class="status-select {{ task.THT|lower|replace(' ', '-') }}">{{ task.THT }}</span>
+                    </td>
+                    <td>
+                        <span class="status-select {{ task.AA|lower|replace(' ', '-') }}">{{ task.AA }}</span>
+                    </td>
+
+                    <td><p>{{ task.COM }}</p></td>
+
+                    <td>{{ task.Done_date }}</td>
+
+                </tr>
+                {% endif %}
+                {% endfor %}
+            </table>
+        </div>
+
+        <!-- PopUp Formular -->
+        <div id="popupForm">
+            <h3>Neuen Eintrag hinzufügen</h3>
+            <form method="POST" action="{{ url_for('programmierliste') }}">
+                <!-- Formularfelder hier... -->
+                 <form method="POST" action="{{ url_for('programmierliste') }}">
+                        <div style="display: flex; flex-direction: column; gap: 15px; max-width: 800px;">
+
+                            <!-- Erste Zeile: Typ + Greipl-Nr -->
+                            <div style="display: flex; gap: 30px;">
+                                <div style="flex: 1; display: flex; flex-direction: column;">
+                                    <label for="TYP" style="font-weight: bold;">Typ:</label>
+                                    <select id="TYP" name="TYP">
+                                        <option value="NT">NT</option>
+                                        <option value="ÄMT">ÄMT</option>
+                                        <option value="Doppelanlage">Doppelanlage</option>
+                                        <option value="Bestand">Bestand</option>
+                                    </select>
+                                </div>
+                                <div style="flex: 1; display: flex; flex-direction: column;">
+                                    <label for="GNR" style="font-weight: bold;">Greipl-Nr:</label>
+                                    <input type="text" id="GNR" name="GNR">
+                                </div>
+                            </div>
+
+                            <!-- Zweite Zeile: Platinen Parameter -->
+                            <div style="display: flex; flex-direction: column; gap: 10px;">
+                                <label style="font-weight: bold;">Parameter Platine:</label>
+
+                                <div style="display: flex; gap: 30px;">
+                                    <div style="flex: 1; display: flex; align-items: center;">
+                                        <input type="checkbox" id="SMD" name="SMD" value="SMD">
+                                        <label for="SMD" style="margin-left: 8px;">SMD</label>
+                                    </div>
+                                    <div style="flex: 1; display: flex; align-items: center;">
+                                        <input type="checkbox" id="SMD-Doppel" name="SMD-Doppel" value="SMD-Doppel">
+                                        <label for="SMD-Doppel" style="margin-left: 8px;">SMD-Doppelseitig</label>
+                                    </div>
+                                    <div style="flex: 1; display: flex; align-items: center;">
+                                        <input type="checkbox" id="THT" name="THT" value="THT">
+                                        <label for="THT" style="margin-left: 8px;">THT</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Dritte Zeile: PFAD -->
+                            <div style="display: flex; gap: 30px;">
+                                <div style="flex: 1; display: flex; flex-direction: column;">
+                                    <label for="PFAD" style="font-weight: bold;">Pfad Daten:</label>
+                                    <input type="text" id="PFAD" name="PFAD">
+                                </div>
+                            </div>
+
+                            <!-- Vierte Zeile: Bemerkung -->
+                            <div style="display: flex; gap: 30px;">
+                                <div style="flex: 1; display: flex; flex-direction: column;">
+                                    <label for="COM" style="font-weight: bold;">Bemerkung:</label>
+                                    <textarea id="COM" name="COM" rows="4"></textarea>
+                                </div>
+                            </div>
+
+
+                            <!-- Fünfte Zeile: Bemerkung -->
+                            <div style="display: flex; gap: 10px;">
+                                <button type="submit">Hinzufügen</button>
+                                <button type="button" onclick="closeForm()">Abbrechen</button>
+                            </div>
+                        </div>
+            </form>
+        </div>
+        <div id="overlay" onclick="closeForm()"></div>
+    </div>
+</body>
+</html>
