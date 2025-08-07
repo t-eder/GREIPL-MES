@@ -4,7 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="7d186514-fd06-41ff-8b8f-744ab137ced3" name="Changes" comment="Programmierliste automatische Statuswahl wenn kein THT oder kein SMD" />
+    <list default="true" id="7d186514-fd06-41ff-8b8f-744ab137ced3" name="Changes" comment="Bugfix Programmierliste">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/index.html" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -259,7 +262,23 @@
       <option name="project" value="LOCAL" />
       <updated>1754569155792</updated>
     </task>
-    <option name="localTasksCounter" value="18" />
+    <task id="LOCAL-00018" summary="Bugfix Programmierliste">
+      <option name="closed" value="true" />
+      <created>1754573314076</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1754573314076</updated>
+    </task>
+    <task id="LOCAL-00019" summary="Bugfix Programmierliste">
+      <option name="closed" value="true" />
+      <created>1754573506841</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1754573506841</updated>
+    </task>
+    <option name="localTasksCounter" value="20" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -291,6 +310,7 @@
     <MESSAGE value="Anpassung Übersicht Auftragsbestand" />
     <MESSAGE value="Programmierliste hinzugefügt und Auftragsbestandsübersicht angepasst" />
     <MESSAGE value="Programmierliste automatische Statuswahl wenn kein THT oder kein SMD" />
-    <option name="LAST_COMMIT_MESSAGE" value="Programmierliste automatische Statuswahl wenn kein THT oder kein SMD" />
+    <MESSAGE value="Bugfix Programmierliste" />
+    <option name="LAST_COMMIT_MESSAGE" value="Bugfix Programmierliste" />
   </component>
 </project>

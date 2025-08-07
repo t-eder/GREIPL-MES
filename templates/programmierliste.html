@@ -285,7 +285,7 @@
                     <td>{{ task.FA_start }}</td>
                     <td>{{ task.TYP }}</td>
                     <td>{{ task.GNR }}</td>
-                    <td>{{ task.BEZ }}</td>
+                    <td style="width: 200px; word-wrap: break-word; white-space: pre-wrap;">{{ task.BEZ }}</td>
                     <td>{{ task.REV }}</td>
                     <td>{{ task.KND }}</td>
 
@@ -366,7 +366,7 @@
                     </td>
 
                     <td>
-                        <textarea cols="30" rows="6" onchange="updateComment({{ task.id }}, this.value)">{{ task.COM }}</textarea>
+                        <textarea cols="30" rows="4" onchange="updateComment({{ task.id }}, this.value)">{{ task.COM }}</textarea>
                     </td>
 
                     <td style="text-align: center;">
