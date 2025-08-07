@@ -120,7 +120,7 @@ def group_jobs_by_week(records):
     return dict(sorted(grouped_jobs.items()))
 
 
-def get_jobs(gruppe, masch_gruppe ,zustand_min, zustand_max, date_min, date_max):
+def get_jobs(gruppe, masch_gruppe, zustand_min, zustand_max, date_min, date_max):
     conn = pyodbc.connect(connectionString)
     typ = "A"  # Auftrag = E; Arbeitsgang = A; Material = M;
     if masch_gruppe == 0:  # Wenn keine Maschinengruppe angegeben wurde
@@ -401,7 +401,7 @@ def programmierliste():
             # print("Keine gültigen Daten aus der Datenbank.")
             return "Keine gültigen Daten aus der Datenbank.", 404
 
-        if request.form.getlist('SMT'):
+        if request.form.getlist('SMD'):
             SMT = "Offen"
             STC = "Offen"
             AOI = "Offen"
