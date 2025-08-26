@@ -3,7 +3,8 @@
 
         <div class="navbar">
                 <a href="/" id="{% if request.path == '/' %}active-link{% endif %}">Auftragsbestand</a>
-                <a href="/vorrat" id="{% if request.path == '/vorrat' %}active-link{% endif %}">Arbeitsvorratsliste</a>
+                <a href="/vorrat" id="{% if request.path == '/vorrat' %}active-link{% endif %}">Arbeitsvorratslisten</a>
+                <a href="/lieferliste" id="{% if request.path == '/lieferliste' %}active-link{% endif %}">Lieferliste</a>
                 <a href="/programmierliste" id="{% if request.path == '/programmierliste' %}active-link{% endif %}">Programmierliste</a>
                 <a href="/kpi" id="{% if request.path == '/kpi' %}active-link{% endif %}">Kennzahlen</a>
                 <a href="/tools" id="{% if request.path == '/tools' %}active-link{% endif %}">Tools</a>

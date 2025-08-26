@@ -124,14 +124,13 @@
     });
 </script><!-- Fertigmeldungen nach Jahr -->
 
-
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         // Daten aus Flask übergeben
         let fa_fertig_wochenweise = {{ fa_fertig_wochenweise|tojson }};
 
         // Kalenderwochen als Labels (x-Achse)
-        let labels = Object.keys(fa_fertig_wochenweise).map(kw => "KW " + kw);
+        let labels = Object.keys(fa_fertig_wochenweise).map(kw => kw);
 
         // Mengen für jedes Lager
         let daten = Object.values(fa_fertig_wochenweise);

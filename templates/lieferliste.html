@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>GREIPL-MES</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='styles/style.css') }}">
+    <style>
+        #filter-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(11, 41, 69, 0.9);
+            color: white;
+            padding: 5px 15px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            font-size: 14px;
+            font-weight: bold;
+            box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.3);
+            height: 35px;
+            align-items: center;
+            white-space: nowrap;
+        }
+
+        #filter-bar label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        #filter-bar input[type="checkbox"] {
+            transform: scale(1.1);
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+{% include 'header.html' %}
+    <div class="container">
+        <h2>Lieferliste E1</h2>
+        <span>R= Reservierung K= Kundenauftrag</span>
+        <table>
+            <tr>
+                <th>Liefertermin</th>
+                <th>Art</th>
+                <th>Auftrag</th>
+                <th>Teil</th>
+                <th>Bezeichnung</th>
+                <th>Geliefert</th>
+                <th>Lagerbestand</th>
+            </tr>
+            {% for lieferung in lieferungen %}
+            <tr class="lieferung-row"
+                data-komplett="{{ 'true' if lieferung.MngAuftr <= lieferung.BestandSumme else 'false' }}"
+                style="
+                {% if lieferung.MngAuftr <= lieferung.BestandSumme %}
+                    background-color: #cceddf; color: grey;
+                {% elif lieferung.EndTerm <= heute %}
+                    background-color: red;
+                {% endif %}">
+                <td>{{ lieferung.EndTerm.strftime('%d.%m.%Y') }}</td>
+                <td>{{ lieferung.BstArt }}</td>
+                <td>{{ lieferung.Auftrag }}</td>
+                <td>{{ lieferung.Teil }}</td>
+                <td>{{ lieferung.Bez }}</td>
+                <td>{{ lieferung.MngBeweg }} / {{ lieferung.MngAuftr }}</td>
+                <td>{{ lieferung.BestandSumme }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+
+        <p style="font-size:8px; float: right; color: lightgrey">Tobias Eder 2023</p>
+    </div>
+
+    <!-- Filter-Leiste -->
+    <div id="filter-bar">
+        <label>
+            <input type="checkbox" id="hideKomplett"> Erledigte Aufträge ausblenden
+        </label>
+    </div>
+
+    <script>
+        function applyFilters() {
+            const hideKomplett = document.getElementById('hideKomplett').checked;
+
+            document.querySelectorAll('.lieferung-row').forEach(row => {
+                const isKomplett = row.getAttribute('data-komplett') === 'true';
+                let shouldHide = false;
+
+                if (hideKomplett && isKomplett) {
+                    shouldHide = true;
+                }
+
+                row.style.display = shouldHide ? 'none' : '';
+            });
+        }
+
+        document.getElementById('hideKomplett').addEventListener('change', applyFilters);
+
+        // Zustand merken (optional)
+        window.addEventListener('load', () => {
+            if (localStorage.getItem('filter_hideKomplett') !== null) {
+                document.getElementById('hideKomplett').checked = localStorage.getItem('filter_hideKomplett') === 'true';
+                applyFilters();
+            }
+        });
+
+        document.getElementById('hideKomplett').addEventListener('change', () => {
+            localStorage.setItem('filter_hideKomplett', document.getElementById('hideKomplett').checked);
+            applyFilters();
+        });
+    </script>
+</body>
+</html>

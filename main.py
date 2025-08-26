@@ -2,7 +2,7 @@ import pyodbc
 from model import app, db, Personal, StundenKW, WorkLoad, AuftragInfo, MIN_TEMP_FILE, MAX_TEMP_FILE, ProgrammierListe
 from flask import render_template, redirect, request, Flask, render_template, jsonify, flash, url_for
 import datetime as dt
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from collections import defaultdict
 from config import connectionString
 from collections import defaultdict
@@ -168,7 +168,7 @@ def get_mat_buchungen(Buchungsdatum_min, Buchungsdatum_max, Erfassende, Teilegru
         # Basis-SQL-Abfrage ohne Erfassende- und Teilegruppen-Filter
         SQL_QUERY = f"""
             SELECT 
-                DATEPART(WEEK, BEWEGUNG.AendDat) AS Kalenderwoche,
+                DATEPART(MONTH, BEWEGUNG.AendDat) AS Kalenderwoche,
                 BEWEGUNG.Lag,
                 SUM(BEWEGUNG.MngEff) AS Summe_Menge,
                 TEILE.Gruppe
@@ -194,7 +194,7 @@ def get_mat_buchungen(Buchungsdatum_min, Buchungsdatum_max, Erfassende, Teilegru
         # Schließe die GROUP BY und ORDER BY-Klauseln an
         SQL_QUERY += """
             GROUP BY 
-                DATEPART(WEEK, BEWEGUNG.AendDat), BEWEGUNG.Lag, TEILE.Gruppe
+                DATEPART(MONTH, BEWEGUNG.AendDat), BEWEGUNG.Lag, TEILE.Gruppe
             ORDER BY 
                 Kalenderwoche, BEWEGUNG.Lag
         """
@@ -645,6 +645,69 @@ def vorrat():
     return render_template('vorrat.html', smd_jobs=smd_jobs, tht_jobs=tht_jobs, man_jobs=man_jobs, pruef_jobs=pruef_jobs, aoi_jobs=aoi_jobs,auftrag_info=auftrag_info)
 
 
+def get_lieferungen(Gruppe, DateMax, DateMin, ZustandMax, ZustandMin):
+    with app.app_context():
+        conn = pyodbc.connect(connectionString)
+        SQL_QUERY = f"""
+            SELECT 
+                DISPBEW.Auftrag,
+                DISPBEW.BstArt,
+                DISPBEW.EndTerm,
+                DISPBEW.Teil,
+                TEILE.Bez,
+                TEILE.Gruppe,
+                DISPBEW.MngAuftr,
+                DISPBEW.MngBeweg,
+                COALESCE(SUM(LAGPLBST.Mng), 0) AS BestandSumme
+            FROM 
+                INFRADB.dbo.DISPBEW DISPBEW
+            JOIN 
+                INFRADB.dbo.TEILE TEILE
+                ON TEILE.Teil = DISPBEW.Teil
+            LEFT JOIN 
+                INFRADB.dbo.LAGPLBST LAGPLBST
+                ON LAGPLBST.Teil = DISPBEW.Teil
+            WHERE
+                TEILE.Gruppe = '{Gruppe}'
+                AND DISPBEW.EndTerm < '{DateMax}'
+                AND DISPBEW.EndTerm > '{DateMin}'
+                AND DISPBEW.Zustand >= '{ZustandMin}'
+                AND DISPBEW.Zustand <= '{ZustandMax}'
+                AND DISPBEW.Stat != 'E'
+                AND DISPBEW.BstArt != 'F'
+            GROUP BY
+                DISPBEW.Auftrag,
+                DISPBEW.BstArt,
+                DISPBEW.EndTerm,
+                DISPBEW.Teil,
+                TEILE.Bez,
+                TEILE.Gruppe,
+                DISPBEW.MngAuftr,
+                DISPBEW.MngBeweg
+            ORDER BY
+                DISPBEW.EndTerm;
+        """
+        cursor = conn.cursor()
+        cursor.execute(SQL_QUERY)
+        records = cursor.fetchall()
+        return records
+
+
+@app.route('/lieferliste')
+def lieferliste():
+    gruppe = "E1"
+    date_max = "2099-01-01 00:00:00"
+    date_min = "2000-01-01 00:00:00"
+    ZustandMin = 20
+    ZustandMax = 50
+    lieferungen = get_lieferungen(gruppe, date_max, date_min, ZustandMax, ZustandMin)
+    heute = datetime.today()
+    print(lieferungen)
+
+    return render_template('lieferliste.html', lieferungen=lieferungen, heute=heute)
+
+
+
 @app.route('/kpi')
 def kpi():
 ## Auftragskennzahlen
@@ -702,8 +765,8 @@ def kpi():
         print(fa_fertig_wochenweise)
 
 ## Materialwirtschaft
-#  Meterialmengen
-    mat_buchungen = get_mat_buchungen("2025-01-01 00:00:00", "2100-01-01 00:00:00", ["mranz", "teder", "jbusc", "julli"], "", "AR")  # AR = Metrialentnahme
+#  Meterialmengen nach Woche
+    mat_buchungen = get_mat_buchungen("2020-01-10 00:00:00", "2100-01-01 00:00:00", ["mranz", "teder", "jbusc", "julli", "tfbg"], "", "AR")  # AR = Metrialentnahme
     buchungen_wochenweise = {}
     for row in mat_buchungen:
         kalenderwoche = row[0]
