@@ -4,15 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="7d186514-fd06-41ff-8b8f-744ab137ced3" name="Changes" comment="Lieferliste ergänzt">
-      <change afterPath="$PROJECT_DIR$/arbeitvorrat.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/auftragsliste.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/kpi.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/lieferliste.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/programmierliste.py" afterDir="false" />
+    <list default="true" id="7d186514-fd06-41ff-8b8f-744ab137ced3" name="Changes" comment="Aufteilung auf separate Pythonfiles nach Funktion/Seite">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tempcheck.py" beforeDir="false" afterPath="$PROJECT_DIR$/tempcheck.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auftragsliste.py" beforeDir="false" afterPath="$PROJECT_DIR$/auftragsliste.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lieferliste.py" beforeDir="false" afterPath="$PROJECT_DIR$/lieferliste.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -300,7 +295,15 @@
       <option name="project" value="LOCAL" />
       <updated>1756210919982</updated>
     </task>
-    <option name="localTasksCounter" value="22" />
+    <task id="LOCAL-00022" summary="Aufteilung auf separate Pythonfiles nach Funktion/Seite">
+      <option name="closed" value="true" />
+      <created>1757402428937</created>
+      <option name="number" value="00022" />
+      <option name="presentableId" value="LOCAL-00022" />
+      <option name="project" value="LOCAL" />
+      <updated>1757402428937</updated>
+    </task>
+    <option name="localTasksCounter" value="23" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -335,6 +338,7 @@
     <MESSAGE value="Bugfix Programmierliste" />
     <MESSAGE value="Bugfixes" />
     <MESSAGE value="Lieferliste ergänzt" />
-    <option name="LAST_COMMIT_MESSAGE" value="Lieferliste ergänzt" />
+    <MESSAGE value="Aufteilung auf separate Pythonfiles nach Funktion/Seite" />
+    <option name="LAST_COMMIT_MESSAGE" value="Aufteilung auf separate Pythonfiles nach Funktion/Seite" />
   </component>
 </project>

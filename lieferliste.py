@@ -18,7 +18,7 @@ def get_lieferungen(Gruppe, DateMax, DateMin, ZustandMax, ZustandMin):
                 TEILE.Gruppe,
                 DISPBEW.MngAuftr,
                 DISPBEW.MngBeweg,
-                COALESCE(SUM(LAGPLBST.Mng), 0) AS BestandSumme
+                COALESCE(SUM(CASE WHEN LAGPLBST.Lag != 'N' THEN LAGPLBST.Mng ELSE 0 END), 0) AS BestandSumme
             FROM 
                 INFRADB.dbo.DISPBEW DISPBEW
             JOIN 

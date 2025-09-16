@@ -36,6 +36,7 @@ def data_FA(Gruppe, ZustandMin, ZustandMax, DateMin, DateMax, Typ):
                 TEILE.Gruppe = '{Gruppe}' 
                 AND FAPOS.Zustand BETWEEN '{ZustandMin}' AND '{ZustandMax}' 
                 AND FAPOS.Typ = '{Typ}'
+                AND FAPOS.Stat != 'E'
                 AND FAPOS.StartTermPlan > '{DateMin}' 
                 AND FAPOS.StartTermPlan < '{DateMax}'
         """
