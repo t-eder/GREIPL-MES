@@ -20,15 +20,11 @@
                                 <img src="{{ url_for('static', filename='late.png') }}" alt="Icon" height="20px" style="filter: invert(100%);">
                             {% endif %}
 
-                            {% set match_found = auftrag_info | selectattr("fa_mat", "equalto", 1)
-                                      | selectattr("fa_nr", "equalto", job.Auftrag | int)
-                                      | list
-                                      | length > 0 %}
-                            {% if match_found %}
-                                <img src="{{ url_for('static', filename='goods.png') }}" alt="Icon" height="20px" style="filter: invert(0%);">
-                            {% else %}
-                                <img src="{{ url_for('static', filename='goods.png') }}" alt="Icon" height="20px" style="filter: invert(80%);">
-                            {% endif %}
+                            {% for info in auftrag_info %}
+                                    {% if info.fa_mat | int == 0 and info.fa_nr | int == job.Auftrag %}
+                                        <img src="{{ url_for('static', filename='goods.png') }}" alt="Icon" height="30px" style="filter: invert(0%);">
+                                    {% endif %}
+                            {% endfor %}
 
                         {% if job.Zustand | int > 40 %}
                             <img class="icon" src="{{ url_for('static', filename='spanner.png') }}" alt="Icon" height="20px" style="filter: invert(0%);">

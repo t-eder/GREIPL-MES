@@ -1,6 +1,6 @@
 import pyodbc
 from model import app, db, Personal, StundenKW, WorkLoad, AuftragInfo, MIN_TEMP_FILE, MAX_TEMP_FILE, ProgrammierListe
-from flask import render_template, redirect, request, Flask, render_template, jsonify, flash, url_for
+from flask import render_template, redirect, request, Flask, render_template, session
 import datetime as dt
 from datetime import datetime
 from config import connectionString
@@ -35,6 +35,7 @@ def get_lieferungen(Gruppe, DateMax, DateMin, ZustandMax, ZustandMin):
                 AND DISPBEW.Zustand <= '{ZustandMax}'
                 AND DISPBEW.Stat != 'E'
                 AND DISPBEW.BstArt != 'F'
+                AND DISPBEW.BstArt != 'B'
             GROUP BY
                 DISPBEW.Auftrag,
                 DISPBEW.BstArt,
@@ -55,7 +56,7 @@ def get_lieferungen(Gruppe, DateMax, DateMin, ZustandMax, ZustandMin):
 
 @app.route('/lieferliste')
 def lieferliste():
-    gruppe = "E1"
+    gruppe = session.get('abteilung', 'E1')  # Default E1, falls keine Auswahl gespeichert
     date_max = "2099-01-01 00:00:00"
     date_min = "2000-01-01 00:00:00"
     ZustandMin = 20

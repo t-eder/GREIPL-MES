@@ -1,26 +1,163 @@
 <div class="header">
-        <div style="float: left; padding-left: 50px; padding-top: 35px;"><img src="{{ url_for('static', filename='logo-weiss.png') }}" alt="Greipl Logo" height="75"></div>
+  <div class="header-content">
+    <!-- Logo oben -->
+    <div class="header-logo">
+      <img src="{{ url_for('static', filename='logo-weiss.png') }}" alt="Greipl Logo">
+    </div>
 
-        <div class="navbar">
-                <a href="/" id="{% if request.path == '/' %}active-link{% endif %}">Auftragsbestand</a>
-                <a href="/vorrat" id="{% if request.path == '/vorrat' %}active-link{% endif %}">Arbeitsvorratslisten</a>
-                <a href="/lieferliste" id="{% if request.path == '/lieferliste' %}active-link{% endif %}">Lieferliste</a>
-                <a href="/programmierliste" id="{% if request.path == '/programmierliste' %}active-link{% endif %}">Programmierliste</a>
-                <a href="/kpi" id="{% if request.path == '/kpi' %}active-link{% endif %}">Kennzahlen</a>
-                <a href="/tools" id="{% if request.path == '/tools' %}active-link{% endif %}">Tools</a>
-                <a href="/settings" id="{% if request.path == '/settings' %}active-link{% endif %}"><img class="icon" src="{{ url_for('static', filename='gear.png') }}" alt="Icon" height="40px" style="filter: invert(100%);"></a>
-        </div>
+    <!-- Menü darunter -->
+    <div class="navbar">
+      <a href="/" class="{% if request.path == '/' %}active-link{% endif %}">Auftragsbestand</a>
+      <a href="/vorrat" class="{% if request.path == '/vorrat' %}active-link{% endif %}">Arbeitsvorratslisten</a>
+      <a href="/lieferliste" class="{% if request.path == '/lieferliste' %}active-link{% endif %}">Lieferliste</a>
+      <a href="/tools" class="{% if request.path == '/tools' %}active-link{% endif %}">Tools</a>
+      <a href="/settings" class="{% if request.path == '/settings' %}active-link{% endif %}">
+        <img class="icon" src="{{ url_for('static', filename='gear.png') }}" alt="Einstellungen" height="35" style="filter: invert(100%); vertical-align: middle;">
+      </a>
+
+      <!-- Abteilungsauswahl -->
+      <form id="abteilungForm" method="post" action="{{ url_for('set_abteilung') }}" class="abteilung-form">
+        <select name="abteilung" id="abteilungSelect" class="abteilung-select">
+          <option value="E1" {% if session.get('abteilung') == 'E1' %}selected{% endif %}>E1</option>
+          <option value="M1" {% if session.get('abteilung') == 'M1' %}selected{% endif %}>M1</option>
+          <option value="M2" {% if session.get('abteilung') == 'M2' %}selected{% endif %}>M2</option>
+          <option value="M4" {% if session.get('abteilung') == 'M4' %}selected{% endif %}>M4</option>
+          <option value="WZ" {% if session.get('abteilung') == 'WZ' %}selected{% endif %}>WZ</option>
+          <option value="QS" {% if session.get('abteilung') == 'QS' %}selected{% endif %}>QS</option>
+        </select>
+      </form>
+    </div>
+  </div>
 </div>
 
 {% with messages = get_flashed_messages() %}
-        {% if messages %}
-                {% for msg in messages %}
-                        <div style="float: bottom; height: 35px; width: 1400px; padding-left: 20px; padding-right: 20px;
-                                margin: 0 auto; margin-top: 1px; background-color: #0082da; display: flex;align-items: center;
-                                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);">
-                                <span>{{ msg }}</span>
-                        </div>
-                {% endfor %}
-        {% endif %}
+  {% if messages %}
+    {% for msg in messages %}
+      <div style="height: 35px; width: 1400px; padding-left: 20px; padding-right: 20px;
+                  margin: 0 auto; margin-top: 1px; background-color: #0082da; display: flex; align-items: center;
+                  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);">
+        <span>{{ msg }}</span>
+      </div>
+    {% endfor %}
+  {% endif %}
 {% endwith %}
 
+<script>
+document.getElementById('abteilungSelect').addEventListener('change', function() {
+  const formData = new FormData(document.getElementById('abteilungForm'));
+  fetch('{{ url_for("set_abteilung") }}', {
+    method: 'POST',
+    body: formData
+  }).then(r => r.json()).then(data => {
+    if (data.success) {
+      location.reload();
+    }
+  });
+});
+</script>
+
+<style>
+/* -----------------------------------
+   HEADER
+----------------------------------- */
+.header {
+  width: 100%;
+  background-color: #0b2945;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.header-content {
+  max-width: 1440px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column; /* Logo oben, Menü darunter */
+  align-items: flex-start;
+  padding: 0px 50px;
+}
+
+/* -----------------------------------
+   LOGO
+----------------------------------- */
+.header-logo img {
+  height: 75px;
+  margin-bottom: 10px;
+}
+
+/* -----------------------------------
+   NAVIGATION
+----------------------------------- */
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* Menü links, Dropdown rechts */
+  width: 100%; /* Damit der Flex-Space greift */
+}
+
+/* Linker Bereich des Menüs */
+.navbar a {
+  color: white;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 16px;
+  padding: 5px 8px;
+  transition: all 0.2s ease;
+}
+
+.navbar a:hover {
+  color: #66ccff;
+  border-bottom: 2px solid #66ccff;
+}
+
+.navbar a.active-link {
+  color: #66ccff;
+  border-bottom: 2px solid #66ccff;
+}
+
+/* -----------------------------------
+   ABTEILUNGSAUSWAHL (rechtsbündig)
+----------------------------------- */
+.abteilung-form {
+  margin-left: auto; /* Schiebt das Dropdown ganz nach rechts */
+}
+
+.abteilung-select {
+  background-color: transparent;
+  color: white;
+  border: none;
+  border-bottom: 2px solid white;
+  font-size: 15px;
+  padding: 5px 10px;
+  cursor: pointer;
+  outline: none;
+}
+
+.abteilung-select:hover {
+  border-bottom: 2px solid #66ccff;
+}
+
+.abteilung-select option {
+  background-color: #0b2945;
+  color: white;
+}
+
+/* -----------------------------------
+   RESPONSIVE DESIGN
+----------------------------------- */
+@media (max-width: 900px) {
+  .header-content {
+    padding: 20px;
+  }
+
+  .navbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .abteilung-form {
+    align-self: flex-end; /* Bei kleinen Screens bleibt es rechts */
+    margin-left: 0;
+  }
+}
+
+</style>

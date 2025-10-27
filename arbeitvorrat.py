@@ -1,9 +1,10 @@
 import pyodbc
 from model import app, db, Personal, StundenKW, WorkLoad, AuftragInfo, MIN_TEMP_FILE, MAX_TEMP_FILE, ProgrammierListe
-from flask import render_template, redirect, request, Flask, render_template, jsonify, flash, url_for
+from flask import render_template, redirect, request, Flask, render_template, jsonify, session
 import datetime as dt
 from datetime import datetime
 from config import connectionString
+import re
 
 def data_MG():
     with app.app_context():
@@ -71,42 +72,6 @@ def get_jobs(gruppe, masch_gruppe, zustand_min, zustand_max, date_min, date_max)
     columns = [column[0] for column in cursor.description]
     jobs = [dict(zip(columns, row)) for row in records]
     return jobs
-
-@app.route('/vorrat')
-def vorrat():
-    auftrag_info = AuftragInfo.query.all()
-    gruppe = "E1"
-    zustand_min = "20"
-    zustand_max = "50"
-    date_min = "2010-01-01 00:00:00"
-    date_max = "2099-31-12 00:00:00"
-
-    masch_gruppe = "2410-01"  # SMT
-    smd_jobs = get_jobs(gruppe, masch_gruppe, zustand_min, zustand_max, date_min, date_max)
-    get_job_ahead(smd_jobs)
-    get_delay(smd_jobs)
-
-    masch_gruppe = "2410-03"  # THT
-    tht_jobs = get_jobs(gruppe, masch_gruppe, zustand_min, zustand_max, date_min, date_max)
-    get_job_ahead(tht_jobs)
-    get_delay(tht_jobs)
-
-    masch_gruppe = "2410-04"  # Manuelle Handarbeit
-    man_jobs = get_jobs(gruppe, masch_gruppe, zustand_min, zustand_max, date_min, date_max)
-    get_job_ahead(man_jobs)
-    get_delay(man_jobs)
-
-    masch_gruppe = "2410-50"  # 3DAOI Nacharbeit
-    aoi_jobs = get_jobs(gruppe, masch_gruppe, zustand_min, zustand_max, date_min, date_max)
-    get_job_ahead(aoi_jobs)
-    get_delay(aoi_jobs)
-
-    masch_gruppe = "2450-01"  # Prüfung E1
-    pruef_jobs = get_jobs(gruppe, masch_gruppe, zustand_min, zustand_max, date_min, date_max)
-    get_job_ahead(pruef_jobs)
-    get_delay(pruef_jobs)
-
-    return render_template('vorrat.html', smd_jobs=smd_jobs, tht_jobs=tht_jobs, man_jobs=man_jobs, pruef_jobs=pruef_jobs, aoi_jobs=aoi_jobs,auftrag_info=auftrag_info)
 
 
 def get_delay(jobs):
@@ -187,6 +152,201 @@ def get_job_ahead(jobs):
 
     conn.close()
     return jobs
+
+
+@app.route('/vorrat')
+def vorrat():
+    gruppe = session.get('abteilung', 'E1')  # z.B. 'E1', 'M1', 'M4'
+
+    zustand_min = "20"
+    zustand_max = "50"
+    date_min = "2010-01-01 00:00:00"
+    date_max = "2099-12-31 00:00:00"
+    typ = "A"
+
+    # Verbindung herstellen
+    conn = pyodbc.connect(connectionString)
+    cursor = conn.cursor()
+    if gruppe == "QS":
+        # --- Dynamisch alle Maschinengruppen für die Abteilung abfragen ---
+        SQL_MG = f"""
+            SELECT DISTINCT FAPOS.PmNr, ARBPLATZ.Bez
+            FROM INFRADB.dbo.FAPOS FAPOS
+            JOIN INFRADB.dbo.TEILE TEILE ON FAPOS.Teil = TEILE.Teil
+            JOIN INFRADB.dbo.ARBPLATZ ARBPLATZ ON FAPOS.PmNr = ARBPLATZ.PmNr
+            WHERE (TEILE.Gruppe IS NOT NULL)
+              AND FAPOS.Typ = '{typ}'
+              AND FAPOS.Zustand BETWEEN '{zustand_min}' AND '{zustand_max}'
+              AND TRY_CONVERT(datetime, FAPOS.StartTermPlan, 120) IS NOT NULL
+              AND NOT (FAPOS.Stat = 'E' AND FAPOS.Zustand IN ('10','20'))
+            ORDER BY FAPOS.PmNr
+        """
+        cursor.execute(SQL_MG)
+        maschinen = cursor.fetchall()
+        print(f"QS liefert {len(maschinen)} Maschinengruppen")
+    else:
+         # --- Dynamisch alle Maschinengruppen für die Abteilung abfragen ---
+        SQL_MG = f"""
+            SELECT DISTINCT FAPOS.PmNr, ARBPLATZ.Bez
+            FROM INFRADB.dbo.FAPOS FAPOS
+            JOIN INFRADB.dbo.TEILE TEILE ON FAPOS.Teil = TEILE.Teil
+            JOIN INFRADB.dbo.ARBPLATZ ARBPLATZ ON FAPOS.PmNr = ARBPLATZ.PmNr
+            WHERE TEILE.Gruppe = '{gruppe}'
+              AND FAPOS.Typ = '{typ}'
+              AND FAPOS.Zustand BETWEEN '{zustand_min}' AND '{zustand_max}'
+              AND TRY_CONVERT(datetime, FAPOS.StartTermPlan, 120) IS NOT NULL
+              AND NOT (FAPOS.Stat = 'E' AND FAPOS.Zustand IN ('10','20'))
+            ORDER BY FAPOS.PmNr
+        """
+        cursor.execute(SQL_MG)
+        maschinen = cursor.fetchall()
+
+
+# Blacklist: diese Maschinengruppen sollen ignoriert werden
+# blacklist = {"A159", "A155", "A154", "A156", "8700-10", "8700-11"}
+                #NZ       #NZ     #NZ    #NZ      #EMPB      #EMPB
+
+    if gruppe == "M1":
+        # Maschinengruppenliste erstellen:
+        # 1 Nicht in Blacklist
+        # 2 Beginnt mit "2440"
+        gruppen_liste = [
+            {"pmnr": row[0], "bez": row[1]}
+            for row in maschinen
+            if row[0]  # nicht leer
+               # and row[0] not in blacklist  # nicht in Blacklist
+               and str(row[0]).startswith("2440")  # beginnt mit 2440
+        ]
+    elif gruppe == "E1":
+        # Maschinengruppenliste erstellen:
+        # 1 Nicht in Blacklist
+        # 2 Beginnt mit "2440"
+        gruppen_liste = [
+            {"pmnr": row[0], "bez": row[1]}
+            for row in maschinen
+            if row[0]  # nicht leer
+               # and row[0] not in blacklist  # nicht in Blacklist
+               and str(row[0]).startswith("2410")  # beginnt mit 2440
+        ]
+    elif gruppe == "M2":
+        # Maschinengruppenliste erstellen:
+        # 1 Nicht in Blacklist
+        # 2 Beginnt mit "2440"
+        gruppen_liste = [
+            {"pmnr": row[0], "bez": row[1]}
+            for row in maschinen
+            if row[0]  # nicht leer
+               # and row[0] not in blacklist  # nicht in Blacklist
+               and str(row[0]).startswith("1")  # beginnt mit 2440
+        ]
+    elif gruppe == "M4":
+        # Maschinengruppenliste erstellen:
+        # 1 Nicht in Blacklist
+        # 2 Beginnt mit "2440"
+        gruppen_liste = [
+            {"pmnr": row[0], "bez": row[1]}
+            for row in maschinen
+            if row[0]  # nicht leer
+               # and row[0] not in blacklist  # nicht in Blacklist
+               and str(row[0]).startswith("2440")  # beginnt mit 2440
+               or str(row[0]).startswith("2460")  # beginnt mit 2460
+        ]
+    elif gruppe == "WZ":
+        # Maschinengruppenliste erstellen:
+        # 1 Nicht in Blacklist
+        # 2 Beginnt mit "2440"
+        gruppen_liste = [
+            {"pmnr": row[0], "bez": row[1]}
+            for row in maschinen
+            if row[0]  # nicht leer
+               # and row[0] not in blacklist  # nicht in Blacklist
+               and str(row[0]).startswith("3")
+        ]
+    elif gruppe == "QS":
+        # Maschinengruppenliste erstellen:
+        # 1 Nicht in Blacklist
+        # 2 Beginnt mit "2440"
+        gruppen_liste = [
+            {"pmnr": row[0], "bez": row[1]}
+            for row in maschinen
+            if row[0]  # nicht leer
+               # and row[0] not in blacklist  # nicht in Blacklist
+               and str(row[0]).startswith("8")
+               or str(row[0]).startswith("2450")
+        ]
+
+
+    gruppen_jobs = {}
+    for mg in gruppen_liste:
+        pmnr = mg["pmnr"]
+
+
+        if gruppe == 'QS':
+            SQL_JOBS = f"""
+                            SELECT 
+                                FAPOS.Zustand, FAPOS.Auftrag, TEILE.Teil, TEILE.Bez,
+                                FAPOS.Mng, 
+                                TRY_CONVERT(datetime, FAPOS.StartTermPlan, 120) AS StartTermPlan,
+                                TRY_CONVERT(datetime, FAPOS.EndTermPlan, 120) AS EndTermPlan,
+                                FAPOS.PmNr, FAPOS.MngRest, FAPOS.Zeit, FAPOS.Pos,
+                                FAPOS.ZeitIst, FAPOS.Bez AS posbez, ARBPLATZ.Bez AS ArbBez
+                            FROM INFRADB.dbo.FAPOS FAPOS
+                            JOIN INFRADB.dbo.TEILE TEILE ON FAPOS.Teil = TEILE.Teil
+                            JOIN INFRADB.dbo.ARBPLATZ ARBPLATZ ON FAPOS.PmNr = ARBPLATZ.PmNr
+                            WHERE (TEILE.Gruppe IS NOT NULL)
+                              AND FAPOS.Typ = '{typ}'
+                              AND FAPOS.PmNr = '{pmnr}'
+                              AND FAPOS.Zustand BETWEEN '{zustand_min}' AND '{zustand_max}'
+                              AND TRY_CONVERT(datetime, FAPOS.StartTermPlan, 120) IS NOT NULL
+                              AND NOT (FAPOS.Stat = 'E' AND FAPOS.Zustand IN ('10','20'))
+                            ORDER BY StartTermPlan, EndTermPlan, Pos
+                        """
+        else:
+            # --- Jobs je Maschinengruppe abrufen ---
+            SQL_JOBS = f"""
+                SELECT 
+                    FAPOS.Zustand, FAPOS.Auftrag, TEILE.Teil, TEILE.Bez,
+                    FAPOS.Mng, 
+                    TRY_CONVERT(datetime, FAPOS.StartTermPlan, 120) AS StartTermPlan,
+                    TRY_CONVERT(datetime, FAPOS.EndTermPlan, 120) AS EndTermPlan,
+                    FAPOS.PmNr, FAPOS.MngRest, FAPOS.Zeit, FAPOS.Pos,
+                    FAPOS.ZeitIst, FAPOS.Bez AS posbez, ARBPLATZ.Bez AS ArbBez
+                FROM INFRADB.dbo.FAPOS FAPOS
+                JOIN INFRADB.dbo.TEILE TEILE ON FAPOS.Teil = TEILE.Teil
+                JOIN INFRADB.dbo.ARBPLATZ ARBPLATZ ON FAPOS.PmNr = ARBPLATZ.PmNr
+                WHERE TEILE.Gruppe = '{gruppe}'
+                  AND FAPOS.Typ = '{typ}'
+                  AND FAPOS.PmNr = '{pmnr}'
+                  AND FAPOS.Zustand BETWEEN '{zustand_min}' AND '{zustand_max}'
+                  AND TRY_CONVERT(datetime, FAPOS.StartTermPlan, 120) IS NOT NULL
+                  AND NOT (FAPOS.Stat = 'E' AND FAPOS.Zustand IN ('10','20'))
+                ORDER BY StartTermPlan, EndTermPlan, Pos
+            """
+
+        cursor.execute(SQL_JOBS)
+        records = cursor.fetchall()
+        columns = [c[0] for c in cursor.description]
+        jobs = [dict(zip(columns, row)) for row in records]
+
+        # --- Berechnungen ---
+        get_job_ahead(jobs)
+        get_delay(jobs)
+
+        gruppen_jobs[pmnr] = {"bez": mg["bez"], "jobs": jobs}
+
+    cursor.close()
+    conn.close()
+
+    # Auftrag Info laden
+    auftrag_info = AuftragInfo.query.all()
+
+    return render_template(
+        "vorrat.html",
+        gruppen_jobs=gruppen_jobs,
+        auftrag_info=auftrag_info
+    )
+
+
 
 @app.route('/update_status/<int:task_id>', methods=['POST'])
 def update_status(task_id):

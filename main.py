@@ -1,6 +1,16 @@
 import auftragsliste, arbeitvorrat, lieferliste, programmierliste, tempcheck, kpi
 from model import app, db, Personal
-from flask import  redirect, request, render_template
+from flask import render_template, session, redirect, request, jsonify
+
+@app.route('/set_abteilung', methods=['POST'])
+def set_abteilung():
+    abteilung = request.form.get('abteilung')
+    if abteilung:  # deine gültigen Bereiche
+        session['abteilung'] = abteilung
+        return jsonify({'success': True, 'abteilung': abteilung})
+    else:
+        return jsonify({'success': False, 'message': 'Ungültige Abteilung'}), 400
+
 
 @app.route('/personal/add', methods=['POST'])
 def personal_add():

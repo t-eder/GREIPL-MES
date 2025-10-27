@@ -155,7 +155,6 @@
                         <th>Bezeichnung</th>
                         <th>Menge</th>
                         <th>Termin</th>
-                        <th>Produktionszeit</th>
                         <th>Bemerkung</th>
                     </tr>
                 </thead>
@@ -169,8 +168,7 @@
                             {% if job.Zustand == "60" %}
                                 style="background-color: #cceddf; color: grey;"
                             {% endif %}>
-                            <td
-                            style="
+                            <td style="
                             {% if job.Zustand == '10' %}
                                 border-left: 4px solid #A0A0A0;
                             {% elif job.Zustand == '20' %}
@@ -183,8 +181,7 @@
                                 border-left: 4px solid #FB923C;
                             {% elif job.Zustand == '60' %}
                                 border-left: 4px solid #00b542;
-                            {% endif %}"
-                            >
+                            {% endif %}">
                                 {% if job.Typ == 'Start' %}
                                     <img src="{{ url_for('static', filename='fa_start.png') }}" alt="Icon" height="30px" style="filter: invert(0%);">
                                 {% elif job.Typ == 'Ende' %}
@@ -202,9 +199,8 @@
                             <td class="auftrag-num" data-auftrag="{{ job.Auftrag }}">{{ job.Auftrag }}</td>
                             <td>{{ job.Teil }}</td>
                             <td>{{ job.Bez }}</td>
-                            <td>{{ job.Mng }}</td>
+                            <td>{{ job.Mng | round(0) | int }}</td>
                             <td>{{ job.Datum.strftime('%d.%m.%Y') }}</td>
-                            <td>{{ (job.Zeit / 60) | round(1) }} h</td>
                             <td style="width: 300px; text-align:left; border: 1px solid #e0e0e0;">
                                 {% for info in auftrag_info %}
                                     {% if info.fa_nr | int == job.Auftrag %}
@@ -218,12 +214,6 @@
             </table>
 
 <div id="filter-bar">
-    <label>
-        <input type="checkbox" id="hideStatus10"> Status 10 ausblenden
-    </label>
-    <label>
-        <input type="checkbox" id="hideStatus60"> Status 60 ausblenden
-    </label>
     <label>
     <input type="checkbox" id="showOnlyStart"> Nur Start-Zeilen
     </label>
@@ -392,9 +382,7 @@ document.addEventListener('keydown', function (event) {
                 const enteredComment = document.getElementById('comment').value;
                 const checkboxChecked = document.getElementById('checkbox').checked;
 
-                // 🧠 Filterzustände vor Reload speichern
-                localStorage.setItem('filter_hideStatus10', document.getElementById('hideStatus10').checked);
-                localStorage.setItem('filter_hideStatus60', document.getElementById('hideStatus60').checked);
+                // Filterzustände vor Reload speichern
                 localStorage.setItem('filter_showOnlyStart', document.getElementById('showOnlyStart').checked);
                 localStorage.setItem('filter_showOnlyEnd', document.getElementById('showOnlyEnd').checked);
 
@@ -442,8 +430,6 @@ document.addEventListener('keydown', function (event) {
 
 <script>
 function applyFilters() {
-    const hide60 = document.getElementById('hideStatus60').checked;
-    const hide10 = document.getElementById('hideStatus10').checked;
     const showOnlyStart = document.getElementById('showOnlyStart').checked;
     const showOnlyEnd = document.getElementById('showOnlyEnd').checked;
 
@@ -451,14 +437,6 @@ function applyFilters() {
         const statusCell = row.querySelector('td:nth-child(3)');
         const typeImg = row.querySelector('td img');
         let shouldHide = false;
-
-        // Status-Filter
-        if (statusCell) {
-            const status = statusCell.textContent.trim();
-            if ((hide60 && status === '60') || (hide10 && status === '10')) {
-                shouldHide = true;
-            }
-        }
 
         // Typ-Filter: prüft das 'fa_start.png' oder 'fa_end.png' im <img>-Tag
         if (showOnlyStart && (!typeImg || !typeImg.src.includes('fa_start.png'))) {
@@ -474,8 +452,6 @@ function applyFilters() {
 }
 
 // Event Listener
-document.getElementById('hideStatus60').addEventListener('change', applyFilters);
-document.getElementById('hideStatus10').addEventListener('change', applyFilters);
 document.getElementById('showOnlyStart').addEventListener('change', applyFilters);
 document.getElementById('showOnlyEnd').addEventListener('change', applyFilters);
 document.getElementById('applyFilters').addEventListener('click', applyFilters);
@@ -515,8 +491,6 @@ function getWeekNumber(date) {
             }
         };
 
-        restore('hideStatus10', 'filter_hideStatus10');
-        restore('hideStatus60', 'filter_hideStatus60');
         restore('showOnlyStart', 'filter_showOnlyStart');
         restore('showOnlyEnd', 'filter_showOnlyEnd');
 
@@ -526,8 +500,6 @@ function getWeekNumber(date) {
         }
 
         // Optional: Speicher löschen (wenn du möchtest, dass es nur für einen Reload gilt)
-        // localStorage.removeItem('filter_hideStatus10');
-        // localStorage.removeItem('filter_hideStatus60');
         // localStorage.removeItem('filter_showOnlyStart');
         // localStorage.removeItem('filter_showOnlyEnd');
     });

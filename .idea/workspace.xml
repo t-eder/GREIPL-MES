@@ -4,10 +4,22 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="7d186514-fd06-41ff-8b8f-744ab137ced3" name="Changes" comment="Aufteilung auf separate Pythonfiles nach Funktion/Seite">
+    <list default="true" id="7d186514-fd06-41ff-8b8f-744ab137ced3" name="Changes" comment="Auftragsliste Stat E ausgefiltert; Lieferliste Lager N nicht berücksichtigen">
+      <change afterPath="$PROJECT_DIR$/infraDB_function.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/static/statistics.png" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/arbeitvorrat.py" beforeDir="false" afterPath="$PROJECT_DIR$/arbeitvorrat.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/auftragsliste.py" beforeDir="false" afterPath="$PROJECT_DIR$/auftragsliste.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/lieferliste.py" beforeDir="false" afterPath="$PROJECT_DIR$/lieferliste.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/model.py" beforeDir="false" afterPath="$PROJECT_DIR$/model.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/styles/style.css" beforeDir="false" afterPath="$PROJECT_DIR$/static/styles/style.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/header.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/header.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/lieferliste.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/lieferliste.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/tools.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/tools.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/vorrat.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/vorrat.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/vorrat_jobline.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/vorrat_jobline.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -303,7 +315,15 @@
       <option name="project" value="LOCAL" />
       <updated>1757402428937</updated>
     </task>
-    <option name="localTasksCounter" value="23" />
+    <task id="LOCAL-00023" summary="Auftragsliste Stat E ausgefiltert; Lieferliste Lager N nicht berücksichtigen">
+      <option name="closed" value="true" />
+      <created>1758012070342</created>
+      <option name="number" value="00023" />
+      <option name="presentableId" value="LOCAL-00023" />
+      <option name="project" value="LOCAL" />
+      <updated>1758012070342</updated>
+    </task>
+    <option name="localTasksCounter" value="24" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -339,6 +359,7 @@
     <MESSAGE value="Bugfixes" />
     <MESSAGE value="Lieferliste ergänzt" />
     <MESSAGE value="Aufteilung auf separate Pythonfiles nach Funktion/Seite" />
-    <option name="LAST_COMMIT_MESSAGE" value="Aufteilung auf separate Pythonfiles nach Funktion/Seite" />
+    <MESSAGE value="Auftragsliste Stat E ausgefiltert; Lieferliste Lager N nicht berücksichtigen" />
+    <option name="LAST_COMMIT_MESSAGE" value="Auftragsliste Stat E ausgefiltert; Lieferliste Lager N nicht berücksichtigen" />
   </component>
 </project>

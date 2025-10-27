@@ -7,30 +7,39 @@
 <body>
 {% include 'header.html' %}
 <div class="container">
-    <h1 style="text-align:left;">E1 Tools</h1>
-
+    <h1 style="text-align:left;">Tools</h1>
     <div class="tiles">
         <div class="tile">
-            <a href="/progplan">
+            <a href="/programmierliste">
                 <img class="tile-icon" src="{{ url_for('static', filename='monitoring.png') }}" alt="E1 Programmierliste">
                 <p class="tile-text">E1 Programmierliste</p>
             </a>
         </div>
         <div class="tile">
-            <a href="/">
-                <img class="tile-icon" src="{{ url_for('static', filename='smd-file.png') }}" alt="ISM-Infra Abgleich">
+            <a href="/kpi">
+                <img class="tile-icon" src="{{ url_for('static', filename='statistics.png') }}" alt="E1 Kennzahlen">
+                <p class="tile-text">E1 Kennzahlen</p>
+            </a>
+        </div>
+    </div>
+
+    <h1 style="text-align:left;">Tools in Planung</h1>
+    <div class="tiles">
+        <div class="tile">
+            <a href="">
+                <img class="tile-icon" src="{{ url_for('static', filename='smd-file.png') }}" alt="ISM-Infra Abgleich" style="opacity: 0.2;">
                 <p class="tile-text">ISM-Infra Abgleich</p>
             </a>
         </div>
         <div class="tile">
-            <a href="/tempcheck">
-                <img class="tile-icon" src="{{ url_for('static', filename='high-temperature.png') }}" alt="Reflow Temperatur Check">
+            <a href="">
+                <img class="tile-icon" src="{{ url_for('static', filename='high-temperature.png') }}" alt="Reflow Temperatur Check" style="opacity: 0.2;">
                 <p class="tile-text">Reflow Temperatur Check</p>
             </a>
         </div>
         <div class="tile">
             <a href="">
-                <img class="tile-icon" src="{{ url_for('static', filename='purchase.png') }}" alt="Verbrauchsmaterial">
+                <img class="tile-icon" src="{{ url_for('static', filename='purchase.png') }}" alt="Verbrauchsmaterial" style="opacity: 0.2;" >
                 <p class="tile-text">Verbrauchsmaterial</p>
             </a>
         </div>

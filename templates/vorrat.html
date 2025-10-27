@@ -53,60 +53,25 @@
 
         <!-- Tab-Navigation -->
         <div class="tab-container">
-            <div class="tab active" data-tab="smd-tab">2410-01 SMD-Linie</div>
-            <div class="tab" data-tab="tht-tab">2410-03 THT-Selektivlöten</div>
-            <div class="tab" data-tab="man-tab">2410-04 Manuelle Tätigkeit</div>
-            <div class="tab" data-tab="aoi-tab">2410-50 3DAOI Nacharbeit</div>
-            <div class="tab" data-tab="pruef-tab">2450-01 Prüfung E1</div>
+          {% for pmnr, data in gruppen_jobs.items() %}
+            <div class="tab {% if loop.first %}active{% endif %}" data-tab="tab-{{ pmnr|replace('.', '-') }}">
+              {{ pmnr }} {{ data.bez[:12] }}
+            </div>
+          {% endfor %}
         </div>
 
         <!-- Tab-Inhalte -->
-        <div class="tab-content active" id="smd-tab">
+        {% for pmnr, data in gruppen_jobs.items() %}
+          <div class="tab-content {% if loop.first %}active{% endif %}" id="tab-{{ pmnr|replace('.', '-') }}">
             <table class="table1">
-                {% include 'vorrat_table_header.html' %}
-                {% for job in smd_jobs %}
-                    {% include 'vorrat_jobline.html' %}
-                {% endfor %}
+              {% include 'vorrat_table_header.html' %}
+              {% for job in data.jobs %}
+                {% include 'vorrat_jobline.html' %}
+              {% endfor %}
             </table>
-        </div>
+          </div>
+        {% endfor %}
 
-        <div class="tab-content" id="tht-tab">
-            <table class="table1">
-                {% include 'vorrat_table_header.html' %}
-                {% for job in tht_jobs %}
-                    {% include 'vorrat_jobline.html' %}
-                {% endfor %}
-            </table>
-        </div>
-
-        <div class="tab-content" id="man-tab">
-            <table class="table1">
-                {% include 'vorrat_table_header.html' %}
-                {% for job in man_jobs %}
-                    {% include 'vorrat_jobline.html' %}
-                {% endfor %}
-            </table>
-        </div>
-
-
-        <div class="tab-content" id="aoi-tab">
-            <table class="table1">
-                {% include 'vorrat_table_header.html' %}
-                {% for job in aoi_jobs %}
-                    {% include 'vorrat_jobline.html' %}
-                {% endfor %}
-            </table>
-        </div>
-
-
-        <div class="tab-content" id="pruef-tab">
-            <table class="table1">
-               {% include 'vorrat_table_header.html' %}
-                {% for job in pruef_jobs %}
-                    {% include 'vorrat_jobline.html' %}
-                {% endfor %}
-            </table>
-        </div>
 
 
         <p style="font-size:8px; float: right; color: lightgrey">Tobias Eder 2023</p>

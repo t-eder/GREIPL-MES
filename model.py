@@ -8,6 +8,8 @@ app.config['TEMPLATES_AUTO_RELOAD'] = True
 # Set up the upload folder here
 app.config['UPLOAD_FOLDER'] = 'uploads'  # Make sure this is defined before using it
 
+app.secret_key = "GREIPL"  # nötig für Sessions
+
 # 📌 Feste Pfade für Min- und Max-Kurven
 MIN_TEMP_FILE = r"uploads/JEDEC_temp_max.csv"
 MAX_TEMP_FILE = r"uploads/JEDEC_temp_min.csv"

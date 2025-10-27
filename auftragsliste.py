@@ -1,6 +1,8 @@
 import pyodbc
+
+from infraDB_function import CheckFAMat
 from model import app, db, Personal, StundenKW, WorkLoad, AuftragInfo, MIN_TEMP_FILE, MAX_TEMP_FILE, ProgrammierListe
-from flask import render_template, redirect, request, Flask, render_template, jsonify, flash, url_for
+from flask import render_template, redirect, request, Flask, render_template, jsonify, session
 import datetime as dt
 from datetime import datetime, timedelta
 from config import connectionString
@@ -93,6 +95,39 @@ def group_FA_by_week(records):
     return dict(sorted(grouped_jobs.items()))
 
 
+def GetFAMat(FANR, ZustandMin, ZustandMax):
+    with app.app_context():
+        conn = pyodbc.connect(connectionString)
+        SQL_QUERY = f"""
+            SELECT 
+                FAPOS.Auftrag,
+                FAPOS.Zustand,              
+                FAPOS.Teil,                 
+                TEILE.Bez,                  
+                FAPOS.MngRest
+            FROM INFRADB.dbo.FAPOS FAPOS
+            JOIN INFRADB.dbo.TEILE TEILE ON FAPOS.Teil = TEILE.Teil
+            LEFT JOIN (
+                SELECT 
+                    Teil, 
+                    COALESCE(SUM(CASE WHEN Lag != 'N' THEN Mng ELSE 0 END), 0) AS BestandSumme
+                FROM INFRADB.dbo.LAGPLBST
+                GROUP BY Teil
+            ) LAGPLBST_SUM ON FAPOS.Teil = LAGPLBST_SUM.Teil
+            WHERE
+                FAPOS.Auftrag = '{FANR}'
+                AND FAPOS.Zustand BETWEEN {ZustandMin} AND {ZustandMax}
+                AND FAPOS.Typ = 'M'
+                AND FAPOS.Stat != 'E'
+                AND (FAPOS.MngRest IS NULL OR COALESCE(LAGPLBST_SUM.BestandSumme, 0) < FAPOS.MngRest)
+        """
+        cursor = conn.cursor()
+        cursor.execute(SQL_QUERY)
+        records = cursor.fetchall()
+        return records
+
+
+
 @app.route('/update_comment', methods=['POST'])
 def update_comment():
     data = request.get_json()
@@ -123,26 +158,20 @@ def update_comment():
 
 @app.route('/')
 def index():
-    team = Personal.query.all()
-    stunden = StundenKW.query.all()
-    workload = WorkLoad.query.all()
+    # team = Personal.query.all()
+    # stunden = StundenKW.query.all()
+    # workload = WorkLoad.query.all()
     auftrag_info = AuftragInfo.query.all()
 
-    gruppe = "E1"
-    zustand_min = "10"
-    zustand_max = "60"
+    gruppe = session.get('abteilung', 'E1')  # Default E1, falls keine Auswahl gespeichert
+    zustand_min = "20"
+    zustand_max = "50"
     date_min = (datetime.now() - timedelta(weeks=6)).strftime("%Y-%d-%m %H:%M:%S")
     date_max = "2099-30-12 00:00:00"
 
-    # masch_gruppe = 0
-    # jobs = get_jobs(gruppe, masch_gruppe, zustand_min, zustand_max, date_min, date_max) #Arbeitsgänge auslesen
-    ##  print(grouped_jobs)
-    # get_kw_workload(grouped_jobs)  # Summieren der Arbeitsgang-Zeiten nach Gruppe und KW
-
     records = data_FA(gruppe, zustand_min, zustand_max, date_min, date_max, "E")
-    # print(records)
     grouped_jobs = group_FA_by_week(records)
+    ## CheckFAMat([fa.Auftrag for fa in records])
 
+    return render_template('index.html', grouped_jobs=grouped_jobs, auftrag_info=auftrag_info)
 
-    return render_template('index.html',grouped_jobs=grouped_jobs
-                           , workload=workload, stunden=stunden, team=team, auftrag_info=auftrag_info)
