@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>GREIPL-MES – Linienübersicht</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/style.css') }}">
+
+    <style>
+        .Kapa {
+            border-collapse: collapse; /* wichtig, damit die Linien sauber sind */
+        }
+        .Kapa td {
+            border-left: 1px solid black;
+            border-right: 1px solid black;
+        }
+
+    </style>
+</head>
+
+<body>
+
+{% include 'header.html' %}
+
+<div class="container">
+
+    <h2>Lieferungen</h2>
+    <table>
+                <tr>
+                    <th colspan="6">
+                        Kundenauftrag
+                    </th>
+                    <th colspan="3">
+                        Fertigungsauftrag
+                    </th>
+                </tr>
+                <tr>
+                    <th>Zustand</th>
+                    <th>Liefertermin</th>
+                    <th>Auftrag</th>
+                    <th>Menge</th>
+                    <th>Teil</th>
+                    <th>Bezeichnung</th>
+
+                    <th>Zustand</th>
+                    <th>Starttermin</th>
+                    <th>Fertigungsauftrag</th>
+
+                </tr>
+
+                {% for KA in Liefertermine %}
+                <tr style="{% if KA.FAZustand == '60' %} background-color: lightgreen; {% endif %}" >
+                    <td>{{ KA.Zustand }}</td>
+                    <td>{{ KA.EndTerm.strftime('%d.%m.%Y') }}</td>
+                    <td>{{ KA.Auftrag }}</td>
+                    <td>{{ KA.MngAuftr | int }} ST</td>
+                    <td>{{ KA.Teil }}</td>
+                    <td>{{ KA.Bez }}</td>
+
+                    <td>{{ KA.FAZustand }}</td>
+                    <td style="{% if (KA.FAStartTerm + timedelta(weeks=1)) > KA.EndTerm %} color: red; {% endif %}">
+                        {{ KA.FAStartTerm.strftime('%d.%m.%Y') }}
+                    </td>
+                    <td>{{ KA.FA }}</td>
+                    <td>{{ KA.FAMenge }}</td>
+
+                </tr>
+                {% endfor %}
+    </table>
+
+
+
+
+
+
+    <!-- ============================= -->
+    <!-- TOP-TABELLE – GESAMTAUSLASTUNG -->
+    <!-- ============================= -->
+
+    {% set alle_wochen = [] %}
+    {% for week_data in weeks.values() %}
+        {% for week in week_data.keys() %}
+            {% if week not in alle_wochen %}
+                {% set _ = alle_wochen.append(week) %}
+            {% endif %}
+        {% endfor %}
+    {% endfor %}
+    {% set alle_wochen = alle_wochen|sort %}
+
+    <table class="Kapa">
+        <tr>
+            <th>Bereich</th>
+            {% for week in alle_wochen %}
+                <th style="width:180px; {% if week < current_week %}background-color: grey;{% endif %}">
+                    {{ week }}
+                </th>
+            {% endfor %}
+        </tr>
+
+        {# Einzelbereiche #}
+        {% for bereich, week_data in weeks.items() %}
+            <tr>
+                <td>{{ bereich }}</td>
+                {% for week in alle_wochen %}
+                    {% set val = week_data.get(week, 0) %}
+                    {% set kap_woche = kap.get(bereich, {}).get(week, 0) %}
+                    {% if kap_woche == 0 %}
+                        {% set percent = 999 %}
+                    {% else %}
+                        {% set percent = (val / kap_woche * 100) | round(1) %}
+                    {% endif %}
+                    <td>
+                        {{ val | round(1) }} h / {{ kap_woche | round(1) }}
+
+                        <div style="background-color:#ddd; width: 120px; height: 20px; border:1px solid #aaa;">
+                            <div style="background-color: {{ 'red' if percent>110 else '#4CAF50' }};
+                                        width: {{ percent if percent<=110 else 110 }}%;
+                                        height: 100%;
+                                        text-align: right;
+                                        color:white;
+                                        padding-right:2px;">
+                                {{ percent }}%
+                            </div>
+                        </div>
+
+                        <input type="number" value="{{ (kap_woche|float) / 40 }}" min="0" style="width:50px;"
+                               onchange="updateKapazitaet('{{ bereich }}', '{{ week }}', this.value * 40)"> Personen
+                    </td>
+                {% endfor %}
+            </tr>
+        {% endfor %}
+
+{# Summenzeile über alle Bereiche mit Balken #}
+<tr style="font-weight:bold; background-color:#9ccbf7;">
+    <td>Gesamt</td>
+    {% for week, data in gesamt.items() %}
+    <td>
+        {{ data.sum_val | round(1) }} h / {{ data.sum_kap }}
+        <div style="background-color:#ddd; width:120px; height:20px; border:1px solid #aaa;">
+            <div style="background-color: {{ 'red' if data.sum_percent>110 else '#4CAF50' }};
+                        width: {{ data.sum_percent if data.sum_percent<=110 else 110 }}%;
+                        height: 100%;
+                        text-align: right;
+                        color:white;
+                        padding-right:2px;">
+                {{ data.sum_percent }}%
+            </div>
+        </div>
+        {{ data.sum_kap / 40 }} Personen
+    </td>
+{% endfor %}
+
+</tr>
+
+    </table>
+
+
+
+
+
+    <!-- ========================================================= -->
+    <!--  BEREICHSANSICHTEN UNTEN (Tabellen + Wochen rechts) -->
+    <!-- ========================================================= -->
+
+    {% macro render_section(name, items) %}
+    <h2>{{ name }}</h2>
+
+    <div class="bereich">
+
+        <div class="left-table">
+            <table>
+                <tr>
+                    <th>Zustand</th>
+                    <th>Termin</th>
+                    <th>FA</th>
+                    <th>Teil</th>
+                    <th>Fehlmenge</th>
+                    <th>Planzeit</th>
+                </tr>
+
+                {% for FA in items %}
+                {% if FA.Zustand != '60' %}
+                <tr>
+                    <td>{{ FA.Zustand }}</td>
+                    <td>{{ FA.StartTerm.strftime('%d.%m.%Y') }}</td>
+                    <td>{{ FA.Auftrag }}</td>
+                    <td>{{ FA.Teil }} {{ FA.Bez }}</td>
+                    <td>{{ (FA.Mng - FA.MngRest)|int }}/{{ FA.Mng|int }} ST</td>
+                    <td>{{ (FA.Zeit / 60)|round(1) if FA.Zeit else 0 }}h</td> {# Minuten in Stunden #}
+                </tr>
+                {% endif %}
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+    {% endmacro %}
+
+    {{ render_section("Endmontage", Endmontage) }}
+    {{ render_section("HAK", Zusatzgehaeuse) }}
+    {{ render_section("Anschlussmodule", Anschlussmodul) }}
+
+</div>
+
+<script>
+function updateKapazitaet(bereich, kw, stunden) {
+    fetch('/update_kapazitaet', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({bereich: bereich, kw: kw, stunden: stunden})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status !== 'ok') {
+            alert('Fehler: ' + data.msg);
+        } else {
+            console.log('Kapazität aktualisiert:', data);
+            // Seite neu laden, damit Balken und Summen aktualisiert werden
+            location.reload();
+        }
+    })
+    .catch(err => {
+        alert('Fehler beim Aktualisieren: ' + err);
+    });
+}
+</script>
+
+</body>
+</html>

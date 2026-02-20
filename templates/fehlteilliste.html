@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>GREIPL-MES</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='styles/style.css') }}">
+    <style>
+        #filter-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(11, 41, 69, 0.9);
+            color: white;
+            padding: 5px 15px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            font-size: 14px;
+            font-weight: bold;
+            box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.3);
+            height: 35px;
+            align-items: center;
+            white-space: nowrap;
+        }
+
+        #filter-bar label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        #filter-bar input[type="checkbox"] {
+            transform: scale(1.1);
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+{% include 'header.html' %}
+    <div class="container">
+        <h2>Lieferliste E1</h2>
+        <span>R= Reservierung K= Kundenauftrag</span>
+        <table>
+            <tr>
+                <th>Termin</th>
+                <th>FA</th>
+                <th>Erzeugnis</th>
+                <th>Teil</th>
+                <th>Bezeichnung</th>
+                <th>Fehlmenge</th>
+                <th>Lager</th>
+            </tr>
+            {% for teil in fehlteile %}
+            <tr style="
+                    {% if teil.BestandSumme < teil.MngRest %}
+                    background-color: grey;
+                    {% elif teil.StartTerm <= heute %}
+                    background-color: red;
+                    {% endif %}">
+                <td>{{ teil.StartTerm.strftime('%d.%m.%Y') }}</td>
+                <td>{{ teil.Auftrag }}</td>
+                <td>{{ teil.Endprodukt }} {{ teil.Endprodukt_Bez }}</td>
+                <td>{{ teil.Teil }}</td>
+                <td>{{ teil.Bezeichnung }}</td>
+                <td>{{ teil.MngRest }}</td>
+                <td>{{ teil.BestandSumme }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+
+    </div>
+
+</body>
+</html>

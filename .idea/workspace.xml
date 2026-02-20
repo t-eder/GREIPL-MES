@@ -4,22 +4,19 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="7d186514-fd06-41ff-8b8f-744ab137ced3" name="Changes" comment="Auftragsliste Stat E ausgefiltert; Lieferliste Lager N nicht berücksichtigen">
-      <change afterPath="$PROJECT_DIR$/infraDB_function.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/static/statistics.png" afterDir="false" />
+    <list default="true" id="7d186514-fd06-41ff-8b8f-744ab137ced3" name="Changes" comment="Anpassung auf alle Abteilungen">
+      <change afterPath="$PROJECT_DIR$/auslastung.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/fehlteilliste.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/linie.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/static/electric-station.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/static/gantt-chart.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/static/puzzle.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/fehlteilliste.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/linie.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/arbeitvorrat.py" beforeDir="false" afterPath="$PROJECT_DIR$/arbeitvorrat.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auftragsliste.py" beforeDir="false" afterPath="$PROJECT_DIR$/auftragsliste.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lieferliste.py" beforeDir="false" afterPath="$PROJECT_DIR$/lieferliste.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/model.py" beforeDir="false" afterPath="$PROJECT_DIR$/model.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/styles/style.css" beforeDir="false" afterPath="$PROJECT_DIR$/static/styles/style.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/header.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/header.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/lieferliste.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/lieferliste.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/programmierliste.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/programmierliste.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/tools.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/tools.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/vorrat.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/vorrat.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/vorrat_jobline.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/vorrat_jobline.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -63,6 +60,7 @@
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Users\teder\PycharmProjects\MES\templates" />
       <recent name="C:\Users\teder\PycharmProjects\MES" />
+      <recent name="C:\Users\teder\PycharmProjects\MES\.venv" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\Users\teder\PycharmProjects\MES\static" />
@@ -323,7 +321,15 @@
       <option name="project" value="LOCAL" />
       <updated>1758012070342</updated>
     </task>
-    <option name="localTasksCounter" value="24" />
+    <task id="LOCAL-00024" summary="Anpassung auf alle Abteilungen">
+      <option name="closed" value="true" />
+      <created>1761585854064</created>
+      <option name="number" value="00024" />
+      <option name="presentableId" value="LOCAL-00024" />
+      <option name="project" value="LOCAL" />
+      <updated>1761585854065</updated>
+    </task>
+    <option name="localTasksCounter" value="25" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -360,6 +366,7 @@
     <MESSAGE value="Lieferliste ergänzt" />
     <MESSAGE value="Aufteilung auf separate Pythonfiles nach Funktion/Seite" />
     <MESSAGE value="Auftragsliste Stat E ausgefiltert; Lieferliste Lager N nicht berücksichtigen" />
-    <option name="LAST_COMMIT_MESSAGE" value="Auftragsliste Stat E ausgefiltert; Lieferliste Lager N nicht berücksichtigen" />
+    <MESSAGE value="Anpassung auf alle Abteilungen" />
+    <option name="LAST_COMMIT_MESSAGE" value="Anpassung auf alle Abteilungen" />
   </component>
 </project>

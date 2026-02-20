@@ -1,4 +1,4 @@
-import auftragsliste, arbeitvorrat, lieferliste, programmierliste, tempcheck, kpi
+import auftragsliste, arbeitvorrat, lieferliste, programmierliste, tempcheck, kpi, fehlteilliste, auslastung, linie
 from model import app, db, Personal
 from flask import render_template, session, redirect, request, jsonify
 
