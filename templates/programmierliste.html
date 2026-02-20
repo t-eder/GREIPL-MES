@@ -110,158 +110,241 @@
         }
     </style>
     <script>
-            function openForm() {
-                document.getElementById("popupForm").style.display = "block";
-                document.getElementById("overlay").style.display = "block";
-            }
 
-            function closeForm() {
-                document.getElementById("popupForm").style.display = "none";
-                document.getElementById("overlay").style.display = "none";
-            }
+/* =========================================================
+   POPUP STEUERUNG
+========================================================== */
 
-            function updateStatus(taskId, field, value) {
-                fetch(`/update_status/${taskId}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ field: field, value: value })
-                })
-                .then(response => {
-                    if (response.ok) {
-                        location.reload();
-                    } else {
-                        alert("Fehler beim Aktualisieren.");
-                    }
-                });
-            }
+function openForm() {
+    document.getElementById("popupForm").style.display = "block";
+    document.getElementById("overlay").style.display = "block";
+}
 
-            function deleteTask(taskId) {
-                if (confirm("Eintrag wirklich löschen?")) {
-                    fetch(`/delete_task/${taskId}`, {
-                        method: 'DELETE'
-                    })
-                    .then(response => {
-                        if (response.ok) {
-                            location.reload();
-                        } else {
-                            alert("Löschen fehlgeschlagen.");
-                        }
-                    });
-                }
-            }
+function closeForm() {
+    document.getElementById("popupForm").style.display = "none";
+    document.getElementById("overlay").style.display = "none";
+}
 
-            // Tab-Logik
-            document.addEventListener("DOMContentLoaded", function() {
-                const tabs = document.querySelectorAll('.tab');
-                const contents = document.querySelectorAll('.tab-content');
 
-                tabs.forEach(tab => {
-                    tab.addEventListener('click', function() {
-                        tabs.forEach(t => t.classList.remove('active'));
-                        contents.forEach(c => c.classList.remove('active'));
+/* =========================================================
+   STATUS UPDATE (AJAX → Flask Backend)
+========================================================== */
 
-                        this.classList.add('active');
-                        document.getElementById(this.dataset.tab).classList.add('active');
-                    });
-                });
-            });
+function updateStatus(taskId, field, value) {
+    fetch(`/update_status/${taskId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ field: field, value: value })
+    })
+    .then(response => {
+        if (response.ok) location.reload();
+        else alert("Fehler beim Aktualisieren.");
+    });
+}
 
-            function updateComment(taskId, comment) {
-                fetch(`/update_comment_prog/${taskId}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ comment: comment })
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        alert("Fehler beim Speichern der Bemerkung.");
-                    }
-                });
-            }
 
-            document.addEventListener('DOMContentLoaded', function () {
-            const getCellValue = (row, index) => {
-                const cell = row.children[index];
-                const select = cell.querySelector('select');
-                if (select) {
-                    return select.options[select.selectedIndex].text || select.value;
-                }
-                return cell.innerText || cell.textContent;
-            };
+/* =========================================================
+   EINTRAG LÖSCHEN
+========================================================== */
 
-            const comparer = (index, asc) => (a, b) => ((v1, v2) =>
-                v1 !== '' && v2 !== '' && !isNaN(v1) && !isNaN(v2) ?
-                    v1 - v2 : v1.toString().localeCompare(v2)
-            )(getCellValue(asc ? a : b, index), getCellValue(asc ? b : a, index));
-
-            document.querySelectorAll('table').forEach(table => {
-                const headers = table.querySelectorAll('th');
-
-                headers.forEach((th, i) => {
-                    th.style.cursor = 'pointer';
-
-                    th.addEventListener('click', function () {
-                        const tbody = table.querySelector('tbody') || table;
-                        const rows = Array.from(tbody.querySelectorAll('tr:nth-child(n+2)'));
-
-                        const asc = !this.asc;
-                        this.asc = asc;
-
-                        headers.forEach(header => {
-                            header.textContent = header.textContent.replace(/[\u2191\u2193]/g, '');
-                            header.asc = undefined;
-                        });
-
-                        rows.sort(comparer(i, asc));
-                        rows.forEach(row => tbody.appendChild(row));
-                        this.textContent += asc ? ' \u2191' : ' \u2193';
-                        this.asc = asc;
-                    });
-                });
-            });
+function deleteTask(taskId) {
+    if (confirm("Eintrag wirklich löschen?")) {
+        fetch(`/delete_task/${taskId}`, { method: 'DELETE' })
+        .then(response => {
+            if (response.ok) location.reload();
+            else alert("Löschen fehlgeschlagen.");
         });
+    }
+}
 
-        // Diese Funktion wird direkt zum Kopieren aufgerufen (optional)
-        function copyToClipboard(text) {
-            if (!navigator.clipboard) {
-                // Fallback für ältere Browser
-                const textArea = document.createElement("textarea");
-                textArea.value = text;
-                document.body.appendChild(textArea);
-                textArea.focus();
-                textArea.select();
 
-                try {
-                    document.execCommand('copy');
-                    alert("Pfad in Zwischenablage kopiert: " + text);
-                } catch (err) {
-                    alert('Kopieren fehlgeschlagen');
-                }
+/* =========================================================
+   TAB LOGIK
+========================================================== */
 
-                document.body.removeChild(textArea);
-                return;
-            }
+document.addEventListener("DOMContentLoaded", function() {
 
-            navigator.clipboard.writeText(text).then(function () {
-                alert("Pfad in Zwischenablage kopiert: " + text);
-            }, function (err) {
-                alert('Kopieren fehlgeschlagen');
-            });
+    const tabs = document.querySelectorAll('.tab');
+    const contents = document.querySelectorAll('.tab-content');
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            tabs.forEach(t => t.classList.remove('active'));
+            contents.forEach(c => c.classList.remove('active'));
+
+            this.classList.add('active');
+            document.getElementById(this.dataset.tab).classList.add('active');
+        });
+    });
+
+});
+
+
+/* =========================================================
+   KOMMENTAR UPDATE
+========================================================== */
+
+function updateComment(taskId, comment) {
+    fetch(`/update_comment_prog/${taskId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ comment: comment })
+    })
+    .then(response => {
+        if (!response.ok) {
+            alert("Fehler beim Speichern der Bemerkung.");
+        }
+    });
+}
+
+
+/* =========================================================
+   TABELLEN SORTIERUNG (MIT DATUMSERKENNUNG)
+========================================================== */
+
+document.addEventListener('DOMContentLoaded', function () {
+
+    const getCellValue = (row, index) => {
+        const cell = row.children[index];
+        const select = cell.querySelector('select');
+
+        if (select) {
+            return select.options[select.selectedIndex].text || select.value;
         }
 
-        // Event-Handler auf alle Buttons mit data-path setzen
-        document.addEventListener('DOMContentLoaded', function () {
-            document.querySelectorAll('.copy-btn').forEach(function (btn) {
-                btn.addEventListener('click', function () {
-                    const path = this.getAttribute('data-path');
-                    copyToClipboard(path); // zentrale Funktion nutzen
+        return cell.innerText || cell.textContent;
+    };
+
+    const parseDate = (value) => {
+        const datePattern = /^(\d{2})\.(\d{2})\.(\d{2}|\d{4})$/;
+        const match = value.trim().match(datePattern);
+
+        if (!match) return null;
+
+        let day = parseInt(match[1], 10);
+        let month = parseInt(match[2], 10) - 1;
+        let year = parseInt(match[3], 10);
+
+        if (year < 100) year += 2000;
+
+        return new Date(year, month, day);
+    };
+
+    const comparer = (index, asc) => (a, b) => {
+
+        const v1 = getCellValue(a, index).trim();
+        const v2 = getCellValue(b, index).trim();
+
+        const d1 = parseDate(v1);
+        const d2 = parseDate(v2);
+
+        if (d1 && d2) return asc ? d1 - d2 : d2 - d1;
+
+        if (!isNaN(v1) && !isNaN(v2))
+            return asc ? v1 - v2 : v2 - v1;
+
+        return asc
+            ? v1.localeCompare(v2, 'de')
+            : v2.localeCompare(v1, 'de');
+    };
+
+
+    document.querySelectorAll('table').forEach(table => {
+
+        const headers = table.querySelectorAll('th');
+
+        headers.forEach((th, i) => {
+
+            th.style.cursor = 'pointer';
+
+            th.addEventListener('click', function () {
+
+                const tbody = table.querySelector('tbody') || table;
+                const rows = Array.from(tbody.querySelectorAll('tr:nth-child(n+2)'));
+
+                const asc = !this.asc;
+
+                headers.forEach(header => {
+                    header.textContent = header.textContent.replace(/[\u2191\u2193]/g, '');
+                    header.asc = undefined;
                 });
+
+                rows.sort(comparer(i, asc));
+                rows.forEach(row => tbody.appendChild(row));
+
+                this.textContent += asc ? ' \u2191' : ' \u2193';
+                this.asc = asc;
             });
         });
+
+        /* =========================================================
+           STANDARDSORTIERUNG → 1. Spalte (Datum) AUFSTEIGEND
+        ========================================================== */
+
+        const firstHeader = headers[0];
+
+        if (firstHeader) {
+
+            const tbody = table.querySelector('tbody') || table;
+            const rows = Array.from(tbody.querySelectorAll('tr:nth-child(n+2)'));
+
+            rows.sort(comparer(0, true));
+            rows.forEach(row => tbody.appendChild(row));
+
+            firstHeader.textContent += ' \u2191';
+            firstHeader.asc = true;
+        }
+
+    });
+
+});
+
+
+/* =========================================================
+   COPY TO CLIPBOARD
+========================================================== */
+
+function copyToClipboard(text) {
+
+    if (!navigator.clipboard) {
+
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+
+        try {
+            document.execCommand('copy');
+            alert("Pfad in Zwischenablage kopiert: " + text);
+        } catch (err) {
+            alert('Kopieren fehlgeschlagen');
+        }
+
+        document.body.removeChild(textArea);
+        return;
+    }
+
+    navigator.clipboard.writeText(text).then(
+        () => alert("Pfad in Zwischenablage kopiert: " + text),
+        () => alert('Kopieren fehlgeschlagen')
+    );
+}
+
+
+/* =========================================================
+   COPY BUTTON EVENT
+========================================================== */
+
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.copy-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            const path = this.getAttribute('data-path');
+            copyToClipboard(path);
+        });
+    });
+});
+
 </script>
 
 </head>

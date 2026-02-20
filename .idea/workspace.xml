@@ -4,19 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="7d186514-fd06-41ff-8b8f-744ab137ced3" name="Changes" comment="Anpassung auf alle Abteilungen">
-      <change afterPath="$PROJECT_DIR$/auslastung.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/fehlteilliste.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/linie.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/static/electric-station.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/static/gantt-chart.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/static/puzzle.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/fehlteilliste.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/linie.html" afterDir="false" />
+    <list default="true" id="7d186514-fd06-41ff-8b8f-744ab137ced3" name="Changes" comment="Änderung Programmierliste &#10;Fixierung Headerzeile">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/programmierliste.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/programmierliste.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/tools.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/tools.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -329,7 +319,15 @@
       <option name="project" value="LOCAL" />
       <updated>1761585854065</updated>
     </task>
-    <option name="localTasksCounter" value="25" />
+    <task id="LOCAL-00025" summary="Änderung Programmierliste &#10;Fixierung Headerzeile">
+      <option name="closed" value="true" />
+      <created>1771595432458</created>
+      <option name="number" value="00025" />
+      <option name="presentableId" value="LOCAL-00025" />
+      <option name="project" value="LOCAL" />
+      <updated>1771595432459</updated>
+    </task>
+    <option name="localTasksCounter" value="26" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -367,6 +365,7 @@
     <MESSAGE value="Aufteilung auf separate Pythonfiles nach Funktion/Seite" />
     <MESSAGE value="Auftragsliste Stat E ausgefiltert; Lieferliste Lager N nicht berücksichtigen" />
     <MESSAGE value="Anpassung auf alle Abteilungen" />
-    <option name="LAST_COMMIT_MESSAGE" value="Anpassung auf alle Abteilungen" />
+    <MESSAGE value="Änderung Programmierliste &#10;Fixierung Headerzeile" />
+    <option name="LAST_COMMIT_MESSAGE" value="Änderung Programmierliste &#10;Fixierung Headerzeile" />
   </component>
 </project>
