@@ -81,7 +81,7 @@ def update_fa_start_from_infra():
                 FROM INFRADB.dbo.FKOPF
                 WHERE Teil = ?
                   AND StartTerm >= GETDATE()
-                  AND Zustand < 40
+                  AND Zustand <= 50
                 ORDER BY StartTerm ASC
             """, (greipl_nr,))
 
