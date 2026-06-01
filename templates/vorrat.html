@@ -4,23 +4,32 @@
     <title>GREIPL-MES</title>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='styles/style.css') }}">
     <style>
-        /* Tab-Bereich */
+        /* Tab-Bereich: Mehrreihig und touch-optimiert */
         .tab-container {
             display: flex;
+            flex-wrap: wrap; /* Erlaubt den Zeilenumbruch für 2-3 Reihen */
             border-bottom: 2px solid #ccc;
+            gap: 4px; /* Gleichmäßiger Abstand zwischen den Kacheln */
+            margin-bottom: 10px;
         }
         .tab {
-            padding: 10px 20px;
+            padding: 12px 16px; /* Etwas mehr Höhe für die Bedienung per Finger am Tablet */
             cursor: pointer;
             background-color: #f1f1f1;
             border: 1px solid #ccc;
-            border-bottom: none;
-            margin-right: 5px;
+            margin-right: 0; /* Abstand wird jetzt über 'gap' geregelt */
+            flex: 1 1 calc(14% - 8px); /* Flexible Breite: Erzeugt ca. 6-7 Tabs pro Reihe */
+            min-width: 140px; /* Garantiert, dass PM-Nummer und Bezeichnung lesbar bleiben */
+            text-align: center;
+            white-space: nowrap; /* Verhindert hässliche Zeilenumbrüche innerhalb des Wortes */
+            overflow: hidden;
+            text-overflow: ellipsis; /* Schneidet zu langen Text sauber mit '...' ab */
         }
         .tab.active {
             background-color: white;
             font-weight: bold;
-            border-top: 2px solid orange;
+            border-top: 3px solid orange;
+            border-bottom: 1px solid white; /* Schließt visuell mit dem aktiven Inhalt ab */
         }
         .tab-content {
             display: none;

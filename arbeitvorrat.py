@@ -6,74 +6,6 @@ from datetime import datetime
 from config import connectionString
 import re
 
-def data_MG():
-    with app.app_context():
-        conn = pyodbc.connect(connectionString)
-
-        Gruppe = "E1"
-        ZustandMin = "30"
-        ZustandMax = "50"
-        DateMin = "2024-01-01 00:00:00"
-        DateMax = "2024-30-11 00:00:00"
-        Typ = "A"  # Auftrag = E; Arbeitsgang = A; Material = M;
-        SQL_QUERY = f"""
-                        SELECT 
-                        FAPOS.Zustand, FAPOS.Auftrag, TEILE.Teil, TEILE.Bez, FAPOS.Mng, FAPOS.StartTermPlan, FAPOS.EndTermPlan, FAPOS.PmNr, ARBPLATZ.Bez, FAPOS.Mng, FAPOS.MngGutIst, FAPOS.Zeit, FAPOS.MngRest
-                        FROM 
-                        INFRADB.dbo.FAPOS FAPOS, INFRADB.dbo.TEILE TEILE, INFRADB.dbo.ARBPLATZ ARBPLATZ
-                        WHERE
-                        FAPOS.Teil = TEILE.Teil AND TEILE.Gruppe = '{Gruppe}' AND FAPOS.Zustand <= '{ZustandMax}' AND FAPOS.Zustand >= '{ZustandMin}' AND FAPOS.PmNr = ARBPLATZ.PmNr AND FAPOS.Typ = '{Typ}'
-                        AND FAPOS.StartTermPlan > '{DateMin}' AND FAPOS.StartTermPlan < '{DateMax}'
-                        ORDER BY
-                        FAPOS.StartTermPlan, FAPOS.EndTermPlan
-                        """
-
-        cursor = conn.cursor()
-        cursor.execute(SQL_QUERY)
-        records = cursor.fetchall()
-        return records
-
-def get_jobs(gruppe, masch_gruppe, zustand_min, zustand_max, date_min, date_max):
-    conn = pyodbc.connect(connectionString)
-    typ = "A"  # Auftrag = E; Arbeitsgang = A; Material = M;
-    if masch_gruppe == 0:  # Wenn keine Maschinengruppe angegeben wurde
-        SQL_QUERY = f"""
-                                SELECT 
-                                FAPOS.Zustand, FAPOS.Auftrag, TEILE.Teil, TEILE.Bez, FAPOS.Mng, FAPOS.StartTermPlan,
-                                FAPOS.EndTermPlan, FAPOS.PmNr, FAPOS.Mng, FAPOS.MngRest, FAPOS.Zeit, FAPOS.Pos,
-                                FAPOS.ZeitIst, FAPOS.Bez AS posbez, ARBPLATZ.Bez AS ArbBez
-                                FROM 
-                                INFRADB.dbo.FAPOS FAPOS, INFRADB.dbo.TEILE TEILE, INFRADB.dbo.ARBPLATZ ARBPLATZ
-                                WHERE
-                                FAPOS.Teil = TEILE.Teil AND TEILE.Gruppe = '{gruppe}' AND FAPOS.Zustand <= '{zustand_max}' AND FAPOS.Zustand >= '{zustand_min}' AND FAPOS.PmNr = ARBPLATZ.PmNr AND FAPOS.Typ = '{typ}'
-                                AND FAPOS.StartTermPlan > '{date_min}' AND FAPOS.StartTermPlan < '{date_max}'
-                                AND NOT (FAPOS.Stat = 'E' AND (FAPOS.Zustand = '10' OR FAPOS.Zustand = '20'))
-                                ORDER BY
-                                FAPOS.StartTermPlan, FAPOS.EndTermPlan, FAPOS.Pos
-                                """
-    else:   # Nach Maschinengruppe filtern
-        SQL_QUERY = f"""
-                                SELECT 
-                                FAPOS.Zustand, FAPOS.Auftrag, TEILE.Teil, TEILE.Bez, FAPOS.Mng, FAPOS.StartTermPlan,
-                                FAPOS.EndTermPlan, FAPOS.PmNr, FAPOS.Mng, FAPOS.MngRest, FAPOS.Zeit, FAPOS.Pos,
-                                FAPOS.ZeitIst, FAPOS.Bez AS posbez, ARBPLATZ.Bez AS ArbBez
-                                FROM 
-                                INFRADB.dbo.FAPOS FAPOS, INFRADB.dbo.TEILE TEILE, INFRADB.dbo.ARBPLATZ ARBPLATZ
-                                WHERE
-                                FAPOS.Teil = TEILE.Teil AND TEILE.Gruppe = '{gruppe}' AND FAPOS.Zustand <= '{zustand_max}' AND FAPOS.Zustand >= '{zustand_min}' AND FAPOS.PmNr = ARBPLATZ.PmNr AND FAPOS.Typ = '{typ}'
-                                AND FAPOS.StartTermPlan > '{date_min}' AND FAPOS.StartTermPlan < '{date_max}' AND FAPOS.PmNr = '{masch_gruppe}'
-                                AND NOT (FAPOS.Stat = 'E' AND (FAPOS.Zustand = '10' OR FAPOS.Zustand = '20'))
-                                ORDER BY
-                                FAPOS.StartTermPlan, FAPOS.EndTermPlan, FAPOS.Pos
-                                """
-    cursor = conn.cursor()
-    cursor.execute(SQL_QUERY)
-    records = cursor.fetchall()
-    columns = [column[0] for column in cursor.description]
-    jobs = [dict(zip(columns, row)) for row in records]
-    return jobs
-
-
 def get_delay(jobs):
     conn = pyodbc.connect(connectionString)
     typ = "A"  # Auftrag = E; Arbeitsgang = A; Material = M;
@@ -153,12 +85,11 @@ def get_job_ahead(jobs):
     conn.close()
     return jobs
 
-
 @app.route('/vorrat')
 def vorrat():
     gruppe = session.get('abteilung', 'E1')  # z.B. 'E1', 'M1', 'M4'
 
-    zustand_min = "20"
+    zustand_min = "30"
     zustand_max = "50"
     date_min = "2010-01-01 00:00:00"
     date_max = "2099-12-31 00:00:00"
@@ -191,8 +122,7 @@ def vorrat():
             FROM INFRADB.dbo.FAPOS FAPOS
             JOIN INFRADB.dbo.TEILE TEILE ON FAPOS.Teil = TEILE.Teil
             JOIN INFRADB.dbo.ARBPLATZ ARBPLATZ ON FAPOS.PmNr = ARBPLATZ.PmNr
-            WHERE TEILE.Gruppe = '{gruppe}'
-              AND FAPOS.Typ = '{typ}'
+            WHERE FAPOS.Typ = '{typ}'
               AND FAPOS.Zustand BETWEEN '{zustand_min}' AND '{zustand_max}'
               AND TRY_CONVERT(datetime, FAPOS.StartTermPlan, 120) IS NOT NULL
               AND NOT (FAPOS.Stat = 'E' AND FAPOS.Zustand IN ('10','20'))
@@ -231,13 +161,13 @@ def vorrat():
     elif gruppe == "M2":
         # Maschinengruppenliste erstellen:
         # 1 Nicht in Blacklist
-        # 2 Beginnt mit "2440"
+        # 2 Beginnt mit "14"
         gruppen_liste = [
             {"pmnr": row[0], "bez": row[1]}
             for row in maschinen
             if row[0]  # nicht leer
                # and row[0] not in blacklist  # nicht in Blacklist
-               and str(row[0]).startswith("1")  # beginnt mit 2440
+               and str(row[0]).startswith("14")  # beginnt mit 1
         ]
     elif gruppe == "M4":
         # Maschinengruppenliste erstellen:
@@ -314,8 +244,7 @@ def vorrat():
                 FROM INFRADB.dbo.FAPOS FAPOS
                 JOIN INFRADB.dbo.TEILE TEILE ON FAPOS.Teil = TEILE.Teil
                 JOIN INFRADB.dbo.ARBPLATZ ARBPLATZ ON FAPOS.PmNr = ARBPLATZ.PmNr
-                WHERE TEILE.Gruppe = '{gruppe}'
-                  AND FAPOS.Typ = '{typ}'
+                WHERE FAPOS.Typ = '{typ}'
                   AND FAPOS.PmNr = '{pmnr}'
                   AND FAPOS.Zustand BETWEEN '{zustand_min}' AND '{zustand_max}'
                   AND TRY_CONVERT(datetime, FAPOS.StartTermPlan, 120) IS NOT NULL
