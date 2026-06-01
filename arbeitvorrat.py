@@ -2,7 +2,7 @@ import pyodbc
 from model import app, db, Personal, StundenKW, WorkLoad, AuftragInfo, MIN_TEMP_FILE, MAX_TEMP_FILE, ProgrammierListe
 from flask import render_template, redirect, request, Flask, render_template, jsonify, session
 import datetime as dt
-from datetime import datetime
+from datetime import datetime, timedelta
 from config import connectionString
 import re
 
@@ -91,8 +91,16 @@ def vorrat():
 
     zustand_min = "30"
     zustand_max = "50"
-    date_min = "2010-01-01 00:00:00"
-    date_max = "2099-12-31 00:00:00"
+
+    # Native Python datetime-Objekte erzeugen (Keine Strings!)
+    date_min_obj = datetime(2010, 1, 1, 0, 0, 0)
+
+    heute = datetime.now()
+    date_max_obj = heute + timedelta(days=42)  # Heute + 6 Wochen
+    # Uhrzeit auf das Ende des Tages setzen
+    date_max_obj = date_max_obj.replace(hour=23, minute=59, second=59)
+
+
     typ = "A"
 
     # Verbindung herstellen
@@ -107,12 +115,12 @@ def vorrat():
             JOIN INFRADB.dbo.ARBPLATZ ARBPLATZ ON FAPOS.PmNr = ARBPLATZ.PmNr
             WHERE (TEILE.Gruppe IS NOT NULL)
               AND FAPOS.Typ = '{typ}'
+              AND FAPOS.StartTermPlan BETWEEN ? AND ?
               AND FAPOS.Zustand BETWEEN '{zustand_min}' AND '{zustand_max}'
               AND TRY_CONVERT(datetime, FAPOS.StartTermPlan, 120) IS NOT NULL
               AND NOT (FAPOS.Stat = 'E' AND FAPOS.Zustand IN ('10','20'))
             ORDER BY FAPOS.PmNr
         """
-        cursor.execute(SQL_MG)
         maschinen = cursor.fetchall()
         print(f"QS liefert {len(maschinen)} Maschinengruppen")
     else:
@@ -123,13 +131,14 @@ def vorrat():
             JOIN INFRADB.dbo.TEILE TEILE ON FAPOS.Teil = TEILE.Teil
             JOIN INFRADB.dbo.ARBPLATZ ARBPLATZ ON FAPOS.PmNr = ARBPLATZ.PmNr
             WHERE FAPOS.Typ = '{typ}'
+              AND FAPOS.StartTermPlan BETWEEN ? AND ?
               AND FAPOS.Zustand BETWEEN '{zustand_min}' AND '{zustand_max}'
               AND TRY_CONVERT(datetime, FAPOS.StartTermPlan, 120) IS NOT NULL
               AND NOT (FAPOS.Stat = 'E' AND FAPOS.Zustand IN ('10','20'))
             ORDER BY FAPOS.PmNr
         """
-        cursor.execute(SQL_MG)
-        maschinen = cursor.fetchall()
+    cursor.execute(SQL_MG, (date_min_obj, date_max_obj))
+    maschinen = cursor.fetchall()
 
 
 # Blacklist: diese Maschinengruppen sollen ignoriert werden
@@ -227,6 +236,7 @@ def vorrat():
                               AND FAPOS.Typ = '{typ}'
                               AND FAPOS.PmNr = '{pmnr}'
                               AND FAPOS.Zustand BETWEEN '{zustand_min}' AND '{zustand_max}'
+                              AND FAPOS.StartTermPlan BETWEEN ? AND ?
                               AND TRY_CONVERT(datetime, FAPOS.StartTermPlan, 120) IS NOT NULL
                               AND NOT (FAPOS.Stat = 'E' AND FAPOS.Zustand IN ('10','20'))
                             ORDER BY StartTermPlan, EndTermPlan, Pos
@@ -246,13 +256,14 @@ def vorrat():
                 JOIN INFRADB.dbo.ARBPLATZ ARBPLATZ ON FAPOS.PmNr = ARBPLATZ.PmNr
                 WHERE FAPOS.Typ = '{typ}'
                   AND FAPOS.PmNr = '{pmnr}'
+                  AND FAPOS.StartTermPlan BETWEEN ? AND ?
                   AND FAPOS.Zustand BETWEEN '{zustand_min}' AND '{zustand_max}'
                   AND TRY_CONVERT(datetime, FAPOS.StartTermPlan, 120) IS NOT NULL
                   AND NOT (FAPOS.Stat = 'E' AND FAPOS.Zustand IN ('10','20'))
                 ORDER BY StartTermPlan, EndTermPlan, Pos
             """
 
-        cursor.execute(SQL_JOBS)
+        cursor.execute(SQL_JOBS, (date_min_obj, date_max_obj))
         records = cursor.fetchall()
         columns = [c[0] for c in cursor.description]
         jobs = [dict(zip(columns, row)) for row in records]
