@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles/style.css') }}">
+    <title>{{ selected_team or 'Teamleiter-Kapazitätsplanung' }}</title>
+    <style>
+        :root { --navy:#0b2945; --blue:#1a60a1; --line:#dce5ed; --soft:#f5f8fb; --green:#138a56; --amber:#c27b00; --red:#c0392b; }
+        /* Nur der sichtbare Seitencontainer nutzt border-box; der Header bleibt wie bei Tools. */
+        main.container,
+        main.container * { box-sizing:border-box; }
+        body { margin:0; background:#f4f4f4; color:#172b3a; font-family:Arial, sans-serif; overflow-x:hidden; }
+        main.container { max-width:1400px; margin:0 auto; padding:20px; background-color:#ffffff; border-radius:5px; box-shadow:0 2px 5px rgba(0, 0, 0, 0.2); box-sizing:content-box; text-align:left; }
+        /* Header auf dieser Seite exakt wie bei Tools berechnen. */
+        body > .header { position:relative; left:0; width:100%; }
+        body > .header > .header-content { width:auto; max-width:1440px; margin:0 auto; padding:0 50px; }
+        body > .header .navbar { width:100%; margin:0; transform:none; }
+        h1,h2,h3 { color:var(--navy); }
+        h1 { margin:15px; font-size:40px; text-align:left; }
+        h2 { margin-top:0; padding-top:20px; padding-bottom:20px; font-size:20px; text-align:left; }
+        p { color:#607384; }
+        .intro { margin:0 0 14px; }
+        .team-nav { display:flex; flex-wrap:wrap; gap:7px; margin:0 0 22px; }
+        .team-nav a { padding:7px 10px; border:1px solid #c7d4df; border-radius:5px; background:white; color:var(--blue); text-decoration:none; font-size:.84rem; font-weight:700; }
+        .team-nav a.active, .team-nav a:hover { background:var(--blue); border-color:var(--blue); color:white; }
+        .toolbar, .form-grid, .capacity-grid { display:grid; gap:12px; }
+        .toolbar { grid-template-columns:120px 110px auto; align-items:end; margin-bottom:22px; }
+        label { display:block; color:#425767; font-size:.82rem; font-weight:700; }
+        input, select, button { width:100%; margin-top:5px; padding:9px 10px; border:1px solid #c7d4df; border-radius:5px; font:inherit; }
+        button { cursor:pointer; background:white; color:var(--blue); font-weight:700; }
+        button.primary { border-color:var(--blue); background:var(--blue); color:white; }
+        button.danger { color:var(--red); border-color:#e2b5af; }
+        button:hover { filter:brightness(1.04); }
+        .panel { margin-bottom:20px; padding:18px; border:1px solid var(--line); border-radius:8px; background:white; box-shadow:0 3px 12px rgba(11,41,69,.06); }
+        .capacity-grid { grid-template-columns:repeat(4, minmax(180px,1fr)); }
+        .capacity-card { padding:14px; border:1px solid var(--line); border-radius:7px; background:var(--soft); }
+        .capacity-card strong { display:block; margin:5px 0; color:var(--navy); font-size:1.45rem; }
+        .capacity-card .available { color:var(--green); }
+        .capacity-card small { color:#607384; }
+        .form-grid { grid-template-columns:2fr 1fr 1fr auto; align-items:end; }
+        .employee-list { display:grid; gap:9px; }
+        .employee-row { display:grid; grid-template-columns:1fr 2fr 1.3fr 1fr 1fr auto auto; gap:9px; align-items:center; padding:10px; border-bottom:1px solid var(--line); }
+        .employee-row:first-child { color:#607384; font-size:.76rem; font-weight:800; text-transform:uppercase; }
+        .employee-row:not(:first-child) { color:#172b3a; }
+        .muted { color:#8b9aa6; }
+        .attendance-table-wrap { overflow:auto; }
+        table { width:100%; min-width:850px; border-collapse:collapse; }
+        th,td { padding:9px 8px; border-bottom:1px solid var(--line); text-align:left; vertical-align:middle; }
+        th { background:#eaf1f6; color:var(--navy); font-size:.76rem; text-transform:uppercase; }
+        td input, td select { margin:0; }
+        .hint { margin:8px 0 0; font-size:.8rem; }
+        .checkin-panel { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; margin-bottom:20px; padding:14px 18px; border:1px solid #efc875; border-radius:8px; background:#fffaf0; }
+        .checkin-panel.checked { border-color:#9bd5b7; background:#f0fbf5; }
+        .checkin-status { color:#8a5a00; font-weight:800; }
+        .checkin-panel.checked .checkin-status { color:var(--green); }
+        .checkin-status small { display:block; margin-top:3px; color:#607384; font-weight:400; }
+        .checkin-actions { display:flex; flex-wrap:wrap; gap:8px; }
+        .checkin-actions button { width:auto; min-width:155px; margin:0; }
+        .checkin-actions button.active { background:var(--navy); border-color:var(--navy); color:white; }
+        .employee-row.checked-in { border-left:4px solid var(--green); background:#f0fbf5; }
+        .employee-row.changed { border-left:4px solid var(--blue); background:#eef6fc; }
+        .employee-row.unchecked { border-left:4px solid #efc875; background:#fffaf0; }
+        .week-title { margin:0; color:var(--navy); font-size:clamp(1.8rem, 5vw, 3rem); letter-spacing:-.02em; }
+        .week-navigation { display:flex; align-items:center; justify-content:center; gap:18px; margin:0 0 22px; padding:14px 12px; border:1px solid var(--line); border-radius:10px; background:white; box-shadow:0 3px 12px rgba(11,41,69,.06); }
+        .week-navigation button { width:58px; height:58px; margin:0; padding:0; border:2px solid var(--blue); border-radius:50%; background:#eef6fc; color:var(--navy); font-size:2rem; line-height:1; }
+        .week-navigation button:hover, .week-navigation button:focus-visible { background:var(--blue); color:white; }
+        .week-navigation button:focus-visible { outline:3px solid #8ebfe4; outline-offset:3px; }
+        .week-navigation-label { display:block; color:var(--navy); font-size:clamp(1.45rem, 4vw, 2.25rem); font-weight:900; text-align:center; }
+        .week-navigation-caption { display:block; margin-top:3px; color:#607384; font-size:.84rem; text-align:center; }
+
+        .team-summary { display:flex; flex-wrap:wrap; gap:10px 22px; margin:0 0 18px; padding:12px 14px; border-left:5px solid var(--blue); border-radius:7px; background:#eef6fc; color:#425767; font-size:1.05rem; font-weight:700; }
+        .team-summary strong { color:var(--navy); font-size:1.25rem; }
+        .team-summary .summary-label { color:#607384; font-size:.76rem; font-weight:800; text-transform:uppercase; letter-spacing:.04em; }
+        .employee-tiles { display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:14px; }
+        .employee-tile { min-height:190px; padding:16px; border:2px solid #efc875; border-radius:10px; background:#fffaf0; box-shadow:0 3px 12px rgba(11,41,69,.06); transition:transform .12s ease, box-shadow .12s ease; }
+        .employee-tile:hover { transform:translateY(-1px); box-shadow:0 6px 16px rgba(11,41,69,.10); }
+        .employee-tile.checked-in { border-color:#9bd5b7; background:#f0fbf5; }
+        .employee-tile.absent { border-color:#8ebfe4; background:#eef6fc; }
+        .employee-tile.vacation { border-color:#d6a11d; background:#fff8df; }
+        .employee-tile.sick { border-color:var(--red); background:#fff0ee; }
+        .employee-tile.unchecked { border-color:#efc875; background:#fffaf0; }
+        .employee-tile-head { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
+        .employee-tile-name { color:var(--navy); font-size:1.1rem; font-weight:800; }
+        .employee-tile-team { margin-top:4px; color:#607384; font-size:.78rem; }
+        .employee-tile-status { margin:15px 0 12px; color:#8a5a00; font-size:.9rem; font-weight:800; }
+        .employee-tile.checked-in .employee-tile-status { color:var(--green); }
+        .employee-tile.absent .employee-tile-status { color:var(--blue); }
+        .employee-tile.vacation .employee-tile-status { color:#a97900; }
+        .employee-tile.sick .employee-tile-status { color:var(--red); }
+        .tile-hours { display:flex; align-items:center; gap:8px; margin:12px 0; color:#425767; font-size:.86rem; font-weight:700; }
+        .tile-hours input { width:105px; margin:0; font-size:1rem; font-weight:700; }
+        .tile-hours span { white-space:nowrap; }
+        .tile-actions { display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; }
+        .tile-actions button { min-height:46px; margin:0; font-size:.9rem; }
+        .tile-actions .active-present { border-color:var(--green); background:var(--green); color:white; }
+        .tile-actions .active-vacation { border-color:#d6a11d; background:#d6a11d; color:white; }
+        .tile-actions .active-sick { border-color:var(--red); background:var(--red); color:white; }
+        .attendance-empty { padding:20px; border:1px dashed var(--line); border-radius:8px; color:#607384; text-align:center; }
+        .settings-toggle { display:flex; justify-content:space-between; align-items:center; gap:12px; cursor:pointer; }
+        .settings-toggle button { width:auto; margin:0; }
+        .week-readonly-note { margin:0 0 12px; padding:10px 12px; border-left:4px solid #efc875; border-radius:5px; background:#fffaf0; color:#8a5a00; font-weight:700; }
+        .employee-tile.read-only { opacity:.86; }
+        .employee-tile.read-only button, .employee-tile.read-only input { cursor:not-allowed; }
+        .employee-tile.read-only button:disabled, .employee-tile.read-only input:disabled { opacity:.62; pointer-events:none; }
+        .week-read-only button:disabled, .week-read-only input:disabled, .week-read-only select:disabled { cursor:not-allowed; opacity:.62; }
+        .week-read-only button:disabled { pointer-events:none; }
+        .daily-checkin { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; margin:18px 0 0; padding:14px 16px; border:1px solid #efc875; border-radius:8px; background:#fffaf0; }
+        .daily-checkin.checked { border-color:#9bd5b7; background:#f0fbf5; }
+        .daily-checkin-copy strong { display:block; color:var(--navy); }
+        .daily-checkin-copy small { display:block; margin-top:3px; color:#607384; }
+        .daily-checkin button { width:auto; min-width:190px; margin:0; }
+        .checkin-legend { display:flex; flex-wrap:wrap; gap:12px; margin:0 0 10px; color:#607384; font-size:.8rem; }
+        .checkin-legend span::before { content:''; display:inline-block; width:10px; height:10px; margin-right:5px; border-radius:2px; background:#ccc; }
+        .checkin-legend .legend-green::before { background:#9bd5b7; }
+        .checkin-legend .legend-blue::before { background:#8ebfe4; }
+        .checkin-legend .legend-yellow::before { background:#efc875; }
+        .toast { position:fixed; right:20px; bottom:20px; display:none; padding:11px 15px; border-radius:6px; background:var(--navy); color:white; box-shadow:0 5px 18px rgba(0,0,0,.2); }
+        @media(max-width:900px) { .capacity-grid { grid-template-columns:repeat(2,1fr); } .employee-row { grid-template-columns:1fr 1fr; } .employee-row:first-child { display:none; } }
+        @media(max-width:560px) { .toolbar,.form-grid,.capacity-grid { grid-template-columns:1fr; } }
+    </style>
+</head>
+<body>
+{% include 'header.html' %}
+<main class="container">
+    <h1>{% if selected_team %}{{ selected_team }}{% else %}Teamleiter-Kapazitätsplanung{% endif %}</h1>
+    <p class="intro">{% if selected_team %}Anwesenheit im Team pflegen und für die ausgewählte Woche bestätigen.{% else %}Bitte zuerst ein Team auswählen.{% endif %}</p>
+    <nav class="team-nav" aria-label="Bereiche">
+        <a href="{{ url_for('teamleiter_master') }}">Übersicht</a>
+        {% for team in teams %}<a class="{% if team == selected_team %}active{% endif %}" href="{{ url_for('teamleiter_kapa_team', team_name=team) }}">{{ team }}</a>{% endfor %}
+    </nav>
+
+    <section class="week-navigation" aria-label="Kalenderwoche wechseln">
+        <button id="previousWeek" type="button" aria-label="Vorherige Kalenderwoche">‹</button>
+        <div>
+            <strong class="week-navigation-label">KW {{ '%02d'|format(selected_week) }}</strong>
+            <span class="week-navigation-caption">{{ selected_year }} · Mit den Pfeilen die Kalenderwoche wechseln</span>
+        </div>
+        <button id="nextWeek" type="button" aria-label="Nächste Kalenderwoche">›</button>
+    </section>
+
+    {% if selected_team %}
+    <section class="panel">
+        <div id="teamSummary" class="team-summary" aria-live="polite"></div>
+        <div class="checkin-legend"><span class="legend-green">anwesend</span><span class="legend-blue">abwesend oder abweichend</span><span class="legend-yellow">noch nicht geprüft</span></div>
+        <p id="weekReadonlyNote" class="week-readonly-note" hidden>Diese Kalenderwoche ist schreibgeschützt. Nur die aktuelle Woche kann bearbeitet werden.</p>
+        <div id="employeeTiles" class="employee-tiles"></div>
+        <div id="dailyCheckin" class="daily-checkin" hidden>
+            <div class="daily-checkin-copy"><strong id="dailyCheckinTitle"></strong><small id="dailyCheckinMeta"></small></div>
+            <button id="dailyCheckinButton" class="primary" type="button"></button>
+        </div>
+        <p class="hint">Die Mitarbeiterdaten werden täglich gepflegt. Die Shopfloor-Meldung wird separat für den heutigen Tag abgegeben; verpflichtend ist sie montags und mittwochs.</p>
+    </section>
+
+    <section class="panel">
+        <details>
+            <summary class="settings-toggle"><strong>Mitarbeiter hinzufügen und Wochenstunden pflegen</strong><button type="button">Öffnen</button></summary>
+            <div style="padding-top:16px">
+                <form id="employeeForm" class="form-grid">
+                    <input id="employeeId" type="hidden">
+                    <input id="employeeWeek" type="hidden" value="{{ selected_year }}-KW-{{ '%02d'|format(selected_week) }}">
+                    <label>Personalnummer<input id="employeeNumber" type="number" min="1" max="999999" step="1" required></label>
+                    <label>Name<input id="employeeName" required></label>
+                    <label>Team<select id="employeeTeam" required disabled>{% for team in teams %}<option value="{{ team }}" {% if team == selected_team %}selected{% endif %}>{{ team }}</option>{% endfor %}</select></label>
+                    <label>Wochenstunden<input id="employeeHours" type="number" min="0.1" max="80" step="0.1" value="40" required></label>
+                    <button class="primary" type="submit">Mitarbeiter speichern</button>
+                </form>
+                <p class="hint">Deaktivierte Mitarbeiter bleiben in der Historie erhalten und werden nicht mehr in die Kapazität eingerechnet.</p>
+                <div id="employeeList" class="employee-list"></div>
+            </div>
+        </details>
+    </section>
+    {% else %}
+    <section class="panel"><p>Wähle oben ein Team aus, um die Mitarbeiterkacheln zu öffnen.</p></section>
+    {% endif %}
+</main>
+<div id="toast" class="toast"></div>
+<script>
+(function () {
+    const selectedTeam = {{ selected_team|tojson }};
+    const currentIsoYear = {{ current_iso_year }};
+    const currentIsoWeek = {{ current_iso_week }};
+    const isCurrentWeek = {{ 'true' if is_current_week else 'false' }};
+    let state = {{ data|tojson }};
+    const $ = id => document.getElementById(id);
+    const selectedYear = {{ selected_year }};
+    const selectedWeek = {{ selected_week }};
+    const weekKey = () => `${selectedYear}-KW-${String(selectedWeek).padStart(2, '0')}`;
+    function toast(message) { const el=$('toast'); el.textContent=message; el.style.display='block'; setTimeout(()=>el.style.display='none',2200); }
+    async function save(payload) {
+        const response=await fetch('/api/teamleiter-kapa',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+        const result=await response.json(); if(!response.ok || !result.success) throw new Error(result.error || 'Speichern fehlgeschlagen.');
+        state=result.data; render(); toast('Gespeichert');
+    }
+    function activeEmployees() { return state.employees.filter(e=>e.active!==false && (!selectedTeam || e.team===selectedTeam)); }
+    function renderEmployees() {
+        const list=$('employeeList'); if(!list) return; list.innerHTML='';
+        const form=$('employeeForm'); if(form) { form.classList.toggle('week-read-only', !isCurrentWeek); form.querySelectorAll('input:not([type="hidden"]), select, button[type="submit"]').forEach(control=>control.disabled=!isCurrentWeek); }
+        const head=document.createElement('div'); head.className='employee-row'; head.innerHTML='<span>Personalnummer</span><span>Name</span><span>Team</span><span>Wochenstunden</span><span>Status</span><span></span><span></span>'; list.appendChild(head);
+        state.employees.filter(e=>!selectedTeam || e.team===selectedTeam).forEach(employee=>{
+            const row=document.createElement('div'); row.className='employee-row';
+            row.innerHTML=`<span>${escapeHtml(employee.personnel_number ?? '')}</span><span>${escapeHtml(employee.name)}</span><span>${escapeHtml(employee.team)}</span><span>${Number(employee.weekly_hours).toFixed(1)} h</span><span>${employee.active===false?'deaktiviert':'aktiv'}</span><span><button type="button" data-edit="${employee.id}">Bearbeiten</button></span><span>${employee.active===false?'':'<button class="danger" type="button" data-remove="'+employee.id+'">Entfernen</button>'}</span>`;
+            list.appendChild(row);
+        });
+        list.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>{
+            if(!isCurrentWeek) { toast('Nur die aktuelle Kalenderwoche kann bearbeitet werden.'); return; }
+            const e=state.employees.find(x=>String(x.id)===String(b.dataset.edit));
+            $('employeeId').value=e.id; $('employeeNumber').value=e.personnel_number ?? ''; $('employeeName').value=e.name; $('employeeTeam').value=e.team; $('employeeHours').value=e.weekly_hours;
+        });
+        list.querySelectorAll('[data-remove]').forEach(b=>b.onclick=()=>{
+            if(!isCurrentWeek) { toast('Nur die aktuelle Kalenderwoche kann bearbeitet werden.'); return; }
+            save({action:'remove_employee',week:weekKey(),id:b.dataset.remove}).catch(e=>alert(e.message));
+        });
+        if(!isCurrentWeek) list.querySelectorAll('button[data-edit],button[data-remove]').forEach(b=>{ b.disabled=true; });
+    }
+    function renderSummary() {
+        const target=$('teamSummary'); if(!target) return;
+        const employees=activeEmployees(); const entries=(state.attendance&&state.attendance[weekKey()])||{};
+        const present=employees.filter(e=>(entries[String(e.id)]||{}).status==='anwesend');
+        const presentHours=present.reduce((sum,e)=>sum+Number((entries[String(e.id)]||{}).hours ?? e.weekly_hours ?? 0),0);
+        const totalHours=employees.reduce((sum,e)=>sum+Number(e.weekly_hours||0),0);
+        target.innerHTML=`<span><span class="summary-label">Anwesenheit</span><br><strong>${present.length}/${employees.length} MA</strong> anwesend</span><span><span class="summary-label">Wochenstunden</span><br><strong>${presentHours.toFixed(1)}/${totalHours.toFixed(1)} h</strong></span>`;
+    }
+    function renderDailyCheckin() {
+        const box=$('dailyCheckin'); if(!box || !selectedTeam) return;
+        const button=$('dailyCheckinButton'); const title=$('dailyCheckinTitle'); const meta=$('dailyCheckinMeta');
+        if(!isCurrentWeek) { box.hidden=true; return; }
+        const now=new Date(); const dayNames=['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+        const day=dayNames[now.getDay()];
+        const todayKey=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+        const saved=((state.daily_checkins||{})[todayKey]||{})[selectedTeam]||{};
+        const entry=saved.checkin||{}; const checked=Boolean(entry.checked_at);
+        box.classList.toggle('checked', checked);
+        title.textContent=checked ? 'Tagesmeldung abgegeben' : (day==='monday'||day==='wednesday' ? 'Pflichtmeldung für heute' : 'Optionale Tagesmeldung');
+        meta.textContent=checked ? ('Abgegeben am '+entry.checked_at+(entry.checked_by?' · '+entry.checked_by:'')) : 'Gilt nur für heute; die nächste Meldung startet automatisch am nächsten Arbeitstag.';
+        button.textContent=checked ? 'Meldung erneut abgeben' : 'Meldung für heute abgeben';
+        button.disabled=false;
+        button.onclick=()=>save({action:'save_checkin',week:weekKey(),team:selectedTeam,day:day}).catch(e=>alert(e.message));
+    }
+    function renderAttendance() {
+        const tiles=$('employeeTiles'); if(!tiles) return; tiles.innerHTML=''; const entries=(state.attendance&&state.attendance[weekKey()])||{}; const employees=activeEmployees();
+        const note=$('weekReadonlyNote'); if(note) note.hidden=isCurrentWeek;
+        if(!employees.length){ tiles.innerHTML='<div class="attendance-empty">Noch keine Mitarbeiter für dieses Team angelegt.</div>'; return; }
+        employees.forEach(e=>{
+            const entry=entries[String(e.id)]||{}; const status=entry.status||'nicht geprüft'; const isPresent=status==='anwesend'; const isVacation=status==='urlaub'; const isSick=status==='krank'; const isAbsent=['urlaub','krank','schulung','sonstiges'].includes(status);
+            const row=document.createElement('article'); row.className='employee-tile '+(isPresent?'checked-in':isVacation?'vacation':isSick?'sick':isAbsent?'absent':'unchecked')+(isCurrentWeek?'':' read-only'); const label=isPresent?'Anwesend':isVacation?'Urlaub':isSick?'Krank':isAbsent?(status.charAt(0).toUpperCase()+status.slice(1)):'Noch nicht geprüft';
+            const hours=entry.hours===undefined?Number(e.weekly_hours):Number(entry.hours);
+            const controls=isCurrentWeek ? `<label class="tile-hours"><span>Kapazität:</span><input data-hours="${e.id}" ${isCurrentWeek?'':'disabled'} type="number" min="0" max="${Number(e.weekly_hours)}" step="0.1" value="${hours}"><span>h</span></label><div class="tile-actions"><button type="button" ${isCurrentWeek?'':'disabled'} class="${isPresent?'active-present':''}" data-status="anwesend" data-employee="${e.id}">Anwesend</button><button type="button" ${isCurrentWeek?'':'disabled'} class="${isVacation?'active-vacation':''}" data-status="urlaub" data-employee="${e.id}">Urlaub</button><button type="button" ${isCurrentWeek?'':'disabled'} class="${isSick?'active-sick':''}" data-status="krank" data-employee="${e.id}">Krank</button></div>` : `<div class="tile-hours"><span>Kapazität:</span><strong>${hours.toFixed(1)} h</strong></div>`;
+            row.innerHTML=`<div class="employee-tile-head"><div><div class="employee-tile-name">${escapeHtml(e.name)}</div><div class="employee-tile-team">${escapeHtml(e.team)} · ${Number(e.weekly_hours).toFixed(1)} h/Woche</div></div><span>${isPresent?'✓':isAbsent?'!':'?'}</span></div><div class="employee-tile-status">${label}</div>${controls}`;
+            tiles.appendChild(row);
+        });
+        if(!isCurrentWeek) return;
+        tiles.querySelectorAll('[data-status]').forEach(b=>b.onclick=()=>{
+            if(!isCurrentWeek) return;
+            const employeeId=b.dataset.employee;
+            const employee=state.employees.find(e=>String(e.id)===String(employeeId));
+            const status=b.dataset.status;
+            const hours=status==='anwesend' ? Number(employee.weekly_hours||0) : 0;
+            const input=tiles.querySelector(`[data-hours="${employeeId}"]`);
+            if(input) input.value=hours;
+            save({action:'save_attendance',employee_id:employeeId,week:weekKey(),status:status,hours:hours}).catch(e=>alert(e.message));
+        });
+        tiles.querySelectorAll('[data-hours]').forEach(input=>input.onchange=()=>{
+            if(!isCurrentWeek) return;
+            const employeeId=input.dataset.hours;
+            const current=(entries[String(employeeId)]||{}).status || 'anwesend';
+            save({action:'save_attendance',employee_id:employeeId,week:weekKey(),status:current,hours:input.value}).catch(e=>alert(e.message));
+        });
+    }
+    function escapeHtml(value){return String(value??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
+    function render(){ renderEmployees(); renderSummary(); renderAttendance(); renderDailyCheckin(); }
+    const form=$('employeeForm'); if(form) form.onsubmit=e=>{
+        e.preventDefault();
+        if(!isCurrentWeek) { toast('Nur die aktuelle Kalenderwoche kann bearbeitet werden.'); return; }
+        save({action:'save_employee',week:weekKey(),employee:{id:$('employeeId').value,personnel_number:$('employeeNumber').value,name:$('employeeName').value,team:selectedTeam,weekly_hours:$('employeeHours').value,active:true}}).then(()=>{e.target.reset();$('employeeHours').value=40;$('employeeId').value='';}).catch(err=>alert(err.message));
+    };
+    function changeWeek(offset) {
+        const current = new Date(selectedYear, 0, 4);
+        const monday = new Date(current);
+        monday.setDate(current.getDate() - ((current.getDay() + 6) % 7) + (selectedWeek - 1) * 7 + offset * 7);
+        const isoYear = monday.getFullYear();
+        const firstThursday = new Date(isoYear, 0, 4);
+        const targetWeek = Math.ceil((((monday - new Date(isoYear, 0, 1)) / 86400000) + ((new Date(isoYear, 0, 1).getDay() + 6) % 7) + 1) / 7);
+        window.location.search='?year='+encodeURIComponent(isoYear)+'&week='+encodeURIComponent(targetWeek);
+    }
+    $('previousWeek').onclick=()=>changeWeek(-1);
+    $('nextWeek').onclick=()=>changeWeek(1);
+    const settingsForm=$('settingsForm');
+    if(settingsForm) settingsForm.querySelectorAll('input, select, button').forEach(control=>control.disabled=!isCurrentWeek);
+    render();
+})();
+</script>
+</body>
+</html>

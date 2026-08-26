@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles/style.css') }}">
+    <title>Übersicht · Teamleiter-Meldungen</title>
+    <style>
+        :root { --navy:#0b2945; --blue:#1a60a1; --line:#dce5ed; --soft:#f5f8fb; --green:#138a56; --amber:#c27b00; --red:#c0392b; --ink:#172b3a; --muted:#607384; }
+        /* Nur der sichtbare Seitencontainer und sein Inhalt nutzen border-box. */
+        main.container,
+        main.container * { box-sizing:border-box; }
+        body { font-family:Arial, sans-serif; background-color:#f4f4f4; margin:0; padding:0; color:#172b3a; }
+        /* Exakt dieselbe Container-Regel wie auf den bestehenden Tools-Seiten. */
+        main.container { max-width:1400px; margin:0 auto; padding:20px; background-color:#ffffff; border-radius:5px; box-shadow:0 2px 5px rgba(0, 0, 0, 0.2); box-sizing:content-box; text-align:left; }
+        h1,h2,h3 { color:var(--navy); }
+        h1 { margin:15px; font-size:40px; text-align:left; }
+        h2 { margin-top:0; padding-top:20px; padding-bottom:20px; font-size:20px; text-align:left; }
+        p { color:var(--muted); }
+        .intro { margin:0 0 14px; text-align:left; }
+        .team-nav { display:flex; flex-wrap:wrap; justify-content:flex-start; gap:7px; margin:0 0 22px; }
+        .team-nav a { padding:7px 10px; border:1px solid #c7d4df; border-radius:5px; background:white; color:var(--blue); text-decoration:none; font-size:.84rem; font-weight:700; }
+        .team-nav a.active, .team-nav a:hover { background:var(--blue); border-color:var(--blue); color:white; }
+        .week-navigation { display:flex; align-items:center; justify-content:center; gap:18px; margin:0 0 20px; padding:14px 12px; border:1px solid var(--line); border-radius:10px; background:white; box-shadow:0 3px 12px rgba(11,41,69,.06); }
+        .week-navigation button { width:52px; height:52px; margin:0; padding:0; border:2px solid var(--blue); border-radius:50%; background:#eef6fc; color:var(--navy); font-size:1.9rem; line-height:1; cursor:pointer; }
+        .week-navigation button:hover, .week-navigation button:focus-visible { background:var(--blue); color:white; }
+        .week-navigation button:focus-visible { outline:3px solid #8ebfe4; outline-offset:3px; }
+        .week-label { display:block; color:var(--navy); font-size:clamp(1.45rem, 4vw, 2.25rem); font-weight:900; text-align:center; }
+        .week-caption { display:block; margin-top:3px; color:var(--muted); font-size:.84rem; text-align:center; }
+        .panel { margin-bottom:20px; padding:18px; border:1px solid var(--line); border-radius:8px; background:white; box-shadow:0 3px 12px rgba(11,41,69,.06); }
+        .master-kpis { display:grid; grid-template-columns:repeat(4, minmax(170px,1fr)); gap:12px; margin-bottom:20px; }
+        .kpi { padding:15px; border:1px solid var(--line); border-radius:8px; background:var(--soft); }
+        .kpi-label { color:var(--muted); font-size:.77rem; font-weight:800; text-transform:uppercase; letter-spacing:.04em; }
+        .kpi-value { display:block; margin-top:5px; color:var(--navy); font-size:1.55rem; font-weight:900; }
+        .kpi-note { display:block; margin-top:3px; color:var(--muted); font-size:.78rem; }
+        .kpi.alert { border-color:#e2b5af; background:#fff4f2; }
+        .kpi.alert .kpi-value { color:var(--red); }
+        .table-wrap { max-width:100%; overflow:auto; }
+        table { width:100%; min-width:980px; border-collapse:collapse; }
+        /* Header auf der Masterseite exakt wie bei Tools positionieren. */
+        body > .header,
+        body > .header * { box-sizing:content-box !important; }
+        body > .header { width:100%; margin:0; }
+        body > .header > .header-content { width:auto; max-width:1440px; margin:0 auto; padding:0 50px; }
+        body > .header .navbar { width:100%; margin:0; transform:none; }
+        th,td { padding:11px 9px; border-bottom:1px solid var(--line); text-align:left; vertical-align:middle; }
+        th { background:#eaf1f6; color:var(--navy); font-size:.74rem; text-transform:uppercase; letter-spacing:.02em; }
+        td.number { text-align:right; white-space:nowrap; }
+        td.team-name { color:var(--navy); font-weight:800; white-space:nowrap; }
+        tr.total { background:#f5f8fb; font-weight:800; }
+        tr.total td { border-top:2px solid #bfd0dd; }
+        .status { display:inline-flex; flex-direction:column; align-items:flex-start; gap:2px; min-width:112px; padding:7px 9px; border-radius:6px; font-size:.82rem; font-weight:800; }
+        .status small { color:var(--muted); font-size:.7rem; font-weight:400; }
+        .status.checked { background:#eaf8f0; color:var(--green); }
+        .status.open { background:#fff4dc; color:#8a5a00; }
+        .status.due-later { background:#f0f3f5; color:#687a88; }
+        .status.na { background:#f0f3f5; color:#687a88; }
+        .status.today { background:#eaf8f0; color:var(--green); }
+        .status.old { background:#fff4dc; color:#8a5a00; }
+        .snapshot-old { background:#fffaf0; color:#8a5a00; }
+        .legend { display:flex; flex-wrap:wrap; gap:12px; margin-top:13px; color:var(--muted); font-size:.8rem; }
+        .legend span::before { content:''; display:inline-block; width:10px; height:10px; margin-right:5px; border-radius:2px; background:#ccc; }
+        .legend .legend-checked::before { background:#9bd5b7; }
+        .legend .legend-open::before { background:#efc875; }
+        .legend .legend-na::before { background:#cbd5dc; }
+        .footnote { margin:12px 0 0; font-size:.8rem; }
+        @media(max-width:850px) { .master-kpis { grid-template-columns:repeat(2, minmax(150px,1fr)); } }
+        @media(max-width:560px) { .master-kpis { grid-template-columns:1fr 1fr; gap:8px; } .kpi { padding:11px; } .kpi-value { font-size:1.25rem; } .week-navigation { gap:10px; } }
+    </style>
+</head>
+<body>
+{% include 'header.html' %}
+<main class="container">
+    <h1>Übersicht</h1>
+    <p class="intro">Aktuelle Teamzahlen und vollständige Kontrolle der Shopfloor-Meldungen.</p>
+    <nav class="team-nav" aria-label="Bereiche">
+        <a class="active" href="{{ url_for('teamleiter_master') }}">Übersicht</a>
+        {% for team in teams %}<a href="{{ url_for('teamleiter_kapa_team', team_name=team) }}">{{ team }}</a>{% endfor %}
+    </nav>
+
+    <section class="week-navigation" aria-label="Kalenderwoche wechseln">
+        <button id="previousWeek" type="button" aria-label="Vorherige Kalenderwoche">‹</button>
+        <div>
+            <strong class="week-label">KW {{ '%02d'|format(selected_week) }}</strong>
+            <span class="week-caption">{{ selected_year }} · Nur Lesemodus</span>
+        </div>
+        <button id="nextWeek" type="button" aria-label="Nächste Kalenderwoche">›</button>
+    </section>
+
+    <section class="master-kpis" aria-label="Gesamtzahlen">
+        <article class="kpi"><span class="kpi-label">Aktive Mitarbeiter</span><strong class="kpi-value">{{ totals.active_employees }}</strong><span class="kpi-note">über alle Teams</span></article>
+        <article class="kpi"><span class="kpi-label">Wochenstunden Soll</span><strong class="kpi-value">{{ '%.1f'|format(totals.gross) }} h</strong><span class="kpi-note">vertragliche Kapazität</span></article>
+        <article class="kpi"><span class="kpi-label">Verfügbare Kapazität</span><strong class="kpi-value">{{ '%.1f'|format(totals.available) }} h</strong><span class="kpi-note">inkl. Ausfallquote</span></article>
+        <article class="kpi"><span class="kpi-label">Letzte Meldungen</span><strong class="kpi-value">{{ overview|selectattr('latest_report.exists')|list|length }} / {{ totals.team_count }}</strong><span class="kpi-note">je Team in dieser Woche</span></article>
+    </section>
+
+    <section class="panel">
+        <h2>Teamstatus KW {{ '%02d'|format(selected_week) }}</h2>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Team</th>
+                        <th>Mitarbeiter</th>
+                        <th>Anwesend</th>
+                        <th>Urlaub</th>
+                        <th>Krank</th>
+                        <th>Sollstunden</th>
+                        <th>Ausfallstunden</th>
+                        <th>Verfügbar</th>
+                        <th>Letzte Meldung</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for row in overview %}
+                    <tr>
+                        <td class="team-name">{{ row.team }}</td>
+                        <td class="number {% if row.latest_report.exists and not row.latest_report.is_today %}snapshot-old{% endif %}">{{ row.active_employees }}</td>
+                        <td class="number {% if row.latest_report.exists and not row.latest_report.is_today %}snapshot-old{% endif %}">{{ row.present }}</td>
+                        <td class="number {% if row.latest_report.exists and not row.latest_report.is_today %}snapshot-old{% endif %}">{{ row.vacation }}</td>
+                        <td class="number {% if row.latest_report.exists and not row.latest_report.is_today %}snapshot-old{% endif %}">{{ row.sick }}</td>
+                        <td class="number {% if row.latest_report.exists and not row.latest_report.is_today %}snapshot-old{% endif %}">{{ '%.1f'|format(row.gross) }} h</td>
+                        <td class="number {% if row.latest_report.exists and not row.latest_report.is_today %}snapshot-old{% endif %}">{{ '%.1f'|format(row.absence) }} h</td>
+                        <td class="number {% if row.latest_report.exists and not row.latest_report.is_today %}snapshot-old{% endif %}">{{ '%.1f'|format(row.available) }} h</td>
+                        <td>
+                            {% if not row.latest_report.exists %}<span class="status na">– Keine Meldung<small>Für diese Woche</small></span>
+                            {% elif row.latest_report.is_today %}<span class="status today">✓ {{ row.latest_report.date }}<small>{{ row.latest_report.checked_at }}{% if row.latest_report.checked_by %} · {{ row.latest_report.checked_by }}{% endif %}</small></span>
+                            {% else %}<span class="status old">● {{ row.latest_report.date }}<small>{{ row.latest_report.checked_at }}{% if row.latest_report.checked_by %} · {{ row.latest_report.checked_by }}{% endif %}</small></span>{% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+                    <tr class="total">
+                        <td>Gesamt</td>
+                        <td class="number">{{ totals.active_employees }}</td>
+                        <td class="number">{{ totals.present }}</td>
+                        <td class="number">{{ totals.vacation }}</td>
+                        <td class="number">{{ totals.sick }}</td>
+                        <td class="number">{{ '%.1f'|format(totals.gross) }} h</td>
+                        <td class="number">{{ '%.1f'|format(totals.absence) }} h</td>
+                        <td class="number">{{ '%.1f'|format(totals.available) }} h</td>
+                        <td class="number">{{ totals.team_count }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="legend"><span class="legend-checked">Meldung abgegeben</span><span class="legend-open">Meldung offen</span><span class="legend-na">Vergangene oder zukünftige Woche</span></div>
+        <p class="footnote">Die Übersicht ist schreibgeschützt. Änderungen an Anwesenheit und Meldungen erfolgen in der jeweiligen Teamleiteransicht.</p>
+    </section>
+</main>
+<script>
+(function () {
+    const year = {{ selected_year }};
+    const week = {{ selected_week }};
+    function changeWeek(offset) {
+        const date = new Date(Date.UTC(year, 0, 4));
+        const day = date.getUTCDay() || 7;
+        date.setUTCDate(date.getUTCDate() - day + 1 + (week - 1) * 7 + offset * 7);
+        const target = new Date(date);
+        const targetDay = target.getUTCDay() || 7;
+        target.setUTCDate(target.getUTCDate() + 4 - targetDay);
+        const targetYear = target.getUTCFullYear();
+        const first = new Date(Date.UTC(targetYear, 0, 1));
+        const targetWeek = Math.ceil((((target - first) / 86400000) + (first.getUTCDay() || 7)) / 7);
+        window.location.search = '?year=' + encodeURIComponent(targetYear) + '&week=' + encodeURIComponent(targetWeek);
+    }
+    document.getElementById('previousWeek').onclick = function () { changeWeek(-1); };
+    document.getElementById('nextWeek').onclick = function () { changeWeek(1); };
+})();
+</script>
+</body>
+</html>

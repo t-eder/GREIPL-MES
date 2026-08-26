@@ -1,64 +1,1702 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Title</title>
+    <title>GREIPL-MES</title>
     <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/style.css') }}">
+
+
+    <style>
+        /* Styling für das Modal */
+        #modal {
+            display: none; /* Verstecke das Modal standardmäßig */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        #modalContent {
+            position: relative;
+            margin: 10% auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 5px;
+            width: 300px;
+        }
+
+        #closeModalBtn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+        }
+
+        label {
+            display: block;
+            margin: 10px 0 5px;
+        }
+
+        select, input[type="checkbox"], button {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;  /* Vertikal zentrieren */
+            gap: 8px;  /* Abstand zwischen Checkbox und Label */
+            margin-left: 8px;
+        }
+
+        .checkbox-container input[type="checkbox"] {
+            width: 16px;  /* Standardgröße */
+            height: 16px;
+            margin: 0;  /* Keine unnötigen Abstände */
+            cursor: pointer;
+        }
+
+        .checkbox-container label {
+            display: flex;
+            align-items: center;  /* Icon & Text vertikal zentrieren */
+            gap: 5px;  /* Abstand zwischen Icon und Text */
+        }
+
+        .checkbox-container img {
+            height: 24px;  /* Größe des Icons */
+        }
+
+        .filter-container {
+            display: flex;
+            margin-bottom: 5px;  /* Abstand zur Tabelle */
+            font-weight: bold;
+        }
+
+        .filter-container label {
+            display: flex;
+            align-items: center;
+        }
+
+        #filter-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background: rgba(11, 41, 69, 0.9); /* Dunkles Blau mit Transparenz */
+        color: white;
+        padding: 5px 15px;  /* Weniger Innenabstand */
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        font-size: 14px; /* Etwas kleinere Schrift */
+        font-weight: bold;
+        box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.3);
+        height: 35px; /* Fixierte Höhe für eine schmale Leiste */
+        align-items: center; /* Elemente vertikal zentrieren */
+        white-space: nowrap; /* Verhindert den Zeilenumbruch */
+    }
+
+    #filter-bar label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    #filter-bar input[type="checkbox"] {
+        transform: scale(1.1); /* Leicht größere Checkbox */
+        cursor: pointer;
+    }
+
+    #filter-bar button {
+        background-color: #1a60a1; /* Blauen Hintergrund für den Button */
+        color: white;
+        border: none;
+        padding: 6px 12px;
+        font-size: 14px;
+        cursor: pointer;
+        border-radius: 5px;
+        height: 30px; /* Gleiche Höhe wie die anderen Elemente */
+        width: 100px;
+        margin: 10px;
+    }
+
+    #filter-bar button:hover {
+        background-color: #0082da;; /* Dunklerer Grünton bei Hover */
+    }
+        /* Wochenbasierte Kapazitätsplanung */
+        :root {
+            --planner-navy: #0b2945;
+            --planner-blue: #1a60a1;
+            --planner-line: #dce5ed;
+            --planner-soft: #f5f8fb;
+            --planner-green: #138a56;
+            --planner-amber: #c27b00;
+            --planner-red: #c0392b;
+        }
+
+        .legacy-kapa {
+            display: none !important;
+        }
+
+        .weekly-planning {
+            max-width: 1700px;
+            margin: 0 auto;
+            padding: 20px 18px 80px;
+            color: #172b3a;
+        }
+
+        .planner-heading {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 24px;
+            margin-bottom: 18px;
+        }
+
+        .planner-heading h1 {
+            margin: 0 0 5px;
+            color: var(--planner-navy);
+            letter-spacing: -0.02em;
+        }
+
+        .planner-heading p {
+            margin: 0;
+            color: #607384;
+        }
+
+        .planner-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .project-selector {
+            position: relative;
+        }
+
+        .project-selector summary {
+            list-style: none;
+            cursor: pointer;
+            border: 1px solid var(--planner-blue);
+            border-radius: 5px;
+            background: white;
+            color: var(--planner-blue);
+            padding: 9px 13px;
+            font-weight: 700;
+        }
+
+        .project-selector summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .project-selector summary::after {
+            content: ' ▾';
+        }
+
+        .project-selector[open] summary,
+        .project-selector summary:hover,
+        .project-selector summary:focus-visible {
+            background: var(--planner-blue);
+            color: white;
+        }
+
+        .project-options {
+            position: absolute;
+            right: 0;
+            top: calc(100% + 7px);
+            z-index: 5;
+            width: 285px;
+            max-height: 310px;
+            overflow-y: auto;
+            padding: 9px;
+            border: 1px solid var(--planner-line);
+            border-radius: 6px;
+            background: white;
+            box-shadow: 0 6px 18px rgba(11, 41, 69, 0.18);
+        }
+
+        .project-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0;
+            padding: 7px 5px;
+            color: #172b3a;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .project-option input {
+            width: 16px;
+            height: 16px;
+            margin: 0;
+            cursor: pointer;
+        }
+
+        .project-actions {
+            display: flex;
+            gap: 7px;
+            margin-bottom: 6px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--planner-line);
+        }
+
+        .project-action {
+            width: auto;
+            margin: 0;
+            padding: 5px 7px;
+            border: 1px solid var(--planner-line);
+            border-radius: 4px;
+            background: var(--planner-soft);
+            color: var(--planner-navy);
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .project-action:hover,
+        .project-action:focus-visible {
+            border-color: var(--planner-blue);
+            color: var(--planner-blue);
+        }
+
+        .project-hint {
+            margin: 6px 0 0;
+            color: #607384;
+            font-size: 0.74rem;
+            line-height: 1.35;
+        }
+
+        .planner-button {
+            width: auto;
+            margin: 0;
+            border: 1px solid var(--planner-blue);
+            border-radius: 5px;
+            background: white;
+            color: var(--planner-blue);
+            padding: 9px 13px;
+            font-weight: 700;
+        }
+
+        .planner-button:hover,
+        .planner-button:focus-visible {
+            background: var(--planner-blue);
+            color: white;
+        }
+
+        .week-block {
+            margin: 0 0 22px;
+            border: 1px solid var(--planner-line);
+            border-radius: 8px;
+            background: white;
+            box-shadow: 0 3px 12px rgba(11, 41, 69, 0.07);
+            scroll-margin-top: 18px;
+            overflow: hidden;
+        }
+
+        .week-block.current-week {
+            border-color: var(--planner-blue);
+            box-shadow: 0 0 0 3px rgba(26, 96, 161, 0.13), 0 4px 15px rgba(11, 41, 69, 0.09);
+        }
+
+        .week-heading {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 18px;
+            padding: 14px 18px;
+            background: var(--planner-navy);
+            color: white;
+        }
+
+        .week-heading,
+        .week-heading h2,
+        .week-heading .week-label {
+            color: #ffffff !important;
+        }
+
+        .week-heading h2 {
+            margin: 0;
+            font-size: 1.3rem;
+        }
+
+        .week-heading h2 small,
+        .week-heading small {
+            color: #cbd9e4 !important;
+            font-weight: 400;
+        }
+
+        .current-badge {
+            display: none;
+            border-radius: 999px;
+            background: #d9f5e7;
+            color: #08683e;
+            padding: 4px 9px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
+        .current-week .current-badge {
+            display: inline-block;
+        }
+
+        .team-summary {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(180px, 1fr));
+            gap: 10px;
+            padding: 13px 18px 15px;
+            background: var(--planner-soft);
+            border-bottom: 1px solid var(--planner-line);
+        }
+
+        .team-card {
+            min-width: 0;
+            padding: 10px 12px;
+            border: 1px solid var(--planner-line);
+            border-radius: 6px;
+            background: white;
+        }
+
+        .team-card.status-near {
+            border-color: #efc875;
+            background: #fffaf0;
+        }
+
+        .team-card.status-over {
+            border-color: #e7a19a;
+            background: #fff5f3;
+        }
+
+        .team-card-head,
+        .team-card-values {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .team-card-head {
+            font-weight: 800;
+            color: var(--planner-navy);
+        }
+
+        .team-card-head span:last-child {
+            color: #607384;
+            font-size: 0.85rem;
+            white-space: nowrap;
+        }
+
+        .team-card-values {
+            align-items: baseline;
+            margin-top: 7px;
+            color: #425767;
+            font-size: 0.86rem;
+        }
+
+        .team-card-values strong {
+            font-size: 1.15rem;
+            color: var(--planner-navy);
+        }
+
+        .team-card.status-near .team-card-values strong {
+            color: var(--planner-amber);
+        }
+
+        .team-card.status-over .team-card-values strong {
+            color: var(--planner-red);
+        }
+
+        .capacity-bar {
+            height: 6px;
+            margin-top: 9px;
+            border-radius: 10px;
+            background: #e8eef3;
+            overflow: hidden;
+        }
+
+        .capacity-bar span {
+            display: block;
+            height: 100%;
+            border-radius: inherit;
+            background: var(--planner-green);
+        }
+
+        .status-near .capacity-bar span {
+            background: var(--planner-amber);
+        }
+
+        .status-over .capacity-bar span {
+            background: var(--planner-red);
+        }
+
+        .weekly-table-wrap {
+            overflow-x: auto;
+        }
+
+        .weekly-table {
+            width: 100%;
+            min-width: 1175px;
+            table-layout: fixed;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 0.86rem;
+        }
+
+        .weekly-table col.col-status { width: 58px; }
+        .weekly-table col.col-project { width: 150px; }
+        .weekly-table col.col-order { width: 115px; }
+        .weekly-table col.col-part { width: 125px; }
+        .weekly-table col.col-description { width: 220px; }
+        .weekly-table col.col-quantity { width: 75px; }
+        .weekly-table col.col-comment { width: 180px; }
+        .weekly-table col.col-team { width: 108px; }
+
+        .weekly-table th,
+        .weekly-table td {
+            padding: 8px 8px;
+            border-bottom: 1px solid var(--planner-line);
+            text-align: left;
+            vertical-align: middle;
+        }
+
+        .weekly-table th {
+            position: sticky;
+            top: 0;
+            z-index: 3;
+            background: #eaf1f6;
+            color: var(--planner-navy);
+            font-size: 0.76rem;
+            letter-spacing: 0.035em;
+            text-transform: uppercase;
+        }
+
+        /* Alle Spalten bis einschließlich Bemerkung bleiben beim Scrollen sichtbar. */
+        .weekly-table th:nth-child(-n+7),
+        .weekly-table td:nth-child(-n+7) {
+            position: sticky;
+            z-index: 4;
+        }
+
+        .weekly-table th:nth-child(1),
+        .weekly-table td:nth-child(1) {
+            left: 0;
+            width: 58px;
+            min-width: 58px;
+            max-width: 58px;
+        }
+
+        .weekly-table th:nth-child(2),
+        .weekly-table td:nth-child(2) {
+            left: 58px;
+            width: 150px;
+            min-width: 150px;
+            max-width: 150px;
+        }
+
+        .weekly-table th:nth-child(3),
+        .weekly-table td:nth-child(3) {
+            left: 208px;
+            width: 115px;
+            min-width: 115px;
+            max-width: 115px;
+        }
+
+        .weekly-table th:nth-child(4),
+        .weekly-table td:nth-child(4) {
+            left: 323px;
+            width: 125px;
+            min-width: 125px;
+            max-width: 125px;
+        }
+
+        .weekly-table th:nth-child(5),
+        .weekly-table td:nth-child(5) {
+            left: 448px;
+            width: 220px;
+            min-width: 220px;
+            max-width: 220px;
+        }
+
+        .weekly-table th:nth-child(6),
+        .weekly-table td:nth-child(6) {
+            left: 668px;
+            width: 75px;
+            min-width: 75px;
+            max-width: 75px;
+        }
+
+        .weekly-table th:nth-child(7),
+        .weekly-table td:nth-child(7) {
+            left: 743px;
+            width: 180px;
+            min-width: 180px;
+            max-width: 180px;
+            box-shadow: 5px 0 8px -8px rgba(11, 41, 69, 0.45);
+        }
+
+        .weekly-table tbody tr:not(.project-row) td:nth-child(-n+8) {
+            background: #ffffff;
+        }
+
+        .weekly-table tbody tr.project-row td:nth-child(-n+8) {
+            background: #eaf3f8;
+        }
+
+        .weekly-table tbody tr.project-detail td:nth-child(-n+8) {
+            background: #fbfdfe;
+        }
+
+        /* Projektzeilen verwenden für FA, GREIPL-Nr und Bezeichnung eine gemeinsame
+           Zelle (colspan=3) und benötigen deshalb eigene Sticky-Positionen. */
+        .weekly-table tbody tr.project-row td:nth-child(1) {
+            left: 0;
+            width: 58px;
+            min-width: 58px;
+            max-width: 58px;
+            z-index: 5;
+        }
+
+        .weekly-table tbody tr.project-row td:nth-child(2) {
+            left: 58px;
+            width: 150px;
+            min-width: 150px;
+            max-width: 150px;
+            z-index: 5;
+        }
+
+        .weekly-table tbody tr.project-row td:nth-child(3) {
+            left: 208px;
+            width: 460px;
+            min-width: 460px;
+            max-width: 460px;
+            z-index: 5;
+        }
+
+        .weekly-table tbody tr.project-row td:nth-child(4) {
+            left: 668px;
+            width: 180px;
+            min-width: 180px;
+            max-width: 180px;
+            z-index: 5;
+            box-shadow: 5px 0 8px -8px rgba(11, 41, 69, 0.45);
+        }
+
+        .weekly-table th.team-header {
+            min-width: 0;
+            width: 108px;
+            border-left: 1px solid var(--planner-line);
+            text-align: center;
+        }
+
+        .weekly-table th.team-header small {
+            line-height: 1.15;
+        }
+
+        .weekly-table th.team-header small {
+            display: block;
+            margin-top: 3px;
+            color: #607384;
+            font-size: 0.68rem;
+            font-weight: 400;
+            letter-spacing: 0;
+            text-transform: none;
+        }
+
+        .weekly-table tbody tr:hover {
+            background: #f7fafc;
+        }
+
+        .weekly-table .project-row {
+            background: #eaf3f8;
+            border-top: 2px solid #c3d8e5;
+        }
+
+        .weekly-table .project-row:hover {
+            background: #e1eef5;
+        }
+
+        .project-cell {
+            min-width: 155px;
+            color: var(--planner-navy);
+            font-weight: 800;
+        }
+
+        .project-cell small {
+            display: block;
+            margin: 4px 0 0 22px;
+            color: #607384;
+            font-size: 0.74rem;
+            font-weight: 500;
+        }
+
+        .project-cell .project-first-description {
+            max-width: 300px;
+            overflow: hidden;
+            color: #425767;
+            font-size: 0.78rem;
+            font-weight: 700;
+            line-height: 1.25;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .project-toggle {
+            width: auto;
+            margin: 0;
+            padding: 0;
+            border: 0;
+            background: transparent;
+            color: var(--planner-blue);
+            font: inherit;
+            font-weight: 800;
+            text-align: left;
+        }
+
+        .project-toggle:hover,
+        .project-toggle:focus-visible {
+            color: var(--planner-navy);
+            text-decoration: underline;
+        }
+
+        .project-description {
+            color: #607384;
+            font-style: italic;
+        }
+
+        .project-indent {
+            padding-left: 22px !important;
+            color: #607384;
+            white-space: nowrap;
+        }
+
+        .project-detail {
+            background: #fbfdfe;
+        }
+
+        .project-detail {
+            background: #fbfdfe;
+        }
+
+        .weekly-table .project-detail:hover {
+            background: #f3f9fc;
+        }
+
+        .comment-cell {
+            width: 180px;
+            min-width: 0;
+            max-width: none;
+            color: #425767;
+            cursor: text;
+            line-height: 1.3;
+            white-space: normal;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+
+        .comment-cell.comment-empty {
+            color: #8b9aa6;
+            font-style: italic;
+        }
+
+        .comment-cell:hover {
+            background: #fff8df;
+            box-shadow: inset 0 0 0 1px #e7c96b;
+        }
+
+        #weeklyCommentModal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 1100;
+            padding: 10vh 16px 16px;
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        #weeklyCommentModal.is-open { display: block; }
+
+        .weekly-comment-dialog {
+            position: relative;
+            width: min(520px, 100%);
+            margin: 0 auto;
+            padding: 22px;
+            border-radius: 8px;
+            background: #fff;
+            box-shadow: 0 10px 30px rgba(11, 41, 69, 0.25);
+        }
+
+        .weekly-comment-dialog h2 {
+            margin: 0 28px 5px 0;
+            color: var(--planner-navy);
+            font-size: 1.15rem;
+        }
+
+        .weekly-comment-dialog p {
+            margin: 0 0 14px;
+            color: #607384;
+            font-size: 0.85rem;
+        }
+
+        #weeklyCommentInput {
+            display: block;
+            width: 100%;
+            min-height: 130px;
+            resize: vertical;
+            box-sizing: border-box;
+            padding: 10px;
+            border: 1px solid var(--planner-line);
+            border-radius: 5px;
+            color: #172b3a;
+            font: inherit;
+        }
+
+        .weekly-comment-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 14px;
+        }
+
+        .weekly-comment-actions button {
+            width: auto;
+            margin: 0;
+            padding: 8px 14px;
+            border-radius: 5px;
+        }
+
+        #closeWeeklyCommentModal {
+            position: absolute;
+            top: 12px;
+            right: 14px;
+            width: auto;
+            margin: 0;
+            padding: 3px 7px;
+            border: 0;
+            background: transparent;
+            color: #607384;
+            font-size: 1.2rem;
+        }
+
+        .weekly-table .project-row[hidden],
+        .weekly-table .project-detail[hidden] {
+            display: none;
+        }
+
+        .weekly-table .status-cell {
+            width: 58px;
+            border-left: 4px solid #60a5fa;
+            font-weight: 800;
+            text-align: center;
+        }
+
+        .weekly-table .order-cell {
+            color: var(--planner-blue);
+            font-weight: 800;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .weekly-table .order-cell:hover {
+            text-decoration: underline;
+        }
+
+        .week-slice {
+            display: inline-block;
+            margin-left: 6px;
+            padding: 3px 7px;
+            border: 1px solid #8eb4cf;
+            border-radius: 999px;
+            background: #dceef8;
+            color: var(--planner-navy);
+            font-size: 0.76rem;
+            font-weight: 900;
+            line-height: 1.1;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+
+        .weekly-table .number-cell {
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .weekly-table .pm-cell {
+            white-space: nowrap;
+            color: #425767;
+        }
+
+        .team-load-cell {
+            border-left: 1px solid var(--planner-line);
+            color: #8b9aa6;
+            text-align: center !important;
+        }
+
+        .team-load-cell.assigned {
+            background: #eef8f3;
+            color: #08683e;
+            font-weight: 800;
+        }
+
+        .team-load-cell.assigned strong {
+            display: block;
+            font-size: 0.96rem;
+        }
+
+        .team-load-cell.assigned small {
+            display: block;
+            margin-top: 2px;
+            font-weight: 400;
+        }
+
+        .empty-week {
+            padding: 20px;
+            color: #607384;
+            font-style: italic;
+        }
+
+        .unassigned-note {
+            margin: 0;
+            padding: 10px 18px 13px;
+            color: #8a5a00;
+            background: #fffaf0;
+            font-size: 0.82rem;
+        }
+
+        .team-legend {
+            margin: 0 0 15px;
+            color: #607384;
+            font-size: 0.82rem;
+        }
+
+        @media (max-width: 900px) {
+            .planner-heading {
+                display: block;
+            }
+
+            .planner-toolbar {
+                margin-top: 14px;
+            }
+
+            .team-summary {
+                grid-template-columns: repeat(2, minmax(170px, 1fr));
+            }
+        }
+
+        @media (max-width: 540px) {
+            .weekly-planning {
+                padding: 14px 8px 70px;
+            }
+
+            .team-summary {
+                grid-template-columns: 1fr;
+                padding-left: 10px;
+                padding-right: 10px;
+            }
+
+            .week-heading {
+                align-items: flex-start;
+                padding: 12px;
+            }
+        }
+    </style>
+
 </head>
 <body>
 {% include 'header.html' %}
-<div class="container">
-   <table class="calender"
-          style="display: block;
-          overflow-x: auto;
-          white-space: nowrap;">
-       <tr>
-           <td>SMD</td>
-           <td></td>
-       </tr>
-       <tr>
-           <td>THT</td>
-           <td></td>
-       </tr>
-       <tr>
-           <td>HA</td>
-           <td></td>
-       </tr>
+<main class="weekly-planning" aria-labelledby="planning-title">
+    <div class="planner-heading">
+        <div>
+            <h1 id="planning-title">Kapazitätsplanung</h1>
+            <p>Wochenplanung für fünf Produktionsteams · Zeitraum: sechs Wochen zurück und sechs Wochen voraus</p>
+        </div>
+        <div class="planner-toolbar">
+            <details class="project-selector">
+                <summary>Projekte zusammenfassen</summary>
+                <div class="project-options">
+                    <div class="project-actions">
+                        <button type="button" class="project-action" id="selectAllProjects">Alle</button>
+                        <button type="button" class="project-action" id="clearAllProjects">Keine</button>
+                    </div>
+                    {% if project_numbers %}
+                        {% for project_number in project_numbers %}
+                            <label class="project-option">
+                                <input type="checkbox" class="project-checkbox" value="{{ project_number }}">
+                                <span>{{ project_number }}</span>
+                            </label>
+                        {% endfor %}
+                        <p class="project-hint">Ausgewählte Projekte werden je Kalenderwoche zu einer Zeile zusammengefasst. Die Einzelaufträge können aufgeklappt werden.</p>
+                    {% else %}
+                        <p class="project-hint">Für den aktuellen Planungshorizont wurden keine Projektnummern gefunden.</p>
+                    {% endif %}
+                </div>
+            </details>
+            <button type="button" class="planner-button" id="jumpToCurrentWeekNew">Zur aktuellen KW</button>
+        </div>
+    </div>
 
-       <tr>
-           <th >FA</th>
-           <th>AG</th>
-           {% for i in range(52)%}
-                <th style="border: 1px solid black">KW {{i}}</th>
-           {% endfor %}
-       </tr>
-       <tr>
-           <td rowspan="5" style="border-right: 1px solid black">300815</td>
-       </tr>
-       <tr>
-           <td>SMD</td>
-       </tr>
-       <tr>
-           <td>THT</td>
-       </tr>
-       <tr>
-           <td>HA</td>
-       </tr>
-       <tr>
-           <td>PF</td>
-       </tr>
+    <p class="team-legend">
+        Auftragszeit = <strong>FAPOS.Zeit</strong> in Stunden. 2440-12 ist ausschließlich <strong>ESD-Montage</strong> zugeordnet; Arbeitsplatznummern, die mit <strong>2560</strong> beginnen, gehören zur <strong>Qualitätssicherung</strong>.
+    </p>
 
-       <tr>
-           {% for i in range(25)%}
-                <td></td>
-           {% endfor %}
-           <td style="background-color: red"></td>
-           <td style="background-color: red"></td>
-       </tr>
-   </table>
+    {% for week in week_plan %}
+        <section class="week-block{% if week.year == current_year and week.week == current_week %} current-week{% endif %}"
+                 id="week-{{ week.year }}-{{ '%02d'|format(week.week) }}"
+                 data-current-week="{{ 'true' if week.year == current_year and week.week == current_week else 'false' }}">
+            <div class="week-heading">
+                <div>
+                    <h2>{{ week.label }} <small>{{ week.year }} · {{ week.date_range }}</small></h2>
+                </div>
+                <span class="current-badge">Aktuelle Woche</span>
+            </div>
 
+            <div class="team-summary" aria-label="Kapazitätsübersicht {{ week.label }}">
+                {% for team in teams %}
+                    {% set metric = week.metrics[team] %}
+                    <div class="team-card status-{{ metric.status }}">
+                        <div class="team-card-head">
+                            <span>{{ team }}</span>
+                            <span>{{ metric.utilisation|round(0)|int }} %</span>
+                        </div>
+                        <div class="team-card-values">
+                            <span><strong>{{ metric.load_hours|round(1) }}</strong> h Bedarf</span>
+                            <span>{{ metric.capacity_hours|round(1) }} h Kapazität</span>
+                        </div>
+                        <div class="capacity-bar" role="progressbar"
+                             aria-label="Auslastung {{ team }}"
+                             aria-valuemin="0" aria-valuemax="100"
+                             aria-valuenow="{{ metric.utilisation|round(0)|int }}">
+                            <span style="width: {{ metric.utilisation_width }}%;"></span>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            {% if week.jobs %}
+                <div class="weekly-table-wrap">
+                    <table class="weekly-table">
+                        <colgroup>
+                            <col class="col-status">
+                            <col class="col-project">
+                            <col class="col-order">
+                            <col class="col-part">
+                            <col class="col-description">
+                            <col class="col-quantity">
+                            <col class="col-comment">
+                            {% for team in teams %}<col class="col-team">{% endfor %}
+                        </colgroup>
+                        <thead>
+                            <tr>
+                                <th scope="col">Stat</th>
+                                <th scope="col">Projektnummer</th>
+                                <th scope="col">FA</th>
+                                <th scope="col">GREIPL-Nr</th>
+                                <th scope="col">Bezeichnung</th>
+                                <th scope="col">Menge</th>
+                                <th scope="col">Bemerkung</th>
+                                {% for team in teams %}
+                                    <th scope="col" class="team-header">
+                                        {{ team }}
+                                        <small>Aufwand · PmNr</small>
+                                    </th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for project in week.project_groups if project.AuftragAnzahl > 1 %}
+                                <tr class="project-row" data-project="{{ project.Projekt }}">
+                                    <td class="status-cell">{{ project.Zustand }}</td>
+                                    <td class="project-cell">
+                                        <button type="button" class="project-toggle" aria-expanded="false" data-project="{{ project.Projekt }}">▸ {{ project.Projekt }}</button>
+                                        <small>{{ project.AuftragAnzahl }} Einzelaufträge</small>
+                                    </td>
+                                    <td colspan="3" class="project-description">{{ project.jobs[0].Bez }}</td>
+                                    <td class="number-cell">—</td>
+                                    <td class="comment-cell comment-empty">—</td>
+                                    {% for team in teams %}
+                                        {% set team_load = project.TeamLoads[team] %}
+                                        {% if team_load.minutes > 0 %}
+                                            <td class="team-load-cell assigned">
+                                                <strong>{{ team_load.hours|round(1) }} h</strong>
+                                                <small>{{ team_load.pmnrs|join(', ') }}</small>
+                                            </td>
+                                        {% else %}
+                                            <td class="team-load-cell">—</td>
+                                        {% endif %}
+                                    {% endfor %}
+                                </tr>
+                                {% for job in project.jobs %}
+                                    <tr class="job-row project-detail" data-project="{{ project.Projekt }}">
+                                        <td class="status-cell">{{ job.Zustand }}</td>
+                                        <td class="project-indent">{{ job.Projekt or '—' }}</td>
+                                        <td class="order-cell" title="Auftrag {{ job.Auftrag }}">{{ job.Auftrag }}{% if job.Wochenanzahl|default(1) > 1 %}<small class="week-slice" title="Woche {{ job.Wochenindex }} von {{ job.Wochenanzahl }}">{{ job.Wochenindex }}/{{ job.Wochenanzahl }}</small>{% endif %}</td>
+                                        <td>{{ job.Teil }}</td>
+                                        <td>{{ job.Bez }}</td>
+                                        <td class="number-cell">{{ job.Mng|round(0)|int }}</td>
+                                        <td class="comment-cell{% if not job.Kommentar %} comment-empty{% endif %}" data-auftrag="{{ job.Auftrag }}" title="Doppelklick zum Bearbeiten">{{ job.Kommentar or 'Doppelklick zum Bearbeiten' }}</td>
+                                        {% for team in teams %}
+                                            {% set team_load = job.TeamLoads[team] %}
+                                            {% if team_load.minutes > 0 %}
+                                                <td class="team-load-cell assigned">
+                                                    <strong>{{ team_load.hours|round(1) }} h</strong>
+                                                    <small>{{ team_load.pmnrs|join(', ') }}</small>
+                                                </td>
+                                            {% else %}
+                                                <td class="team-load-cell">—</td>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </tr>
+                                {% endfor %}
+                            {% endfor %}
+
+                            {# Projekte mit genau einem Auftrag bleiben normale Einzelzeilen. #}
+                            {% for job in week.normal_jobs %}
+                                <tr class="job-row single-project-row" data-project="{{ job.Projekt }}">
+                                    <td class="status-cell">{{ job.Zustand }}</td>
+                                    <td>{{ job.Projekt }}</td>
+                                    <td class="order-cell" title="Auftrag {{ job.Auftrag }}">{{ job.Auftrag }}{% if job.Wochenanzahl|default(1) > 1 %}<small class="week-slice" title="Woche {{ job.Wochenindex }} von {{ job.Wochenanzahl }}">{{ job.Wochenindex }}/{{ job.Wochenanzahl }}</small>{% endif %}</td>
+                                    <td>{{ job.Teil }}</td>
+                                    <td>{{ job.Bez }}</td>
+                                    <td class="number-cell">{{ job.Mng|round(0)|int }}</td>
+                                    <td class="comment-cell{% if not job.Kommentar %} comment-empty{% endif %}" data-auftrag="{{ job.Auftrag }}" title="Doppelklick zum Bearbeiten">{{ job.Kommentar or 'Doppelklick zum Bearbeiten' }}</td>
+                                    {% for team in teams %}
+                                        {% set team_load = job.TeamLoads[team] %}
+                                        {% if team_load.minutes > 0 %}
+                                            <td class="team-load-cell assigned">
+                                                <strong>{{ team_load.hours|round(1) }} h</strong>
+                                                <small>{{ team_load.pmnrs|join(', ') }}</small>
+                                            </td>
+                                        {% else %}
+                                            <td class="team-load-cell">—</td>
+                                        {% endif %}
+                                    {% endfor %}
+                                </tr>
+                            {% endfor %}
+
+                            {% for job in week.jobs if not job.Projekt %}
+                                <tr class="job-row">
+                                    <td class="status-cell">{{ job.Zustand }}</td>
+                                    <td>{{ job.Projekt or '—' }}</td>
+                                    <td class="order-cell" title="Auftrag {{ job.Auftrag }}">{{ job.Auftrag }}{% if job.Wochenanzahl|default(1) > 1 %}<small class="week-slice" title="Woche {{ job.Wochenindex }} von {{ job.Wochenanzahl }}">{{ job.Wochenindex }}/{{ job.Wochenanzahl }}</small>{% endif %}</td>
+                                    <td>{{ job.Teil }}</td>
+                                    <td>{{ job.Bez }}</td>
+                                    <td class="number-cell">{{ job.Mng|round(0)|int }}</td>
+                                    <td class="comment-cell{% if not job.Kommentar %} comment-empty{% endif %}" data-auftrag="{{ job.Auftrag }}" title="Doppelklick zum Bearbeiten">{{ job.Kommentar or 'Doppelklick zum Bearbeiten' }}</td>
+                                    {% for team in teams %}
+                                        {% set team_load = job.TeamLoads[team] %}
+                                        {% if team_load.minutes > 0 %}
+                                            <td class="team-load-cell assigned">
+                                                <strong>{{ team_load.hours|round(1) }} h</strong>
+                                                <small>{{ team_load.pmnrs|join(', ') }}</small>
+                                            </td>
+                                        {% else %}
+                                            <td class="team-load-cell">—</td>
+                                        {% endif %}
+                                    {% endfor %}
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% if week.unassigned_hours > 0 %}
+                    <p class="unassigned-note">
+                        Hinweis: {{ week.unassigned_hours|round(1) }} h konnten keiner der fünf Teamzuordnungen zugeordnet werden.
+                        {% if week.unassigned_pmnrs %}
+                            Betroffene PmNr: <strong>{{ week.unassigned_pmnrs|join(', ') }}</strong>.
+                        {% endif %}
+                    </p>
+                {% endif %}
+            {% else %}
+                <p class="empty-week">Für diese Woche sind keine Aufträge im gewählten Statusbereich vorhanden.</p>
+            {% endif %}
+        </section>
+    {% endfor %}
+</main>
+
+<div id="weeklyCommentModal" role="dialog" aria-modal="true" aria-labelledby="weeklyCommentTitle">
+    <div class="weekly-comment-dialog">
+        <button type="button" id="closeWeeklyCommentModal" aria-label="Dialog schließen">✕</button>
+        <h2 id="weeklyCommentTitle">Bemerkung zum FA</h2>
+        <p id="weeklyCommentOrder"></p>
+        <textarea id="weeklyCommentInput" maxlength="2000" placeholder="Bemerkung eingeben …"></textarea>
+        <div class="weekly-comment-actions">
+            <button type="button" id="cancelWeeklyComment">Abbrechen</button>
+            <button type="button" id="saveWeeklyComment">Bemerkung speichern</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+        const commentModal = document.getElementById('weeklyCommentModal');
+        const commentInput = document.getElementById('weeklyCommentInput');
+        const commentOrder = document.getElementById('weeklyCommentOrder');
+        let activeCommentCell = null;
+        let activeOrder = null;
+
+        function closeCommentEditor() {
+            commentModal.classList.remove('is-open');
+            activeCommentCell = null;
+            activeOrder = null;
+        }
+
+        // Doppelklick auf jede einzelne FA-Zeile öffnet die zentrale Bemerkung.
+        // Die Projektzeile selbst bleibt davon ausgenommen.
+        document.addEventListener('dblclick', function (event) {
+            const row = event.target.closest('tr.job-row');
+            if (!row || row.classList.contains('project-row')) return;
+
+            const cell = row.querySelector('.comment-cell[data-auftrag]');
+            if (!cell) return;
+
+            event.preventDefault();
+            event.stopPropagation();
+            activeCommentCell = cell;
+            activeOrder = cell.dataset.auftrag;
+            commentOrder.textContent = 'FA ' + activeOrder;
+            commentInput.value = cell.classList.contains('comment-empty')
+                ? ''
+                : cell.textContent.trim();
+            commentModal.classList.add('is-open');
+            commentInput.focus();
+        });
+
+        document.getElementById('saveWeeklyComment').addEventListener('click', function () {
+            if (!activeOrder) return;
+            const comment = commentInput.value.trim();
+            fetch('/update_kapa_remark', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({fa_nr: activeOrder, comment: comment})
+            })
+            .then(function (response) { return response.json().then(function (data) { return {ok: response.ok, data: data}; }); })
+            .then(function (result) {
+                if (!result.ok || !result.data.success) throw new Error(result.data.error || 'Speichern fehlgeschlagen.');
+                document.querySelectorAll('.comment-cell[data-auftrag="' + CSS.escape(activeOrder) + '"]').forEach(function (target) {
+                    target.textContent = comment || 'Doppelklick zum Bearbeiten';
+                    target.classList.toggle('comment-empty', !comment);
+                });
+                closeCommentEditor();
+            })
+            .catch(function (error) { alert(error.message); });
+        });
+
+        document.getElementById('cancelWeeklyComment').addEventListener('click', closeCommentEditor);
+        document.getElementById('closeWeeklyCommentModal').addEventListener('click', closeCommentEditor);
+        commentModal.addEventListener('click', function (event) {
+            if (event.target === commentModal) closeCommentEditor();
+        });
+    })();
+</script>
+
+<script>
+    (function () {
+        const selectedProjects = new Set();
+        const expandedProjects = new Set();
+        const projectCheckboxes = Array.from(document.querySelectorAll('.project-checkbox'));
+        const projectSummary = document.querySelector('.project-selector summary');
+        const currentWeek = document.querySelector('.week-block.current-week');
+        const jumpButton = document.getElementById('jumpToCurrentWeekNew');
+
+        function isProjectVisible(projectNumber) {
+            // Ohne Auswahl werden alle Projektzusammenfassungen angezeigt.
+            return selectedProjects.size === 0 || selectedProjects.has(projectNumber);
+        }
+
+        function projectStateKey(projectNumber, weekBlock) {
+            return (weekBlock ? weekBlock.id : '') + '::' + projectNumber;
+        }
+
+        function isProjectExpanded(projectNumber, weekBlock) {
+            return expandedProjects.has(projectStateKey(projectNumber, weekBlock));
+        }
+
+        function refreshProjectRows() {
+            document.querySelectorAll('.week-block').forEach(function (weekBlock) {
+                weekBlock.querySelectorAll('.project-row').forEach(function (row) {
+                    const projectNumber = row.dataset.project;
+                    const visible = isProjectVisible(projectNumber);
+                    row.hidden = !visible;
+                    row.classList.toggle('project-active', visible);
+                });
+
+                weekBlock.querySelectorAll('.project-detail').forEach(function (row) {
+                    const projectNumber = row.dataset.project;
+                    const visible = isProjectVisible(projectNumber) && isProjectExpanded(projectNumber, weekBlock);
+                    row.hidden = !visible;
+                    row.dataset.projectSelected = isProjectVisible(projectNumber) ? 'true' : 'false';
+                });
+
+                weekBlock.querySelectorAll('.single-project-row').forEach(function (row) {
+                    row.hidden = !isProjectVisible(row.dataset.project);
+                });
+
+                weekBlock.querySelectorAll('.project-toggle').forEach(function (button) {
+                    const projectNumber = button.dataset.project;
+                    const expanded = isProjectExpanded(projectNumber, weekBlock);
+                    button.setAttribute('aria-expanded', String(expanded));
+                    button.textContent = (expanded ? '▾ ' : '▸ ') + projectNumber;
+                });
+            });
+
+            if (projectSummary) {
+                projectSummary.textContent = selectedProjects.size
+                    ? selectedProjects.size + ' Projekt(e) anzeigen'
+                    : 'Projekte zusammenfassen';
+            }
+        }
+
+        function toggleProject(projectNumber, weekBlock) {
+            if (!weekBlock || !isProjectVisible(projectNumber)) return;
+
+            const stateKey = projectStateKey(projectNumber, weekBlock);
+            if (isProjectExpanded(projectNumber, weekBlock)) {
+                expandedProjects.delete(stateKey);
+            } else {
+                expandedProjects.add(stateKey);
+            }
+            refreshProjectRows();
+        }
+
+        projectCheckboxes.forEach(function (checkbox) {
+            checkbox.addEventListener('change', function () {
+                if (checkbox.checked) {
+                    selectedProjects.add(checkbox.value);
+                } else {
+                    selectedProjects.delete(checkbox.value);
+                    document.querySelectorAll('.week-block').forEach(function (weekBlock) {
+                        expandedProjects.delete(projectStateKey(checkbox.value, weekBlock));
+                    });
+                }
+                refreshProjectRows();
+            });
+        });
+
+        const selectAll = document.getElementById('selectAllProjects');
+        if (selectAll) {
+            selectAll.addEventListener('click', function () {
+                projectCheckboxes.forEach(function (checkbox) {
+                    checkbox.checked = true;
+                    selectedProjects.add(checkbox.value);
+                });
+                refreshProjectRows();
+            });
+        }
+
+        const clearAll = document.getElementById('clearAllProjects');
+        if (clearAll) {
+            clearAll.addEventListener('click', function () {
+                projectCheckboxes.forEach(function (checkbox) {
+                    checkbox.checked = false;
+                });
+                selectedProjects.clear();
+                expandedProjects.clear();
+                refreshProjectRows();
+            });
+        }
+
+        // Der Button und die gesamte Projektzeile öffnen bzw. schließen die Details.
+        document.querySelectorAll('.project-row').forEach(function (row) {
+            row.addEventListener('click', function (event) {
+                if (event.target.closest('.project-toggle')) return;
+                toggleProject(row.dataset.project, row.closest('.week-block'));
+            });
+        });
+
+        document.querySelectorAll('.project-toggle').forEach(function (button) {
+            button.addEventListener('click', function (event) {
+                event.stopPropagation();
+                toggleProject(button.dataset.project, button.closest('.week-block'));
+            });
+        });
+
+        refreshProjectRows();
+
+        if (jumpButton) {
+            jumpButton.addEventListener('click', function () {
+                if (currentWeek) {
+                    currentWeek.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        }
+    })();
+</script>
+
+{% if false %}
+<div class="container legacy-kapa">
+
+        <h1>Auftragsbestand</h1>
+            <span ><b style="color: #A0A0A0">&#9646</b></span><span>10</span>
+            <span ><b style="color: #a4e2eb">&#9646</b></span><span>20</span>
+            <span ><b style="color: #60A5FA">&#9646</b></span><span>30</span>
+            <span ><b style="color: #fcd703">&#9646</b></span><span>40</span>
+            <span ><b style="color: #FB923C">&#9646</b></span><span>50</span>
+            <span ><b style="color: #00b542">&#9646</b></span><span>60</span>
+            <table class="table1">
+                <thead style="position: sticky; top: 0; z-index: 2;">
+                    <tr>
+                        <th></th>
+                        <th></th>
+                        <th>STAT</th>
+                        <th>FA</th>
+                        <th>GREIPL-Nr</th>
+                        <th>Bezeichnung</th>
+                        <th>Menge</th>
+                        <th>Bemerkung</th>
+                        <th>AG</th>
+                    </tr>
+                </thead>
+                {% for (year, week), jobs in grouped_jobs.items() %}
+                    <tr style=" background-color: #0b2945; color: white; height: 15px; font-weight:bold;">
+                        <td style="text-align: left;" colspan="10">{{ year }}, KW: {{ week }}</td>
+                    </tr>
+
+                    {% for job in jobs %}
+                        <tr class="job-row"
+                            {% if job.Zustand == "60" %}
+                                style="background-color: #cceddf; color: grey;"
+                            {% endif %}>
+                            <td style="
+                            {% if job.Zustand == '10' %}
+                                border-left: 4px solid #A0A0A0;
+                            {% elif job.Zustand == '20' %}
+                                border-left: 4px solid #a4e2eb;
+                            {% elif job.Zustand == '30' %}
+                                border-left: 4px solid #60A5FA;
+                            {% elif job.Zustand == '40' %}
+                                border-left: 4px solid #fcd703;
+                            {% elif job.Zustand == '50' %}
+                                border-left: 4px solid #FB923C;
+                            {% elif job.Zustand == '60' %}
+                                border-left: 4px solid #00b542;
+                            {% endif %}">
+                                {% if job.Typ == 'Start' %}
+                                    <img src="{{ url_for('static', filename='fa_start.png') }}" alt="Icon" height="30px" style="filter: invert(0%);">
+                                {% elif job.Typ == 'Ende' %}
+                                    <img src="{{ url_for('static', filename='fa_end.png') }}" alt="Icon" height="30px" style="filter: invert(0%);">
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% for info in auftrag_info %}
+                                    {% if info.fa_mat | int == 1 and info.fa_nr | int == job.Auftrag %}
+                                        <img src="{{ url_for('static', filename='goods.png') }}" alt="Icon" height="30px" style="filter: invert(0%);">
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                            <td>{{ job.Zustand }}</td>
+                            <td class="auftrag-num" data-auftrag="{{ job.Auftrag }}">{{ job.Auftrag }}</td>
+                            <td>{{ job.Teil }}</td>
+                            <td>{{ job.Bez }}</td>
+                            <td>{{ job.Mng | round(0) | int }}</td>
+                            <td style="width: 300px; text-align:left; border: 1px solid #e0e0e0;">
+                                {% for info in auftrag_info %}
+                                    {% if info.fa_nr | int == job.Auftrag %}
+                                        <span class="data-comment" data-comment="{{ info.fa_bemerk }}"> {{ info.fa_bemerk }}</span>
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                            <td>{{ job.PmNr }}</td>
+                        </tr>
+                    {% endfor %}
+                {% endfor %}
+            </table>
+
+<div id="filter-bar">
+    <label>
+    <input type="checkbox" id="showOnlyStart"> Nur Start-Zeilen
+    </label>
+    <label>
+        <input type="checkbox" id="showOnlyEnd"> Nur End-Zeilen
+    </label>
+    <button id="jumpToCurrentWeek">Aktuelle KW</button>
 </div>
 
 
+
+<!-- Modal -->
+<div id="modal" class="modal">
+    <div id="modalContent" class="modal-content">
+        <span id="closeModalBtn" class="close-btn">✖</span>
+
+        <label for="comment">Kommentar eingeben:</label>
+        <input type="text" id="comment" class="input-field" style="width:260px;">
+        <br> <br>
+        <div class="checkbox-container">
+            <input type="checkbox" id="checkbox">
+            <label for="checkbox"><img src="{{ url_for('static', filename='goods.png') }}" alt="Icon" height="30px" style="filter: invert(0%);"> Material komplett</label>
+        </div>
+
+        <br>
+        <div class="button-container">
+            <button id="saveBtn">Speichern</button>
+            <button id="cancelBtn">Abbrechen</button>
+        </div>
+    </div>
+</div>
+
+        <p style="font-size:8px; float: right; color: lightgrey">Tobias Eder 2023</p>
+    </div>
+
+</body>
+</html>
+
+<script>
+// Original Styles und HTML der Zellen mit Icons sichern
+document.querySelectorAll('.job-row').forEach(row => {
+    row.dataset.originalBgColor = row.style.backgroundColor || '';
+    row.dataset.originalTextColor = row.style.color || '';
+    row.dataset.originalFontWeight = row.style.fontWeight || '';
+
+    // Icons-HTML sichern, z.B. im Auftrag-Cell
+    const auftragCell = row.querySelector('.auftrag-num');
+    if (auftragCell) {
+        auftragCell.dataset.originalHtml = auftragCell.innerHTML;
+    }
+});
+
+document.querySelectorAll('.auftrag-num').forEach(function (cell) {
+    cell.addEventListener('click', function () {
+        const clickedRow = cell.closest('tr');
+        const clickedAuftrag = cell.getAttribute('data-auftrag');
+        const isStart = clickedRow.querySelector('img[src*="fa_start.png"]');
+        if (!isStart) return;
+
+        // Alles zurücksetzen (inklusive Icons)
+        resetAll();
+
+        let currentRow = clickedRow;
+        let foundStart = false;
+
+        while (currentRow) {
+            if (!currentRow.classList.contains('job-row')) {
+                currentRow = currentRow.nextElementSibling;
+                continue;
+            }
+
+            const rowAuftragCell = currentRow.querySelector('.auftrag-num');
+            const rowAuftrag = rowAuftragCell?.getAttribute('data-auftrag') || '';
+            const hasStartImg = currentRow.querySelector('img[src*="fa_start.png"]');
+            const hasEndImg = currentRow.querySelector('img[src*="fa_end.png"]');
+
+            // Start-Zeile färben
+            if (hasStartImg && rowAuftrag === clickedAuftrag) {
+                currentRow.style.backgroundColor = '#21cf15';
+                currentRow.style.color = 'black';
+                currentRow.style.fontWeight = 'bold';
+                foundStart = true;
+            }
+            // End-Zeile färben
+            else if (hasEndImg && rowAuftrag === clickedAuftrag && foundStart) {
+                currentRow.style.backgroundColor = '#f56822';
+                currentRow.style.color = 'black';
+                currentRow.style.fontWeight = 'bold';
+                break;
+            }
+            // Zwischenzeilen grau + dunkelgraue Schrift + Icons entfernen
+            else if (foundStart && rowAuftrag !== clickedAuftrag) {
+                currentRow.style.backgroundColor = '#d4d4d4'; // Grau
+                currentRow.style.color = '#444';             // Dunkelgrau
+                currentRow.style.fontWeight = 'normal';
+
+                // Icons aus Auftrag-Zelle entfernen
+                if (rowAuftragCell) {
+                    rowAuftragCell.querySelectorAll('img[src*="fa_start.png"], img[src*="fa_end.png"]').forEach(img => img.remove());
+                }
+            }
+
+            currentRow = currentRow.nextElementSibling;
+        }
+    });
+});
+
+// Funktion zum Zurücksetzen aller Styles und Icons
+function resetAll() {
+    document.querySelectorAll('.job-row').forEach(row => {
+        row.style.backgroundColor = row.dataset.originalBgColor || '';
+        row.style.color = row.dataset.originalTextColor || '';
+        row.style.fontWeight = row.dataset.originalFontWeight || '';
+
+        // Icons in Auftrag-Zelle wiederherstellen
+        const auftragCell = row.querySelector('.auftrag-num');
+        if (auftragCell && auftragCell.dataset.originalHtml) {
+            auftragCell.innerHTML = auftragCell.dataset.originalHtml;
+        }
+    });
+}
+
+// ESC zum Zurücksetzen
+document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape') {
+        resetAll();
+    }
+});
+</script>
+
+
+<script>
+    // Doppelklick-Eventlistener auf alle Elemente mit der Klasse 'auftrag-num'
+    document.querySelectorAll('.auftrag-num').forEach(function (cell) {
+        cell.addEventListener('dblclick', function () {
+            const fa_nr = cell.getAttribute('data-auftrag');
+            const row = cell.closest('tr');
+            const commentCell = row.querySelector('.data-comment');
+            const currentComment = commentCell ? commentCell.getAttribute('data-comment') : "";
+
+            // Prüfen, ob das Material-Icon vorhanden ist
+            const imgs = row.querySelectorAll('img');
+            let hasMaterialIcon = false;
+            imgs.forEach(img => {
+                if (img.src.includes('goods.png') && img.style.filter === 'invert(0%)') {
+                    hasMaterialIcon = true;
+                }
+            });
+
+            // Öffne das Modal und setze Kommentar + Checkbox
+            document.getElementById('modal').style.display = 'block';
+            document.getElementById('comment').value = currentComment;
+            document.getElementById('checkbox').checked = hasMaterialIcon;
+
+            // Bestehende Listener entfernen durch Cloning
+            const oldSaveBtn = document.getElementById('saveBtn');
+            const newSaveBtn = oldSaveBtn.cloneNode(true);
+            oldSaveBtn.parentNode.replaceChild(newSaveBtn, oldSaveBtn);
+
+            const oldCancelBtn = document.getElementById('cancelBtn');
+            const newCancelBtn = oldCancelBtn.cloneNode(true);
+            oldCancelBtn.parentNode.replaceChild(newCancelBtn, oldCancelBtn);
+
+            // Speichern-Button-Logik
+            newSaveBtn.addEventListener('click', function () {
+                const enteredComment = document.getElementById('comment').value;
+                const checkboxChecked = document.getElementById('checkbox').checked;
+
+                // Filterzustände vor Reload speichern
+                localStorage.setItem('filter_showOnlyStart', document.getElementById('showOnlyStart').checked);
+                localStorage.setItem('filter_showOnlyEnd', document.getElementById('showOnlyEnd').checked);
+
+                // AJAX-POST an Flask
+                fetch('/update_comment', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        fa_nr: fa_nr,
+                        comment: enteredComment,
+                        fa_mat: checkboxChecked ? 1 : 0
+                    })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            window.location.reload(); // Seite neu laden, Filter wird danach rekonstruiert
+                        } else {
+                            alert("Fehler beim Aktualisieren.");
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+
+                document.getElementById('modal').style.display = 'none';
+            });
+
+            // Abbrechen
+            newCancelBtn.addEventListener('click', function () {
+                document.getElementById('modal').style.display = 'none';
+            });
+        });
+    });
+
+    // Modal schließen per X-Button
+    document.getElementById('closeModalBtn').addEventListener('click', function () {
+        document.getElementById('modal').style.display = 'none';
+    });
+</script>
+
+
+
+<script>
+function applyFilters() {
+    const showOnlyStart = document.getElementById('showOnlyStart').checked;
+    const showOnlyEnd = document.getElementById('showOnlyEnd').checked;
+
+    document.querySelectorAll('.job-row').forEach(row => {
+        const statusCell = row.querySelector('td:nth-child(3)');
+        const typeImg = row.querySelector('td img');
+        let shouldHide = false;
+
+        // Typ-Filter: prüft das 'fa_start.png' oder 'fa_end.png' im <img>-Tag
+        if (showOnlyStart && (!typeImg || !typeImg.src.includes('fa_start.png'))) {
+            shouldHide = true;
+        }
+
+        if (showOnlyEnd && (!typeImg || !typeImg.src.includes('fa_end.png'))) {
+            shouldHide = true;
+        }
+
+        row.style.display = shouldHide ? 'none' : '';
+    });
+}
+
+// Event Listener
+document.getElementById('showOnlyStart').addEventListener('change', applyFilters);
+document.getElementById('showOnlyEnd').addEventListener('change', applyFilters);
+document.getElementById('applyFilters').addEventListener('click', applyFilters);
+</script>
+
+
+<script>
+document.getElementById('jumpToCurrentWeek').addEventListener('click', function() {
+    // Berechne die aktuelle Kalenderwoche
+    const currentDate = new Date();
+    const currentWeek = getWeekNumber(currentDate);
+
+    // Suche die Zeile mit der entsprechenden Kalenderwoche
+    const weekRows = document.querySelectorAll('tr');
+    weekRows.forEach(row => {
+        const weekCell = row.querySelector('td[colspan="10"]'); // Angenommen, die Kalenderwoche steht in einer speziellen Zelle
+        if (weekCell && weekCell.textContent.includes('KW: ' + currentWeek)) {
+            row.scrollIntoView({ behavior: 'smooth', block: 'center' }); // Scrolle zur Zeile der aktuellen KW
+        }
+    });
+});
+
+// Funktion zur Berechnung der Kalenderwoche
+function getWeekNumber(date) {
+    const startDate = new Date(date.getFullYear(), 0, 1);
+    const days = Math.floor((date - startDate) / (24 * 60 * 60 * 1000));
+    return Math.ceil((days + 1) / 7);
+}
+</script><!-- Zur aktuellen KW springen -->
+
+<script>
+    window.addEventListener('load', () => {
+        // Zustand aus localStorage wiederherstellen
+        const restore = (id, value) => {
+            if (localStorage.getItem(value) !== null) {
+                document.getElementById(id).checked = localStorage.getItem(value) === 'true';
+            }
+        };
+
+        restore('showOnlyStart', 'filter_showOnlyStart');
+        restore('showOnlyEnd', 'filter_showOnlyEnd');
+
+        // Filter anwenden
+        if (typeof applyFilters === 'function') {
+            applyFilters();
+        }
+
+        // Optional: Speicher löschen (wenn du möchtest, dass es nur für einen Reload gilt)
+        // localStorage.removeItem('filter_showOnlyStart');
+        // localStorage.removeItem('filter_showOnlyEnd');
+    });
+</script>
+{% endif %}
 </body>
 </html>
