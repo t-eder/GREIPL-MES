@@ -834,14 +834,17 @@ def _teamleiter_capacity(data, year, week):
         entry = data.get('attendance', {}).get(key, {}).get(str(employee.get('id')), {})
         status = _text(entry.get('status')).casefold()
 
-        # Anwesenheit wird wochenweise gepflegt. Bei Abwesenheit ist die
-        # verfügbare Arbeitszeit null; bei Anwesenheit gelten die eingetragenen
-        # Stunden oder ersatzweise die individuellen Wochenstunden.
-        if status in {'urlaub', 'krank', 'schulung', 'sonstiges'}:
+        # Bei Anwesenheit gelten immer die individuellen Wochenstunden.
+        # Bei Urlaub/Krank können dagegen bereits geleistete Stunden gepflegt
+        # werden (z. B. 16 Stunden am Mittwoch für Montag und Dienstag).
+        # Nur die Differenz zur Wochenstundenzahl zählt als Abwesenheit.
+        if status in {'urlaub', 'krank'}:
+            worked_hours = _number(entry.get('hours'), 0.0)
+        elif status in {'schulung', 'sonstiges'}:
             worked_hours = 0.0
         else:
-            worked_hours = _number(entry.get('hours'), weekly_hours)
-            worked_hours = min(max(worked_hours, 0.0), weekly_hours)
+            worked_hours = weekly_hours
+        worked_hours = min(max(worked_hours, 0.0), weekly_hours)
 
         absence_hours = weekly_hours - worked_hours
         result[team]['gross'] += weekly_hours
@@ -1120,8 +1123,19 @@ def teamleiter_kapa_api():
         current_iso = datetime.now().isocalendar()
         if (year, week) != (int(current_iso[0]), int(current_iso[1])):
             return jsonify({'success': False, 'error': 'Nur die aktuelle Kalenderwoche kann bearbeitet werden.'}), 403
+        employee = next(
+            (item for item in data.get('employees', []) if str(item.get('id')) == employee_id),
+            None,
+        )
+        if employee is None:
+            return jsonify({'success': False, 'error': 'Mitarbeiter wurde nicht gefunden.'}), 404
+        weekly_hours = max(0.0, _number(employee.get('weekly_hours')))
+        # Server-seitige Begrenzung verhindert negative oder überhöhte Werte.
+        # Bei Anwesenheit werden die Wochenstunden immer automatisch verwendet;
+        # bei Urlaub/Krank sind Teilstunden zulässig.
+        saved_hours = weekly_hours if status == 'anwesend' else min(max(0.0, hours), weekly_hours)
         key = _teamleiter_week_key(year, week)
-        data['attendance'].setdefault(key, {})[employee_id] = {'status': status, 'hours': max(0.0, hours)}
+        data['attendance'].setdefault(key, {})[employee_id] = {'status': status, 'hours': saved_hours}
 
     elif action == 'save_checkin':
         year_week = _teamleiter_parse_week(payload.get('week'))

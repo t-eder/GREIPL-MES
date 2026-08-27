@@ -72,7 +72,7 @@
         .team-summary { display:flex; flex-wrap:wrap; gap:10px 22px; margin:0 0 18px; padding:12px 14px; border-left:5px solid var(--blue); border-radius:7px; background:#eef6fc; color:#425767; font-size:1.05rem; font-weight:700; }
         .team-summary strong { color:var(--navy); font-size:1.25rem; }
         .team-summary .summary-label { color:#607384; font-size:.76rem; font-weight:800; text-transform:uppercase; letter-spacing:.04em; }
-        .employee-tiles { display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:14px; }
+        .employee-tiles { display:grid; grid-template-columns:repeat(auto-fit, minmax(270px, 1fr)); gap:14px; }
         .employee-tile { min-height:190px; padding:16px; border:2px solid #efc875; border-radius:10px; background:#fffaf0; box-shadow:0 3px 12px rgba(11,41,69,.06); transition:transform .12s ease, box-shadow .12s ease; }
         .employee-tile:hover { transform:translateY(-1px); box-shadow:0 6px 16px rgba(11,41,69,.10); }
         .employee-tile.checked-in { border-color:#9bd5b7; background:#f0fbf5; }
@@ -90,9 +90,11 @@
         .employee-tile.sick .employee-tile-status { color:var(--red); }
         .tile-hours { display:flex; align-items:center; gap:8px; margin:12px 0; color:#425767; font-size:.86rem; font-weight:700; }
         .tile-hours input { width:105px; margin:0; font-size:1rem; font-weight:700; }
+        .tile-hours input[readonly] { background:#f5f8fb; color:#607384; cursor:default; }
         .tile-hours span { white-space:nowrap; }
-        .tile-actions { display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; }
-        .tile-actions button { min-height:46px; margin:0; font-size:.9rem; }
+        .tile-actions { display:grid; grid-template-columns:1.18fr 1fr 1fr; gap:8px; align-items:stretch; }
+        .tile-actions button { min-height:46px; height:100%; margin:0; padding:9px 3px; display:flex; align-items:center; justify-content:center; text-align:center; line-height:1.1; white-space:nowrap; font-size:clamp(.76rem, 1.05vw, .9rem); }
+        @media(max-width:560px) { .tile-actions button { padding-left:2px; padding-right:2px; font-size:.78rem; } }
         .tile-actions .active-present { border-color:var(--green); background:var(--green); color:white; }
         .tile-actions .active-vacation { border-color:#d6a11d; background:#d6a11d; color:white; }
         .tile-actions .active-sick { border-color:var(--red); background:var(--red); color:white; }
@@ -217,7 +219,11 @@
         const target=$('teamSummary'); if(!target) return;
         const employees=activeEmployees(); const entries=(state.attendance&&state.attendance[weekKey()])||{};
         const present=employees.filter(e=>(entries[String(e.id)]||{}).status==='anwesend');
-        const presentHours=present.reduce((sum,e)=>sum+Number((entries[String(e.id)]||{}).hours ?? e.weekly_hours ?? 0),0);
+        const presentHours=employees.reduce((sum,e)=>{
+            const entry=entries[String(e.id)]||{};
+            const status=entry.status||'';
+            return sum+(['anwesend','urlaub','krank'].includes(status) ? Number(entry.hours ?? (status==='anwesend'?e.weekly_hours:0)) : 0);
+        },0);
         const totalHours=employees.reduce((sum,e)=>sum+Number(e.weekly_hours||0),0);
         target.innerHTML=`<span><span class="summary-label">Anwesenheit</span><br><strong>${present.length}/${employees.length} MA</strong> anwesend</span><span><span class="summary-label">Wochenstunden</span><br><strong>${presentHours.toFixed(1)}/${totalHours.toFixed(1)} h</strong></span>`;
     }
@@ -244,8 +250,10 @@
         employees.forEach(e=>{
             const entry=entries[String(e.id)]||{}; const status=entry.status||'nicht geprüft'; const isPresent=status==='anwesend'; const isVacation=status==='urlaub'; const isSick=status==='krank'; const isAbsent=['urlaub','krank','schulung','sonstiges'].includes(status);
             const row=document.createElement('article'); row.className='employee-tile '+(isPresent?'checked-in':isVacation?'vacation':isSick?'sick':isAbsent?'absent':'unchecked')+(isCurrentWeek?'':' read-only'); const label=isPresent?'Anwesend':isVacation?'Urlaub':isSick?'Krank':isAbsent?(status.charAt(0).toUpperCase()+status.slice(1)):'Noch nicht geprüft';
-            const hours=entry.hours===undefined?Number(e.weekly_hours):Number(entry.hours);
-            const controls=isCurrentWeek ? `<label class="tile-hours"><span>Kapazität:</span><input data-hours="${e.id}" ${isCurrentWeek?'':'disabled'} type="number" min="0" max="${Number(e.weekly_hours)}" step="0.1" value="${hours}"><span>h</span></label><div class="tile-actions"><button type="button" ${isCurrentWeek?'':'disabled'} class="${isPresent?'active-present':''}" data-status="anwesend" data-employee="${e.id}">Anwesend</button><button type="button" ${isCurrentWeek?'':'disabled'} class="${isVacation?'active-vacation':''}" data-status="urlaub" data-employee="${e.id}">Urlaub</button><button type="button" ${isCurrentWeek?'':'disabled'} class="${isSick?'active-sick':''}" data-status="krank" data-employee="${e.id}">Krank</button></div>` : `<div class="tile-hours"><span>Kapazität:</span><strong>${hours.toFixed(1)} h</strong></div>`;
+            const hours=entry.hours===undefined?(isPresent?Number(e.weekly_hours):0):Number(entry.hours);
+            const hoursLabel=isPresent?'Wochenstunden:':'Anwesend:';
+            const hoursReadonly=isPresent?'readonly':'';
+            const controls=isCurrentWeek ? `<label class="tile-hours"><span>${hoursLabel}</span><input data-hours="${e.id}" ${isCurrentWeek?'':'disabled'} ${hoursReadonly} type="number" min="0" max="${Number(e.weekly_hours)}" step="0.1" value="${hours}" aria-label="${isPresent?'Wochenstunden':'Bereits geleistete Stunden'} für ${escapeHtml(e.name)}"><span>h</span></label><div class="tile-actions"><button type="button" ${isCurrentWeek?'':'disabled'} class="${isPresent?'active-present':''}" data-status="anwesend" data-employee="${e.id}">Anwesend</button><button type="button" ${isCurrentWeek?'':'disabled'} class="${isVacation?'active-vacation':''}" data-status="urlaub" data-employee="${e.id}">Urlaub</button><button type="button" ${isCurrentWeek?'':'disabled'} class="${isSick?'active-sick':''}" data-status="krank" data-employee="${e.id}">Krank</button></div>` : `<div class="tile-hours"><span>${hoursLabel}</span><strong>${hours.toFixed(1)} h</strong></div>`;
             row.innerHTML=`<div class="employee-tile-head"><div><div class="employee-tile-name">${escapeHtml(e.name)}</div><div class="employee-tile-team">${escapeHtml(e.team)} · ${Number(e.weekly_hours).toFixed(1)} h/Woche</div></div><span>${isPresent?'✓':isAbsent?'!':'?'}</span></div><div class="employee-tile-status">${label}</div>${controls}`;
             tiles.appendChild(row);
         });
@@ -255,15 +263,17 @@
             const employeeId=b.dataset.employee;
             const employee=state.employees.find(e=>String(e.id)===String(employeeId));
             const status=b.dataset.status;
-            const hours=status==='anwesend' ? Number(employee.weekly_hours||0) : 0;
+            const currentEntry=entries[String(employeeId)]||{};
+            const hours=status==='anwesend' ? Number(employee.weekly_hours||0) : (['urlaub','krank'].includes(currentEntry.status) ? Number(currentEntry.hours||0) : 0);
             const input=tiles.querySelector(`[data-hours="${employeeId}"]`);
-            if(input) input.value=hours;
+            if(input) { input.value=hours; input.readOnly=status==='anwesend'; }
             save({action:'save_attendance',employee_id:employeeId,week:weekKey(),status:status,hours:hours}).catch(e=>alert(e.message));
         });
         tiles.querySelectorAll('[data-hours]').forEach(input=>input.onchange=()=>{
             if(!isCurrentWeek) return;
             const employeeId=input.dataset.hours;
             const current=(entries[String(employeeId)]||{}).status || 'anwesend';
+            if(current==='anwesend') return;
             save({action:'save_attendance',employee_id:employeeId,week:weekKey(),status:current,hours:input.value}).catch(e=>alert(e.message));
         });
     }
