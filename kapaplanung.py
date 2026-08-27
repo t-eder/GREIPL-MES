@@ -819,7 +819,7 @@ def _teamleiter_is_current_week(year, week):
 
 def _teamleiter_capacity(data, year, week):
     key = _teamleiter_week_key(year, week)
-    result = {team: {'gross': 0.0, 'absence': 0.0, 'available': 0.0} for team in TEAMLEITER_TEAMS}
+    result = {team: {'gross': 0.0, 'worked': 0.0, 'absence': 0.0, 'available': 0.0} for team in TEAMLEITER_TEAMS}
     absence_rate = _number(data.get('settings', {}).get('absence_rate'), TEAMLEITER_ABSENCE_RATE)
     absence_rate = min(max(absence_rate, 0.0), 1.0)
 
@@ -848,6 +848,7 @@ def _teamleiter_capacity(data, year, week):
 
         absence_hours = weekly_hours - worked_hours
         result[team]['gross'] += weekly_hours
+        result[team]['worked'] += worked_hours
         result[team]['absence'] += absence_hours
         result[team]['available'] += worked_hours * (1.0 - absence_rate)
 
@@ -908,6 +909,32 @@ def _teamleiter_latest_report(data, year, week, team):
     return latest
 
 
+def _teamleiter_earliest_report(data, year, week, team):
+    """Liefert die erste Tagesmeldung der ausgewählten KW als Vergleichsbasis."""
+    earliest = None
+    for date_key in data.get('daily_checkins', {}):
+        try:
+            report_date = dt.date.fromisoformat(str(date_key))
+        except (TypeError, ValueError):
+            continue
+        iso = report_date.isocalendar()
+        if (int(iso[0]), int(iso[1])) != (int(year), int(week)):
+            continue
+        entry = _teamleiter_daily_entry(data, report_date, team)
+        if entry.get('checked_at') and (earliest is None or report_date < earliest['date']):
+            earliest = {'date': report_date, 'entry': entry}
+
+    legacy_entries = data.get('checkins', {}).get(_teamleiter_week_key(year, week), {}).get(team, {}) or {}
+    for day_number, day_name in ((1, 'monday'), (3, 'wednesday')):
+        entry = legacy_entries.get(day_name) or {}
+        if not entry.get('checked_at'):
+            continue
+        report_date = _teamleiter_date_for_weekday(year, week, day_number)
+        if earliest is None or report_date < earliest['date']:
+            earliest = {'date': report_date, 'entry': entry}
+    return earliest
+
+
 def _teamleiter_report_snapshot(data, year, week, team):
     """Erfasst die Teamkennzahlen zum Zeitpunkt der Tagesmeldung."""
     key = _teamleiter_week_key(year, week)
@@ -923,7 +950,7 @@ def _teamleiter_report_snapshot(data, year, week, team):
         if counter:
             counts[counter] += 1
     team_capacity = _teamleiter_capacity(data, year, week).get(
-        team, {'gross': 0.0, 'absence': 0.0, 'available': 0.0}
+        team, {'gross': 0.0, 'worked': 0.0, 'absence': 0.0, 'available': 0.0}
     )
     return {
         'active_employees': len(employees),
@@ -931,6 +958,7 @@ def _teamleiter_report_snapshot(data, year, week, team):
         'vacation': counts['vacation'],
         'sick': counts['sick'],
         'gross': team_capacity['gross'],
+        'worked': team_capacity.get('worked', team_capacity['gross'] - team_capacity['absence']),
         'absence': team_capacity['absence'],
         'available': team_capacity['available'],
     }
@@ -955,6 +983,7 @@ def _teamleiter_master_overview(data, year, week):
         'vacation': 0,
         'sick': 0,
         'gross': 0.0,
+        'worked': 0.0,
         'absence': 0.0,
         'available': 0.0,
         'team_count': len(TEAMLEITER_TEAMS),
@@ -975,12 +1004,18 @@ def _teamleiter_master_overview(data, year, week):
             if counter:
                 counts[counter] += 1
 
-        team_capacity = capacity.get(team, {'gross': 0.0, 'absence': 0.0, 'available': 0.0})
+        team_capacity = capacity.get(team, {'gross': 0.0, 'worked': 0.0, 'absence': 0.0, 'available': 0.0})
         latest_report = _teamleiter_latest_report(data, year, week, team)
         latest_entry = latest_report['entry'] if latest_report else {}
         latest_snapshot = latest_entry.get('snapshot') if isinstance(latest_entry.get('snapshot'), dict) else {}
         latest_is_today = bool(latest_report and latest_report['date'] == current_date)
-        latest_values = latest_snapshot or team_capacity
+        # Die Masterübersicht zeigt live die aktuell gepflegten Werte.
+        # Der erste Check-in dient ausschließlich als Wochenstart-Baseline.
+        latest_values = team_capacity
+        baseline_report = _teamleiter_earliest_report(data, year, week, team)
+        baseline_entry = baseline_report['entry'] if baseline_report else {}
+        baseline_snapshot = baseline_entry.get('snapshot') if isinstance(baseline_entry.get('snapshot'), dict) else {}
+        baseline_values = baseline_snapshot or team_capacity
 
         displayed_values = {
             'active_employees': latest_values.get('active_employees', len(employees)),
@@ -988,12 +1023,20 @@ def _teamleiter_master_overview(data, year, week):
             'vacation': latest_values.get('vacation', counts['vacation']),
             'sick': latest_values.get('sick', counts['sick']),
             'gross': latest_values.get('gross', team_capacity['gross']),
+            'worked': latest_values.get('worked', team_capacity.get('worked', 0.0)),
             'absence': latest_values.get('absence', team_capacity['absence']),
             'available': latest_values.get('available', team_capacity['available']),
         }
+        baseline_worked = baseline_values.get('worked', baseline_values.get('gross', team_capacity['gross']) - baseline_values.get('absence', 0.0))
         row = {
             'team': team,
             **displayed_values,
+            'attendance_percent': (displayed_values['worked'] / displayed_values['gross'] * 100.0) if displayed_values['gross'] else 0.0,
+            'employee_percent': (displayed_values['present'] / displayed_values['active_employees'] * 100.0) if displayed_values['active_employees'] else 0.0,
+            'delta_worked': displayed_values['worked'] - baseline_worked,
+            'delta_absence': displayed_values['absence'] - baseline_values.get('absence', team_capacity['absence']),
+            'delta_available': displayed_values['available'] - baseline_values.get('available', team_capacity['available']),
+            'baseline_report': {'exists': bool(baseline_report), 'date': _teamleiter_daily_key(baseline_report['date']) if baseline_report else ''},
             'latest_report': {
                 'exists': bool(latest_report),
                 'is_today': latest_is_today,
@@ -1004,11 +1047,119 @@ def _teamleiter_master_overview(data, year, week):
             },
         }
         overview.append(row)
-        for field in ('active_employees', 'present', 'vacation', 'sick', 'gross', 'absence', 'available'):
+        for field in ('active_employees', 'present', 'vacation', 'sick', 'gross', 'worked', 'absence', 'available'):
             totals[field] += row[field]
 
     totals['open_checkins'] = 0
     return overview, totals
+
+
+def _teamleiter_long_term_history(data, end_year, end_week, weeks=52):
+    """Erzeugt belastbare Wochenwerte für die langfristige Entwicklung.
+
+    Priorität je Woche und Team:
+    1. gespeicherter Check-in-Snapshot,
+    2. vorhandene Anwesenheitsdaten der Woche,
+    3. bei der aktuellen KW die live berechneten Werte.
+
+    Dadurch werden Wochen mit gepflegten Anwesenheitsdaten auch dann angezeigt,
+    wenn noch kein separater Check-in-Snapshot vorhanden ist. Nicht vorhandene
+    Wochen bleiben leer und werden nicht als Nullwerte dargestellt.
+    """
+    history = []
+    end_monday = _teamleiter_date_for_weekday(end_year, end_week, 1)
+    current_iso = datetime.now().isocalendar()
+    current_key = (int(current_iso[0]), int(current_iso[1]))
+
+    for offset in range(-(weeks - 1), 1):
+        monday = end_monday + timedelta(weeks=offset)
+        iso = monday.isocalendar()
+        year = int(iso[0])
+        week = int(iso[1])
+        week_key = _teamleiter_week_key(year, week)
+        teams_data = {}
+        known_team_values = []
+
+        live_capacity = _teamleiter_capacity(data, year, week)
+        week_attendance = data.get('attendance', {}).get(week_key, {}) or {}
+
+        for team in TEAMLEITER_TEAMS:
+            values = None
+            report = _teamleiter_latest_report(data, year, week, team)
+            entry = report['entry'] if report else {}
+            snapshot = entry.get('snapshot') if isinstance(entry.get('snapshot'), dict) else {}
+
+            if snapshot:
+                candidate = {
+                    'active_employees': _number(snapshot.get('active_employees'), None),
+                    'present': _number(snapshot.get('present'), None),
+                    'gross': _number(snapshot.get('gross'), None),
+                    'worked': _number(snapshot.get('worked'), None),
+                    'available': _number(snapshot.get('available'), None),
+                }
+                if all(value is not None for value in candidate.values()):
+                    values = candidate
+
+            if values is None and (year, week) == current_key:
+                employees = [
+                    employee for employee in data.get('employees', [])
+                    if employee.get('active', True) and employee.get('team') == team
+                ]
+                present = sum(
+                    1 for employee in employees
+                    if _text(week_attendance.get(str(employee.get('id')), {}).get('status')).casefold() == 'anwesend'
+                )
+                capacity = live_capacity.get(team, {})
+                values = {
+                    'active_employees': len(employees),
+                    'present': present,
+                    'gross': _number(capacity.get('gross'), 0.0),
+                    'worked': _number(capacity.get('worked'), 0.0),
+                    'available': _number(capacity.get('available'), 0.0),
+                }
+
+            if values is None and week_attendance:
+                employees = [
+                    employee for employee in data.get('employees', [])
+                    if employee.get('active', True)
+                    and employee.get('team') == team
+                    and str(employee.get('id')) in week_attendance
+                ]
+                if employees:
+                    present = sum(
+                        1 for employee in employees
+                        if _text(week_attendance.get(str(employee.get('id')), {}).get('status')).casefold() == 'anwesend'
+                    )
+                    capacity = live_capacity.get(team, {})
+                    values = {
+                        'active_employees': len(employees),
+                        'present': present,
+                        'gross': _number(capacity.get('gross'), 0.0),
+                        'worked': _number(capacity.get('worked'), 0.0),
+                        'available': _number(capacity.get('available'), 0.0),
+                    }
+
+            teams_data[team] = values
+            if values is not None and all(value is not None for value in values.values()):
+                known_team_values.append(values)
+
+        # Auch Teilhistorien werden als Gesamtwert gezeichnet. So bleibt eine
+        # gepflegte Teamwoche sichtbar, selbst wenn andere Teams noch leer sind.
+        total = None
+        if known_team_values:
+            total = {
+                field: sum(values[field] for values in known_team_values)
+                for field in ('active_employees', 'present', 'gross', 'worked', 'available')
+            }
+
+        history.append({
+            'year': year,
+            'week': week,
+            'label': f'KW {week:02d}/{str(year)[2:]}',
+            'teams': teams_data,
+            'total': total,
+        })
+    return history
 
 
 def _render_teamleiter_page(selected_team=None):
@@ -1047,6 +1198,7 @@ def teamleiter_master():
         selected_week=week,
         overview=overview,
         totals=totals,
+        long_term_history=_teamleiter_long_term_history(data, year, week, weeks=52),
     )
 
 
