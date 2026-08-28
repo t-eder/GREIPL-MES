@@ -164,7 +164,7 @@
                     <label>Personalnummer<input id="employeeNumber" type="number" min="1" max="999999" step="1" required></label>
                     <label>Name<input id="employeeName" required></label>
                     <label>Team<select id="employeeTeam" required disabled>{% for team in teams %}<option value="{{ team }}" {% if team == selected_team %}selected{% endif %}>{{ team }}</option>{% endfor %}</select></label>
-                    <label>Wochenstunden<input id="employeeHours" type="number" min="0.1" max="80" step="0.1" value="40" required></label>
+                    <label>Wochenstunden<input id="employeeHours" type="number" min="0" max="80" step="0.1" value="40" required></label>
                     <button class="primary" type="submit">Mitarbeiter speichern</button>
                 </form>
                 <p class="hint">Deaktivierte Mitarbeiter bleiben in der Historie erhalten und werden nicht mehr in die Kapazität eingerechnet.</p>
@@ -252,8 +252,7 @@
             const row=document.createElement('article'); row.className='employee-tile '+(isPresent?'checked-in':isVacation?'vacation':isSick?'sick':isAbsent?'absent':'unchecked')+(isCurrentWeek?'':' read-only'); const label=isPresent?'Anwesend':isVacation?'Urlaub':isSick?'Krank':isAbsent?(status.charAt(0).toUpperCase()+status.slice(1)):'Noch nicht geprüft';
             const hours=entry.hours===undefined?(isPresent?Number(e.weekly_hours):0):Number(entry.hours);
             const hoursLabel=isPresent?'Wochenstunden:':'Anwesend:';
-            const hoursReadonly=isPresent?'readonly':'';
-            const controls=isCurrentWeek ? `<label class="tile-hours"><span>${hoursLabel}</span><input data-hours="${e.id}" ${isCurrentWeek?'':'disabled'} ${hoursReadonly} type="number" min="0" max="${Number(e.weekly_hours)}" step="0.1" value="${hours}" aria-label="${isPresent?'Wochenstunden':'Bereits geleistete Stunden'} für ${escapeHtml(e.name)}"><span>h</span></label><div class="tile-actions"><button type="button" ${isCurrentWeek?'':'disabled'} class="${isPresent?'active-present':''}" data-status="anwesend" data-employee="${e.id}">Anwesend</button><button type="button" ${isCurrentWeek?'':'disabled'} class="${isVacation?'active-vacation':''}" data-status="urlaub" data-employee="${e.id}">Urlaub</button><button type="button" ${isCurrentWeek?'':'disabled'} class="${isSick?'active-sick':''}" data-status="krank" data-employee="${e.id}">Krank</button></div>` : `<div class="tile-hours"><span>${hoursLabel}</span><strong>${hours.toFixed(1)} h</strong></div>`;
+            const controls=isCurrentWeek ? `<label class="tile-hours"><span>${hoursLabel}</span><input data-hours="${e.id}" ${isCurrentWeek?'':'disabled'} type="number" min="0" max="${Number(e.weekly_hours)}" step="0.1" value="${hours}" aria-label="${isPresent?'Wochenstunden':'Bereits geleistete Stunden'} für ${escapeHtml(e.name)}"><span>h</span></label><div class="tile-actions"><button type="button" ${isCurrentWeek?'':'disabled'} class="${isPresent?'active-present':''}" data-status="anwesend" data-employee="${e.id}">Anwesend</button><button type="button" ${isCurrentWeek?'':'disabled'} class="${isVacation?'active-vacation':''}" data-status="urlaub" data-employee="${e.id}">Urlaub</button><button type="button" ${isCurrentWeek?'':'disabled'} class="${isSick?'active-sick':''}" data-status="krank" data-employee="${e.id}">Krank</button></div>` : `<div class="tile-hours"><span>${hoursLabel}</span><strong>${hours.toFixed(1)} h</strong></div>`;
             row.innerHTML=`<div class="employee-tile-head"><div><div class="employee-tile-name">${escapeHtml(e.name)}</div><div class="employee-tile-team">${escapeHtml(e.team)} · ${Number(e.weekly_hours).toFixed(1)} h/Woche</div></div><span>${isPresent?'✓':isAbsent?'!':'?'}</span></div><div class="employee-tile-status">${label}</div>${controls}`;
             tiles.appendChild(row);
         });
@@ -264,16 +263,17 @@
             const employee=state.employees.find(e=>String(e.id)===String(employeeId));
             const status=b.dataset.status;
             const currentEntry=entries[String(employeeId)]||{};
-            const hours=status==='anwesend' ? Number(employee.weekly_hours||0) : (['urlaub','krank'].includes(currentEntry.status) ? Number(currentEntry.hours||0) : 0);
+            const currentHours=currentEntry.hours === undefined ? Number(employee.weekly_hours||0) : Number(currentEntry.hours);
+            const hours=status==='anwesend' ? currentHours : (['urlaub','krank'].includes(currentEntry.status) ? currentHours : 0);
             const input=tiles.querySelector(`[data-hours="${employeeId}"]`);
-            if(input) { input.value=hours; input.readOnly=status==='anwesend'; }
+            if(input) { input.value=hours; input.readOnly=false; }
             save({action:'save_attendance',employee_id:employeeId,week:weekKey(),status:status,hours:hours}).catch(e=>alert(e.message));
         });
         tiles.querySelectorAll('[data-hours]').forEach(input=>input.onchange=()=>{
             if(!isCurrentWeek) return;
             const employeeId=input.dataset.hours;
             const current=(entries[String(employeeId)]||{}).status || 'anwesend';
-            if(current==='anwesend') return;
+            // Stunden bei "Anwesend" sind ausdrücklich editierbar.
             save({action:'save_attendance',employee_id:employeeId,week:weekKey(),status:current,hours:input.value}).catch(e=>alert(e.message));
         });
     }
