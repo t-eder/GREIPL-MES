@@ -976,8 +976,8 @@ def _teamleiter_master_overview(data, year, week):
     current_weekday = int(current_date.isocalendar()[2]) if is_current_week else 0
     monday_date = _teamleiter_date_for_weekday(year, week, 1)
     wednesday_date = _teamleiter_date_for_weekday(year, week, 3)
-    monday_due = is_current_week and current_weekday >= 1
-    wednesday_due = is_current_week and current_weekday >= 3
+    # Tagesmeldungen sind an jedem bisher begonnenen Arbeitstag fällig.
+    workdays_due = min(current_weekday, 5) if is_current_week else 0
     overview = []
     totals = {
         'active_employees': 0,
@@ -989,7 +989,7 @@ def _teamleiter_master_overview(data, year, week):
         'absence': 0.0,
         'available': 0.0,
         'team_count': len(TEAMLEITER_TEAMS),
-        'required_checkins': len(TEAMLEITER_TEAMS) * (int(monday_due) + int(wednesday_due)),
+        'required_checkins': len(TEAMLEITER_TEAMS) * workdays_due,
         'open_checkins': 0,
     }
 
@@ -1007,6 +1007,11 @@ def _teamleiter_master_overview(data, year, week):
                 counts[counter] += 1
 
         team_capacity = capacity.get(team, {'gross': 0.0, 'worked': 0.0, 'absence': 0.0, 'available': 0.0})
+        if is_current_week:
+            for weekday in range(1, workdays_due + 1):
+                report_date = _teamleiter_date_for_weekday(year, week, weekday)
+                if not _teamleiter_daily_entry(data, report_date, team).get('checked_at'):
+                    totals['open_checkins'] += 1
         latest_report = _teamleiter_latest_report(data, year, week, team)
         latest_entry = latest_report['entry'] if latest_report else {}
         latest_snapshot = latest_entry.get('snapshot') if isinstance(latest_entry.get('snapshot'), dict) else {}
@@ -1304,6 +1309,21 @@ def teamleiter_kapa_api():
         if day not in {'monday', 'tuesday', 'wednesday', 'thursday', 'friday'}:
             return jsonify({'success': False, 'error': 'Meldung muss an einem Arbeitstag abgegeben werden.'}), 400
         today = datetime.now().date()
+        attendance_entries = data.get('attendance', {}).get(_teamleiter_week_key(year, week), {}) or {}
+        employees = [
+            employee for employee in data.get('employees', [])
+            if employee.get('active', True) and employee.get('team') == team
+        ]
+        unchecked_employees = [
+            employee for employee in employees
+            if _text(attendance_entries.get(str(employee.get('id')), {}).get('status')).casefold()
+            not in {'anwesend', 'urlaub', 'krank'}
+        ]
+        if unchecked_employees:
+            return jsonify({
+                'success': False,
+                'error': f'{len(unchecked_employees)} Mitarbeiter sind noch ungeprüft. Bitte zuerst Anwesenheit, Urlaub oder Krank erfassen.'
+            }), 400
         weekday_names = {
             0: 'monday',
             1: 'tuesday',
@@ -1317,7 +1337,7 @@ def teamleiter_kapa_api():
         data.setdefault('daily_checkins', {}).setdefault(daily_key, {}).setdefault(team, {})['checkin'] = {
             'checked_at': datetime.now().isoformat(timespec='minutes'),
             'checked_by': checked_by,
-            'required': day in {'monday', 'wednesday'},
+            'required': day in {'monday', 'tuesday', 'wednesday', 'thursday', 'friday'},
             'snapshot': _teamleiter_report_snapshot(data, year, week, team),
         }
 

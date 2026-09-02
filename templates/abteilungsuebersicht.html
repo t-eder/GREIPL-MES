@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles/style.css') }}">
+    <title>Abteilungsübersicht · Langfristige Entwicklung</title>
+    <style>
+        :root { --navy:#0b2945; --blue:#1a60a1; --line:#dce5ed; --soft:#f5f8fb; --green:#138a56; --amber:#c27b00; --ink:#172b3a; --muted:#607384; }
+        main.container, main.container * { box-sizing:border-box; }
+        body { font-family:Arial, sans-serif; background:#f4f4f4; margin:0; padding:0; color:var(--ink); }
+        main.container { max-width:1400px; margin:0 auto; padding:20px; background:#fff; border-radius:5px; box-shadow:0 2px 5px rgba(0,0,0,.2); text-align:left; }
+        body > .header, body > .header * { box-sizing:content-box !important; }
+        body > .header { width:100%; margin:0; }
+        body > .header > .header-content { width:auto; max-width:1440px; margin:0 auto; padding:0 50px; }
+        body > .header .navbar { width:100%; margin:0; transform:none; }
+        h1,h2,h3 { color:var(--navy); }
+        h1 { margin:15px 0 5px; font-size:clamp(2rem,4vw,3rem); }
+        h2 { margin:0; padding:0; font-size:1.35rem; }
+        p { color:var(--muted); }
+        .intro { margin:0 0 18px; }
+        .page-nav { display:flex; flex-wrap:wrap; gap:8px; margin:0 0 22px; }
+        .page-nav a { padding:8px 11px; border:1px solid #c7d4df; border-radius:5px; background:#fff; color:var(--blue); text-decoration:none; font-size:.84rem; font-weight:700; }
+        .page-nav a:hover, .page-nav a:focus-visible { background:var(--blue); border-color:var(--blue); color:#fff; }
+        .panel { margin-bottom:20px; padding:18px; border:1px solid var(--line); border-radius:8px; background:#fff; box-shadow:0 3px 12px rgba(11,41,69,.06); }
+        .panel-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:18px; }
+        .panel-heading p { margin:5px 0 0; font-size:.86rem; }
+        .chart-grid { display:grid; grid-template-columns:1fr; gap:18px; }
+        .trend-card { min-width:0; padding:20px 22px 18px; border:1px solid var(--line); border-radius:8px; background:#fbfdfe; }
+        .trend-card h3 { margin:0; font-size:1.2rem; }
+        .trend-card-note { display:block; margin-top:5px; color:var(--muted); font-size:.88rem; }
+        .trend-plot { width:100%; margin-top:14px; overflow-x:auto; overflow-y:hidden; }
+        .trend-plot svg { display:block; width:100%; min-width:1100px; height:auto; min-height:390px; overflow:visible; }
+        .trend-gridline { stroke:#dbe5eb; stroke-width:1; }
+        .trend-week-gridline { stroke:#edf2f5; stroke-width:1; }
+        .trend-axis-label { fill:var(--muted); font-size:12px; }
+        .trend-week-label { fill:var(--muted); font-size:10px; }
+        .trend-path { fill:none; stroke-width:3.2; stroke-linejoin:round; stroke-linecap:round; }
+        .trend-path.total { stroke-width:4.5; }
+        .trend-point { stroke:#fff; stroke-width:2; }
+        .trend-legend { display:flex; flex-wrap:wrap; gap:9px 16px; margin-top:13px; color:var(--ink); font-size:.9rem; }
+        .trend-legend-item { display:inline-flex; align-items:center; gap:6px; white-space:nowrap; }
+        .trend-legend-swatch { display:inline-block; width:24px; height:4px; border-radius:2px; }
+        .trend-empty { display:flex; align-items:center; justify-content:center; min-height:260px; color:var(--muted); font-size:1rem; text-align:center; }
+        .footnote { margin:12px 0 0; font-size:.8rem; }
+        .rueck-table-wrap { width:100%; overflow-x:auto; border:1px solid var(--line); border-radius:6px; }
+        .rueck-table { width:100%; min-width:1450px; border-collapse:collapse; font-size:.84rem; }
+        .rueck-table th { position:sticky; top:0; z-index:1; padding:10px 9px; background:var(--navy); color:#fff; text-align:left; white-space:nowrap; }
+        .rueck-table td { padding:8px 9px; border-top:1px solid var(--line); white-space:nowrap; vertical-align:top; }
+        .rueck-table tbody tr:nth-child(even) { background:var(--soft); }
+        .rueck-table tbody tr:hover { background:#eaf3fb; }
+        .rueck-empty { padding:22px; border:1px dashed #c7d4df; border-radius:6px; color:var(--muted); background:var(--soft); }
+        .rueck-error { padding:12px 14px; border-left:4px solid #b42318; border-radius:4px; color:#7a1c13; background:#fff1f0; }
+        .rueck-meta { margin:0 0 14px; color:var(--muted); font-size:.86rem; }
+        .summary-table { width:100%; border-collapse:collapse; font-size:.9rem; }
+        .summary-table th { padding:10px 9px; background:var(--navy); color:#fff; text-align:left; white-space:nowrap; }
+        .summary-table td { padding:9px; border-top:1px solid var(--line); white-space:nowrap; }
+        .summary-table tbody tr:nth-child(even) { background:var(--soft); }
+        .summary-table tbody tr:hover { background:#eaf3fb; }
+        .summary-number { text-align:right; font-variant-numeric:tabular-nums; }
+        .summary-total td { border-top:2px solid var(--navy); font-weight:700; background:#eef5fa; }
+        .summary-empty { padding:22px; border:1px dashed #c7d4df; border-radius:6px; color:var(--muted); background:var(--soft); }
+        .summary-error { padding:12px 14px; border-left:4px solid #b42318; border-radius:4px; color:#7a1c13; background:#fff1f0; }
+        .summary-wrap { overflow-x:auto; }
+        .summary-note { margin:0 0 14px; color:var(--muted); font-size:.86rem; }
+        .booking-table-wrap { width:100%; overflow-x:auto; border:1px solid var(--line); border-radius:6px; }
+        .booking-table { width:100%; min-width:920px; border-collapse:collapse; font-size:.9rem; }
+        .booking-table th { padding:10px 9px; background:var(--navy); color:#fff; text-align:left; white-space:nowrap; }
+        .booking-table td { padding:9px; border-top:1px solid var(--line); white-space:nowrap; }
+        .booking-table tbody tr:nth-child(even) { background:var(--soft); }
+        .booking-table tbody tr:hover { background:#eaf3fb; }
+        .booking-number { text-align:right; font-variant-numeric:tabular-nums; }
+        .booking-percent { font-weight:700; border-radius:4px; }
+        .booking-good { color:#126b43; background:#e8f6ef; }
+        .booking-warn { color:#8a5a00; background:#fff5d9; }
+        .booking-critical { color:#9e241b; background:#fff0ee; }
+        .booking-neutral { color:var(--muted); background:#eef2f5; }
+        .booking-team td { border-top:2px solid #b8cbd8; background:#f7fafc; font-weight:700; color:var(--navy); }
+        .booking-empty { padding:22px; border:1px dashed #c7d4df; border-radius:6px; color:var(--muted); background:var(--soft); }
+        .booking-error { padding:12px 14px; border-left:4px solid #b42318; border-radius:4px; color:#7a1c13; background:#fff1f0; }
+        .booking-legend { margin:12px 0 0; color:var(--muted); font-size:.8rem; }
+        .booking-status { color:var(--muted); font-size:.8rem; }
+        .booking-unmatched { color:#9e241b; font-weight:700; }
+        .booking-table .booking-percent { text-align:right; }
+        .booking-panel-heading { align-items:flex-start; }
+        .booking-note { margin:0 0 14px; color:var(--muted); font-size:.86rem; }
+        .booking-note strong { color:var(--ink); }
+        .booking-bar { display:inline-block; width:90px; height:7px; margin-left:7px; vertical-align:middle; border-radius:4px; background:#dce5ed; overflow:hidden; }
+        .booking-bar > span { display:block; height:100%; border-radius:4px; background:currentColor; }
+
+        @media(max-width:700px) {
+            .trend-card { padding:16px 12px 14px; }
+            .trend-card h3 { font-size:1.08rem; }
+            .trend-card-note { font-size:.82rem; }
+            .trend-plot svg { min-width:980px; min-height:330px; }
+            .trend-axis-label { font-size:11px; }
+            .trend-week-label { font-size:9px; }
+            .trend-legend { font-size:.82rem; }
+        }
+    </style>
+</head>
+<body>
+{% include 'header.html' %}
+<main class="container">
+    <h1>Abteilungsübersicht</h1>
+    <p class="intro">Langfristige Entwicklung der Mitarbeiterzahlen, verfügbaren Kapazität und Anwesenheitsquote über alle verfügbaren historischen Kalenderwochen.</p>
+    <nav class="page-nav" aria-label="Bereiche">
+        <a href="{{ url_for('teamleiter_master') }}">← Wochenübersicht</a>
+        {% for team in teams %}<a href="{{ url_for('teamleiter_kapa_team', team_name=team) }}">{{ team }}</a>{% endfor %}
+    </nav>
+
+    <section class="panel" aria-labelledby="history-heading">
+        <div class="panel-heading">
+            <div>
+                <h2 id="history-heading">Langfristige Entwicklung</h2>
+                <p>Zeitraum: {{ history_start }} bis {{ history_end }} · Linien zeigen gespeicherte Wochenwerte je Team und als Gesamtwert.</p>
+            </div>
+        </div>
+        <div class="chart-grid">
+            <article class="trend-card">
+                <h3>Verfügbare Kapazität</h3>
+                <span class="trend-card-note">Stunden pro Kalenderwoche</span>
+                <div class="trend-plot" data-chart="available"></div>
+            </article>
+            <article class="trend-card">
+                <h3>Aktive Mitarbeiter</h3>
+                <span class="trend-card-note">Mitarbeiter pro Kalenderwoche</span>
+                <div class="trend-plot" data-chart="active_employees"></div>
+            </article>
+            <article class="trend-card">
+                <h3>Anwesenheitsquote</h3>
+                <span class="trend-card-note">Geleistete Stunden im Verhältnis zu Sollstunden</span>
+                <div class="trend-plot" data-chart="presence_percent"></div>
+            </article>
+        </div>
+        <p class="footnote">Nicht gepflegte Kalenderwochen bleiben im Verlauf leer. Die aktuellen Werte werden live aus der Anwesenheit und den gepflegten Stunden berechnet.</p>
+    </section>
+
+    <section class="panel" aria-labelledby="booking-heading">
+        <div class="panel-heading booking-panel-heading">
+            <div>
+                <h2 id="booking-heading">Buchungsdisziplin je Mitarbeiter</h2>
+                <p class="booking-note">Letzte abgeschlossene ISO-Kalenderwoche: <strong>KW {{ '%02d'|format(booking_week) }}/{{ booking_year }}</strong> · alle aktiven/gepflegten Mitarbeiter · Zuordnung über die Personalnummer</p>
+            </div>
+        </div>
+        {% if booking_error %}
+            <div class="booking-error" role="alert">Die Buchungsübersicht konnte nicht geladen werden: {{ booking_error }}</div>
+        {% elif booking_rows %}
+            <div class="booking-table-wrap">
+                <table class="booking-table">
+                    <thead>
+                        <tr>
+                            <th>Team</th>
+                            <th>Mitarbeiter</th>
+                            <th>Personalnr.</th>
+                            <th class="booking-number">Anwesend</th>
+                            <th class="booking-number">ERP gebucht</th>
+                            <th class="booking-number">Differenz</th>
+                            <th class="booking-number">Buchungsquote</th>
+                            <th>Basis / Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for row in booking_rows %}
+                        {% if loop.first or row.team != booking_rows[loop.index0 - 1].team %}
+                            <tr class="booking-team">
+                                <td colspan="8">{{ row.team }}</td>
+                            </tr>
+                        {% endif %}
+                        <tr>
+                            <td>{{ row.team }}</td>
+                            <td><strong>{{ row.name }}</strong></td>
+                            <td>{{ row.personnel_number }}</td>
+                            <td class="booking-number">{{ '%.2f'|format(row.attendance_hours) }} h</td>
+                            <td class="booking-number">{{ '%.2f'|format(row.booked_hours) }} h</td>
+                            <td class="booking-number">{{ '%.2f'|format(row.attendance_hours - row.booked_hours) }} h</td>
+                            {% if row.booking_percent is none %}
+                                <td class="booking-number booking-percent booking-neutral">–</td>
+                            {% elif row.booking_percent < 85 or row.booking_percent > 103 %}
+                                <td class="booking-number booking-percent booking-critical">{{ '%.1f'|format(row.booking_percent) }} %<span class="booking-bar"><span style="width:100%"></span></span></td>
+                            {% elif row.booking_percent < 90 or row.booking_percent > 100 %}
+                                <td class="booking-number booking-percent booking-warn">{{ '%.1f'|format(row.booking_percent) }} %<span class="booking-bar"><span style="width:90%"></span></span></td>
+                            {% else %}
+                                <td class="booking-number booking-percent booking-good">{{ '%.1f'|format(row.booking_percent) }} %<span class="booking-bar"><span style="width:{{ [row.booking_percent, 100]|min }}%"></span></span></td>
+                            {% endif %}
+                            <td class="booking-status{% if row.status == 'nicht gepflegt' %} booking-unmatched{% endif %}">{{ row.attendance_basis }}{% if row.status not in ['anwesend', ''] %} · {{ row.status|capitalize }}{% endif %}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <p class="booking-legend"><strong>Ampel:</strong> Grün 90–100 % · Gelb 85–90 % oder 100–103 % · Rot unter 85 % oder über 103 %. Die Differenz zeigt nicht gebuchte Anwesenheitszeit.</p>
+        {% else %}
+            <div class="booking-empty">Es sind keine aktiven/gepflegten Mitarbeiter für die Buchungsdisziplin-Auswertung vorhanden.</div>
+        {% endif %}
+    </section>
+
+    <section class="panel" aria-labelledby="rueck-summary-heading">
+        <div class="panel-heading">
+            <div>
+                <h2 id="rueck-summary-heading">Angemeldete Zeit je Mitarbeiter</h2>
+                <p class="summary-note">Typ <strong>A</strong> · Kostenstelle <strong>2440</strong> · aktuelle und vergangene ISO-Kalenderwoche · Summierung von <strong>ZeitNetto</strong></p>
+            </div>
+        </div>
+        {% if rueck_summary_error %}
+            <div class="summary-error" role="alert">Die Zeitübersicht konnte nicht geladen werden: {{ rueck_summary_error }}</div>
+        {% elif rueck_summary_rows %}
+            <div class="summary-wrap">
+                <table class="summary-table">
+                    <thead>
+                        <tr>
+                            <th>Kalenderwoche</th>
+                            <th>Zeitraum</th>
+                            <th>Mitarbeiter</th>
+                            <th class="summary-number">Zeit netto</th>
+                            <th class="summary-number">Zeit in Stunden</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for row in rueck_summary_rows %}
+                        <tr>
+                            <td>{{ row.Woche }}</td>
+                            <td>{{ row.WocheStart }} – {{ row.WocheEnde }}</td>
+                            <td>{{ row.Person }}</td>
+                            <td class="summary-number">{{ '%.0f'|format(row.ZeitNettoGesamt) }} min</td>
+                            <td class="summary-number">{{ '%.2f'|format(row.ZeitNettoStunden) }} h</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="summary-empty">Für die aktuelle und vergangene Kalenderwoche wurden keine passenden RÜCK-Datensätze gefunden.</div>
+        {% endif %}
+    </section>
+
+    <section class="panel" aria-labelledby="rueck-heading">
+        <div class="panel-heading">
+            <div>
+                <h2 id="rueck-heading">Rückmeldungen aus RUECK</h2>
+                <p class="rueck-meta">Kostenstelle <strong>2440</strong> · Starttermin innerhalb der letzten vier Wochen bis heute · {{ rueck_rows|length }} Datensätze</p>
+            </div>
+        </div>
+        {% if rueck_error %}
+            <div class="rueck-error" role="alert">Die RUECK-Abfrage konnte nicht ausgeführt werden: {{ rueck_error }}</div>
+        {% elif rueck_rows %}
+            <div class="rueck-table-wrap">
+                <table class="rueck-table">
+                    <thead>
+                        <tr>
+                            <th>Typ</th><th>Status</th><th>Referenz</th><th>Auftrag</th>
+                            <th>Pos.</th><th>Upos.</th><th>Suchbegriff</th><th>Projekt</th>
+                            <th>Starttermin</th><th>Endtermin</th><th>Menge</th><th>Ausschuss</th>
+                            <th>ME</th><th>Teil</th><th>PmNr</th><th>Zeit netto</th>
+                            <th>Person</th><th>Kostenstelle</th><th>Kostenträger</th><th>Kostenart</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for row in rueck_rows %}
+                        <tr>
+                            <td>{{ row.Typ }}</td><td>{{ row.Stat }}</td><td>{{ row.Ref }}</td>
+                            <td>{{ row.Auftrag }}</td><td>{{ row.Pos }}</td><td>{{ row.Upos }}</td>
+                            <td>{{ row.Such }}</td><td>{{ row.Proj }}</td><td>{{ row.StartTerm }}</td>
+                            <td>{{ row.EndTerm }}</td><td>{{ row.Mng }}</td><td>{{ row.Ausschuss }}</td>
+                            <td>{{ row.Me }}</td><td>{{ row.Teil }}</td><td>{{ row.PmNr }}</td>
+                            <td>{{ row.ZeitNetto }}</td><td>{{ row.Person }}</td><td>{{ row.KstStelle }}</td>
+                            <td>{{ row.KstTraeg }}</td><td>{{ row.KstArt }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="rueck-empty">Für Kostenstelle 2440 wurden in den letzten vier Wochen keine RÜCK-Datensätze mit Starttermin gefunden.</div>
+        {% endif %}
+    </section>
+</main>
+<script>
+(function () {
+    const longTermHistory = {{ long_term_history|tojson }};
+    const chartColors = ['#1a60a1', '#138a56', '#c27b00', '#8b5cf6', '#c0392b', '#0891b2'];
+    const chartTeams = {{ teams|tojson }};
+    const chartWidth = 1260;
+    const chartHeight = 390;
+    const chartPad = { left: 64, right: 22, top: 22, bottom: 72 };
+
+    function chartValue(point, series, metric) {
+        const values = series === 'Gesamt' ? point.total : point.teams[series];
+        if (!values) return null;
+        if (metric === 'presence_percent') return values.gross ? (values.worked / values.gross) * 100 : null;
+        return values[metric] === undefined ? null : values[metric];
+    }
+
+    function makeSvg(metric) {
+        const series = ['Gesamt'].concat(chartTeams);
+        const width = chartWidth;
+        const height = chartHeight;
+        const plotWidth = width - chartPad.left - chartPad.right;
+        const plotHeight = height - chartPad.top - chartPad.bottom;
+        const allValues = [];
+        series.forEach(name => longTermHistory.forEach(point => {
+            const value = chartValue(point, name, metric);
+            if (value !== null && Number.isFinite(value)) allValues.push(value);
+        }));
+        if (!allValues.length) return '<div class="trend-empty">Noch keine langfristigen Daten vorhanden.</div>';
+
+        const maxValue = metric === 'presence_percent' ? 100 : Math.max(...allValues, 1);
+        const minValue = metric === 'presence_percent' ? 0 : Math.min(0, ...allValues);
+        const valueRange = Math.max(maxValue - minValue, 1);
+        const x = index => chartPad.left + (longTermHistory.length <= 1 ? plotWidth / 2 : index * plotWidth / (longTermHistory.length - 1));
+        const y = value => chartPad.top + (maxValue - value) * plotHeight / valueRange;
+        const formatValue = value => {
+            if (metric === 'presence_percent') return Math.round(value) + '%';
+            return Math.round(value).toLocaleString('de-DE');
+        };
+        const grid = Array.from({ length: 6 }, (_, index) => {
+            const ratio = index / 5;
+            const value = maxValue - ratio * valueRange;
+            const yy = chartPad.top + ratio * plotHeight;
+            return '<line class="trend-gridline" x1="' + chartPad.left + '" x2="' + (width - chartPad.right) + '" y1="' + yy + '" y2="' + yy + '"></line><text class="trend-axis-label" x="' + (chartPad.left - 9) + '" y="' + (yy + 4) + '" text-anchor="end">' + formatValue(value) + '</text>';
+        }).join('');
+        const weekGrid = longTermHistory.map((point, index) => '<line class="trend-week-gridline" x1="' + x(index) + '" x2="' + x(index) + '" y1="' + chartPad.top + '" y2="' + (height - chartPad.bottom) + '"></line>').join('');
+        const xLabels = longTermHistory.map((point, index) => '<text class="trend-week-label" transform="translate(' + (x(index) + 3) + ',' + (height - chartPad.bottom + 16) + ') rotate(55)" text-anchor="start">' + point.label + '</text>').join('');
+        const paths = series.map((name, seriesIndex) => {
+            let path = '';
+            let points = '';
+            let open = false;
+            longTermHistory.forEach((point, index) => {
+                const value = chartValue(point, name, metric);
+                if (value === null || !Number.isFinite(value)) { open = false; return; }
+                const color = name === 'Gesamt' ? '#0b2945' : chartColors[(seriesIndex - 1) % chartColors.length];
+                path += (open ? ' L ' : ' M ') + x(index) + ' ' + y(value);
+                points += '<circle class="trend-point" cx="' + x(index) + '" cy="' + y(value) + '" r="4.5" fill="' + color + '"><title>' + point.label + ': ' + formatValue(value) + '</title></circle>';
+                open = true;
+            });
+            const color = name === 'Gesamt' ? '#0b2945' : chartColors[(seriesIndex - 1) % chartColors.length];
+            return path ? '<path class="trend-path ' + (name === 'Gesamt' ? 'total' : '') + '" stroke="' + color + '" d="' + path + '"></path>' + points : '';
+        }).join('');
+        const legend = series.map((name, index) => {
+            let lastValue = null;
+            for (let i = longTermHistory.length - 1; i >= 0; i -= 1) {
+                const value = chartValue(longTermHistory[i], name, metric);
+                if (value !== null && Number.isFinite(value)) { lastValue = value; break; }
+            }
+            const shownValue = lastValue === null ? 'keine Daten' : formatValue(lastValue);
+            const color = name === 'Gesamt' ? '#0b2945' : chartColors[(index - 1) % chartColors.length];
+            return '<span class="trend-legend-item"><span class="trend-legend-swatch" style="background:' + color + '"></span>' + name + ': <strong>' + shownValue + '</strong></span>';
+        }).join('');
+        return '<svg viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Langfristiger Verlauf: ' + metric + '">' + weekGrid + grid + '<line class="trend-gridline" x1="' + chartPad.left + '" x2="' + (width - chartPad.right) + '" y1="' + (height - chartPad.bottom) + '" y2="' + (height - chartPad.bottom) + '"></line>' + paths + xLabels + '</svg><div class="trend-legend">' + legend + '</div>';
+    }
+
+    document.querySelectorAll('[data-chart]').forEach(chart => {
+        chart.innerHTML = makeSvg(chart.dataset.chart);
+    });
+})();
+</script>
+</body>
+</html>

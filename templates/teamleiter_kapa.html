@@ -151,7 +151,7 @@
             <div class="daily-checkin-copy"><strong id="dailyCheckinTitle"></strong><small id="dailyCheckinMeta"></small></div>
             <button id="dailyCheckinButton" class="primary" type="button"></button>
         </div>
-        <p class="hint">Die Mitarbeiterdaten werden täglich gepflegt. Die Shopfloor-Meldung wird separat für den heutigen Tag abgegeben; verpflichtend ist sie montags und mittwochs.</p>
+        <p class="hint">Die Mitarbeiterdaten werden täglich gepflegt. Die Tagesmeldung wird an jedem Arbeitstag separat für den heutigen Tag abgegeben. Die Kapazitätsberechnung bleibt auf Wochenbasis.</p>
     </section>
 
     <section class="panel">
@@ -233,15 +233,22 @@
         if(!isCurrentWeek) { box.hidden=true; return; }
         const now=new Date(); const dayNames=['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
         const day=dayNames[now.getDay()];
+        if(!['monday','tuesday','wednesday','thursday','friday'].includes(day)) { box.hidden=true; return; }
         const todayKey=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
         const saved=((state.daily_checkins||{})[todayKey]||{})[selectedTeam]||{};
         const entry=saved.checkin||{}; const checked=Boolean(entry.checked_at);
+        const attendanceEntries=(state.attendance&&state.attendance[weekKey()])||{};
+        const uncheckedEmployees=activeEmployees().filter(employee=>!['anwesend','urlaub','krank'].includes((attendanceEntries[String(employee.id)]||{}).status));
+        const hasUnchecked=uncheckedEmployees.length>0;
         box.classList.toggle('checked', checked);
-        title.textContent=checked ? 'Tagesmeldung abgegeben' : (day==='monday'||day==='wednesday' ? 'Pflichtmeldung für heute' : 'Optionale Tagesmeldung');
-        meta.textContent=checked ? ('Abgegeben am '+entry.checked_at+(entry.checked_by?' · '+entry.checked_by:'')) : 'Gilt nur für heute; die nächste Meldung startet automatisch am nächsten Arbeitstag.';
+        title.textContent=checked ? 'Tagesmeldung abgegeben' : (hasUnchecked ? 'Rückmeldung nicht möglich' : 'Tagesmeldung für heute');
+        meta.textContent=checked ? ('Abgegeben am '+entry.checked_at+(entry.checked_by?' · '+entry.checked_by:'')) : (hasUnchecked ? `${uncheckedEmployees.length} Mitarbeiter noch ungeprüft. Bitte zuerst Anwesenheit, Urlaub oder Krank erfassen.` : 'Alle Mitarbeiter sind geprüft. Die Meldung gilt nur für heute.');
         button.textContent=checked ? 'Meldung erneut abgeben' : 'Meldung für heute abgeben';
-        button.disabled=false;
-        button.onclick=()=>save({action:'save_checkin',week:weekKey(),team:selectedTeam,day:day}).catch(e=>alert(e.message));
+        button.disabled=hasUnchecked && !checked;
+        button.onclick=()=>{
+            if(hasUnchecked) { toast(`${uncheckedEmployees.length} Mitarbeiter sind noch ungeprüft.`); return; }
+            save({action:'save_checkin',week:weekKey(),team:selectedTeam,day:day}).catch(e=>alert(e.message));
+        };
     }
     function renderAttendance() {
         const tiles=$('employeeTiles'); if(!tiles) return; tiles.innerHTML=''; const entries=(state.attendance&&state.attendance[weekKey()])||{}; const employees=activeEmployees();
@@ -264,7 +271,13 @@
             const status=b.dataset.status;
             const currentEntry=entries[String(employeeId)]||{};
             const currentHours=currentEntry.hours === undefined ? Number(employee.weekly_hours||0) : Number(currentEntry.hours);
-            const hours=status==='anwesend' ? currentHours : (['urlaub','krank'].includes(currentEntry.status) ? currentHours : 0);
+            const currentStatus=currentEntry.status || '';
+            const todayWeekday=new Date().getDay();
+            const weekdayFraction={1:5/5, 2:4/5, 3:3/5, 4:2/5, 5:1/5}[todayWeekday] ?? 0;
+            const remainingHours=Number(employee.weekly_hours||0) * weekdayFraction;
+            const hours=status==='anwesend'
+                ? (currentStatus==='anwesend' ? Number(employee.weekly_hours||0) : remainingHours)
+                : (['urlaub','krank'].includes(currentStatus) ? currentHours : 0);
             const input=tiles.querySelector(`[data-hours="${employeeId}"]`);
             if(input) { input.value=hours; input.readOnly=false; }
             save({action:'save_attendance',employee_id:employeeId,week:weekKey(),status:status,hours:hours}).catch(e=>alert(e.message));
