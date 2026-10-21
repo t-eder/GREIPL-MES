@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GREIPL-MES | Wochenplanung Ladesäulenlinie</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles/style.css') }}">
+  <style>
+    .emob {
+      --navy: #0b2945;
+      --blue: #1a60a1;
+      --line: #dce5ed;
+      --muted: #607384;
+      max-width: 1700px;
+      margin: auto;
+      padding: 24px 18px 60px;
+      color: #172b3a;
+      font-family: Arial, sans-serif;
+    }
+
+    .emob * {
+      box-sizing: border-box;
+    }
+
+    .emob h1 {
+      margin: 0 0 8px;
+      color: var(--navy);
+    }
+
+    .emob p {
+      line-height: 1.5;
+    }
+
+    .emob .heading,
+    .emob .toolbar,
+    .emob .sequence,
+    .emob .week-heading,
+    .emob .week-summary,
+    .emob .cell-heading,
+    .emob .block-totals,
+    .emob .dialog-actions {
+      display: flex;
+      align-items: center;
+    }
+
+    .emob .heading,
+    .emob .week-heading {
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .emob .toolbar {
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .emob button,
+    .emob select,
+    .emob .nav-link {
+      width: auto;
+      margin: 0;
+      padding: 9px 12px;
+      border: 1px solid var(--blue);
+      border-radius: 4px;
+      background: #fff;
+      color: var(--blue);
+      font: inherit;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .emob button:hover,
+    .emob .nav-link:hover {
+      background: #edf4fa;
+    }
+
+    .emob :focus-visible {
+      outline: 3px solid #e8b64f;
+      outline-offset: 3px;
+    }
+
+    .emob .intro {
+      margin: 20px 0;
+      padding: 12px 16px;
+      border-left: 4px solid var(--blue);
+      background: #f5f8fb;
+    }
+
+    .emob .intro small {
+      display: block;
+      margin-top: 6px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .emob .sequence {
+      gap: 18px;
+      flex-wrap: wrap;
+      font-weight: bold;
+    }
+
+    .emob .week {
+      margin: 24px 0;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      scroll-margin-top: 20px;
+    }
+
+    .emob .week.current {
+      border: 2px solid var(--blue);
+    }
+
+    .emob .week-heading {
+      padding: 15px 18px;
+      background: var(--navy);
+      color: #fff;
+    }
+
+    .emob .week.backlog .week-heading {
+      background: #79521a;
+    }
+
+    .emob .week-heading h2 {
+      margin: 0;
+      color: #fff;
+      font-size: 1.2rem;
+    }
+
+    .emob .week-heading small {
+      color: #cbd9e4;
+      font-weight: normal;
+    }
+
+    .emob .badge {
+      padding: 5px 8px;
+      border-radius: 4px;
+      background: #d9f5e7;
+      color: #08683e;
+      font-size: .8rem;
+    }
+
+    .emob .cell-block {
+      margin: 10px 14px;
+      border: 1px solid var(--line);
+    }
+
+    .emob .cell-heading {
+      justify-content: space-between;
+      gap: 12px;
+      padding: 8px 10px;
+      border-left: 4px solid var(--blue);
+      background: #edf3f7;
+    }
+
+    .emob .cell-heading h3 {
+      margin: 0;
+      color: var(--navy);
+      font-size: 1rem;
+    }
+
+    .emob .cell-heading small {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: .8rem;
+    }
+
+    .emob .block-totals {
+      justify-content: flex-end;
+      gap: 16px;
+      flex-wrap: wrap;
+      font-weight: bold;
+    }
+
+    .emob .block-totals span {
+      white-space: nowrap;
+    }
+
+    .emob .table-wrap {
+      overflow-x: auto;
+    }
+
+    .emob table {
+      width: 100%;
+      min-width: 1150px;
+      border-collapse: collapse;
+      table-layout: fixed;
+      font-size: .82rem;
+    }
+
+    .emob th,
+    .emob td {
+      padding: 2px 8px;
+      border-bottom: 1px solid var(--line);
+      border-right: 1px solid #c5d3df;
+      text-align: left;
+      vertical-align: middle;
+      line-height: 1.2;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .emob th:last-child,
+    .emob td:last-child {
+      border-right: none;
+    }
+
+    .emob td.serial,
+    .emob td.wrap {
+      overflow: visible;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      line-height: 1.15;
+    }
+
+    .emob th {
+      background: #f8fafc;
+      color: var(--navy);
+      font-size: .74rem;
+      letter-spacing: .03em;
+      text-transform: uppercase;
+    }
+
+    /* Spaltenbreiten: alle Zeilen einzeilig, lange Texte werden mit ... gekürzt (volle Texte als Tooltip). */
+    .emob .col-date { width: 8%; }
+    .emob .col-order { width: 10%; }
+    .emob .col-part { width: 9%; }
+    .emob .col-description { width: 20%; }
+    .emob .col-quantity { width: 7%; }
+    .emob .col-project { width: 17%; }
+    .emob .col-serial { width: 14%; }
+    .emob .col-remark { width: 14%; }
+
+    .emob .cell-block[data-pmnr="2440-14"] table { min-width: 1300px; }
+    .emob .cell-block[data-pmnr="2440-14"] .col-date { width: 7%; }
+    .emob .cell-block[data-pmnr="2440-14"] .col-order { width: 8%; }
+    .emob .cell-block[data-pmnr="2440-14"] .col-part { width: 7%; }
+    .emob .cell-block[data-pmnr="2440-14"] .col-description { width: 12%; }
+    .emob .cell-block[data-pmnr="2440-14"] .col-quantity { width: 7%; }
+    .emob .cell-block[data-pmnr="2440-14"] .col-project { width: 13%; }
+    .emob .cell-block[data-pmnr="2440-14"] .col-serial { width: 11%; }
+    .emob .cell-block[data-pmnr="2440-14"] .col-remark { width: 12%; }
+    .emob .cell-block[data-pmnr="2440-14"] .col-work { width: 23%; }
+
+    .emob tr:hover td {
+      background: #f8fbfd;
+    }
+
+    .emob tr.job-status-60 > td {
+      background: #e2f3e5;
+    }
+
+    .emob tr.job-status-60:hover > td {
+      background: #d3ebd8;
+    }
+
+    .emob .order,
+    .emob .project {
+      color: #172b3a;
+      font-weight: normal;
+    }
+
+    .emob .comment-text {
+      color: var(--blue);
+      font-weight: 700;
+    }
+
+    .emob .order {
+      white-space: nowrap;
+    }
+
+    .emob .chain {
+      margin-left: 6px;
+      color: var(--muted);
+      font-size: .76rem;
+      font-weight: normal;
+      white-space: nowrap;
+    }
+
+    .emob .number {
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .emob .comment-text {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .emob .comment-text.empty {
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    .emob .completion-cell {
+      white-space: nowrap;
+      padding: 2px 8px;
+      color: #fff;
+    }
+
+    /* Gesamtstatus des Arbeitsgang-Feldes: offen -> Montage -> Prüfung -> Verpackt. */
+    .emob .completion-cell.work-status-open { background-color: #9e9e9e !important; }
+    .emob .completion-cell.work-status-line { background-color: #2196f3 !important; }
+    .emob .completion-cell.work-status-inspection { background-color: #3f51b5 !important; }
+    .emob .completion-cell.work-status-packed { background-color: #4caf50 !important; }
+
+    .emob .work-status-label {
+      display: inline-block;
+      margin-right: 4px;
+      color: #fff;
+      font-size: .7rem;
+      font-weight: 700;
+      line-height: 1.1;
+    }
+
+    .emob .finish-flags {
+      display: flex;
+      align-items: center;
+      flex-wrap: nowrap;
+      gap: 8px;
+      line-height: 1.1;
+    }
+
+    .emob .finish-flag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin: 0;
+      color: #657889;
+      font-size: .76rem;
+      line-height: 1.15;
+      white-space: nowrap;
+    }
+
+    .emob .finish-flag.done {
+      color: #087443;
+      font-weight: 700;
+    }
+
+    .emob .completion-cell .finish-flag,
+    .emob .completion-cell .finish-flag.done {
+      color: #fff;
+    }
+
+    .emob .finish-flag input[type="checkbox"] {
+      width: 13px;
+      height: 13px;
+      margin: 0;
+      accent-color: #087443;
+      pointer-events: none;
+    }
+
+    .emob .finish-actions {
+      margin-top: 2px;
+    }
+
+    .emob .remark-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2px;
+      border: 0;
+      background: transparent;
+    }
+
+    .emob .remark-button:hover {
+      background: #dceaf5;
+    }
+
+    .emob .remark-button img {
+      display: block;
+      width: 15px;
+      height: 15px;
+    }
+
+    .emob .empty {
+      margin: 0;
+      padding: 18px;
+      color: var(--muted);
+      font-size: .86rem;
+    }
+
+    .emob [hidden] {
+      display: none !important;
+    }
+
+    .emob dialog {
+      width: min(540px, calc(100vw - 32px));
+      padding: 24px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      color: #172b3a;
+    }
+
+    .emob dialog::backdrop {
+      background: #0008;
+    }
+
+    .emob dialog h2 {
+      margin: 0;
+      font-size: 1.2rem;
+    }
+
+    .emob textarea {
+      width: 100%;
+      min-height: 130px;
+      padding: 10px;
+      border: 1px solid #b9c9d7;
+      border-radius: 4px;
+      font: inherit;
+      resize: vertical;
+    }
+
+    .emob .packed-setting,
+    .emob .completion-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+      font-weight: bold;
+    }
+
+    .emob .completion-info {
+      color: var(--muted);
+      font-size: .9rem;
+    }
+
+    .emob .packed-setting input {
+      width: 17px;
+      height: 17px;
+      accent-color: #087443;
+    }
+
+    .emob .packed-setting input:disabled {
+      cursor: not-allowed;
+      opacity: .55;
+    }
+
+    .emob .packed-hint {
+      margin: 6px 0 0;
+      color: #936000;
+      font-size: .82rem;
+      line-height: 1.35;
+    }
+
+    .emob .dialog-actions {
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 15px;
+    }
+
+    .emob .save {
+      background: var(--blue);
+      color: #fff;
+    }
+
+    .emob .error {
+      color: #a43124;
+    }
+
+    .emob button:disabled {
+      opacity: .6;
+      cursor: wait;
+    }
+
+    .emob .subtitle {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    @media (max-width: 800px) {
+      .emob {
+        padding: 16px 8px;
+      }
+
+      .emob .heading {
+        display: block;
+      }
+
+      .emob .toolbar {
+        margin-top: 15px;
+      }
+
+      .emob .week-heading {
+        align-items: flex-start;
+      }
+
+      .emob .week-heading small {
+        display: block;
+        margin-top: 5px;
+      }
+
+      .emob .sequence {
+        gap: 8px;
+      }
+    }
+
+    @media (max-width: 650px) {
+      .emob .cell-heading {
+        align-items: flex-start;
+        flex-wrap: wrap;
+      }
+
+      .emob .block-totals {
+        justify-content: flex-start;
+      }
+
+      .emob table,
+      .emob tbody {
+        display: block;
+      }
+
+      .emob thead {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+      }
+
+      .emob tbody tr {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        border-bottom: 2px solid var(--line);
+      }
+
+      .emob tbody td {
+        display: block;
+        min-width: 0;
+        white-space: normal;
+        padding: 6px 8px;
+        text-align: left;
+      }
+
+      .emob tbody td:nth-child(4),
+      .emob tbody td:nth-child(6),
+      .emob tbody td:nth-child(8),
+      .emob tbody td.completion-cell {
+        grid-column: 1 / -1;
+      }
+
+      .emob tbody td::before {
+        display: block;
+        margin-bottom: 3px;
+        color: var(--muted);
+        font-size: .68rem;
+        font-weight: bold;
+        letter-spacing: .02em;
+        text-transform: uppercase;
+      }
+
+      .emob tbody td:nth-child(1)::before { content: "Startdatum"; }
+      .emob tbody td:nth-child(2)::before { content: "FA / Status"; }
+      .emob tbody td:nth-child(3)::before { content: "GREIPL-Nr"; }
+      .emob tbody td:nth-child(4)::before { content: "Bezeichnung"; }
+      .emob tbody td:nth-child(5)::before { content: "Menge"; }
+      .emob tbody td:nth-child(6)::before { content: "Projekt"; }
+      .emob tbody td:nth-child(7)::before { content: "Seriennummern"; }
+      .emob tbody td:nth-child(8)::before { content: "Bemerkung"; }
+      .emob tbody td.completion-cell::before { content: "Arbeitsgänge"; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .emob * {
+        scroll-behavior: auto !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  {% include 'header.html' %}
+  {% include 'emob_navigation.html' %}
+
+  <main class="emob" aria-labelledby="emob-title">
+    <header class="heading">
+      <div>
+        <h1 id="emob-title">Wochenplanung Ladesäulenlinie</h1>
+        <p class="subtitle">E-Mobility · Rückstand, aktuelle Woche und sechs Wochen voraus</p>
+      </div>
+      <div class="toolbar">
+        <button type="button" id="jump-week">Aktuelle KW</button>
+        <a class="nav-link" href="/kapa">Allgemeine Planung</a>
+      </div>
+    </header>
+
+    <!-- <div class="intro">
+      <div class="sequence">
+        <span>Startdatum → Kalenderwoche</span>
+        <span>HAK · Anschlussmodul · Endmontage Linie</span>
+      </div>
+      <small>
+        Jeder Arbeitsgang wird nach <strong>FAPOS.StartTermPlan</strong> eingeordnet:
+        Starttermine vor der aktuellen Kalenderwoche werden gemeinsam unter
+        <strong>Rückstand</strong> angezeigt; danach folgen die aktuelle und die zukünftigen
+        Wochen. <strong>Proj und Enddatum haben keinen Einfluss auf die Einplanung.</strong>
+        Die Menge zeigt <strong>gefertigte Menge / Auftragsmenge</strong>: Gesamtmenge der
+        Montagezeile minus <strong>FAPOS.MngRest aus der Erzeugniszeile (Typ E) derselben
+        FA-Nummer</strong>, zum Beispiel 18/20 St. Fehlt eine eindeutige Erzeugnis-Restmenge,
+        wird „—“ statt einer berechneten Menge angezeigt. Es erfolgt keine automatische
+        Verschiebung und keine Änderung von ERP-Terminen.
+      </small>
+      <small>
+        Projekt: <strong>FAPOS.Proj aus den E-Zeilen</strong>;
+        Projektbezeichnung: <strong>TEXTE1.Text</strong>, zugeordnet über
+        <strong>TEXTE1.Schluessel = FAPOS.Proj</strong>.
+      </small>
+    </div> -->
+
+    {% for week in week_plan %}
+      <section
+        class="week{% if week.is_backlog %} backlog{% elif week.year == current_year and week.week == current_week %} current{% endif %}"
+        id="{% if week.is_backlog %}backlog{% else %}week-{{ week.year }}-{{ week.week }}{% endif %}"
+      >
+        <div class="week-heading">
+          <h2>
+            {{ week.label }}
+            <small>{% if not week.is_backlog %}{{ week.year }} · {% endif %}{{ week.date_range }}</small>
+          </h2>
+          {% if not week.is_backlog and week.year == current_year and week.week == current_week %}
+            <span class="badge">Aktuelle Woche</span>
+          {% endif %}
+        </div>
+
+        {% for block in week.blocks %}
+          <div class="cell-block" data-pmnr="{{ block.pmnr }}">
+            <div class="cell-heading">
+              <div>
+                <h3>{{ block.name }}</h3>
+                <small>{{ block.pmnr }} · Einplanung nach Startdatum</small>
+              </div>
+              <div class="block-totals">
+                <span>
+                  Menge:
+                  <strong class="block-good-quantity">
+                    {% if block.manufactured_quantity_sum is not none %}
+                      {{ block.manufactured_quantity_sum|round(0)|int }}
+                    {% else %}—{% endif %}
+                  </strong>/<strong class="block-quantity">{{ block.quantity_sum|round(0)|int }}</strong> St.
+                </span>
+                <span>Aufträge: <strong class="block-count">{{ block.order_count }}</strong></span>
+              </div>
+            </div>
+
+            <div class="table-wrap"{% if not block.jobs %} hidden{% endif %}>
+              <table>
+                <colgroup>
+                  <col class="col-date">
+                  <col class="col-order">
+                  <col class="col-part">
+                  <col class="col-description">
+                  <col class="col-quantity">
+                  <col class="col-project">
+                  <col class="col-serial">
+                  <col class="col-remark">
+                  {% if block.pmnr == '2440-14' %}<col class="col-work">{% endif %}
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th scope="col">Startdatum</th>
+                    <th scope="col">FA / Status</th>
+                    <th scope="col">GREIPL-Nr</th>
+                    <th scope="col">Bezeichnung</th>
+                    <th scope="col" class="number">Menge</th>
+                    <th scope="col">Projekt</th>
+                    <th scope="col">Seriennr.</th>
+                    <th scope="col">Bemerkung</th>
+                    {% if block.pmnr == '2440-14' %}
+                      <th scope="col">Arbeitsgänge</th>
+                    {% endif %}
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for job in block.jobs %}
+                    <tr
+                      class="job-row{% if job.Zustand|float == 60 %} job-status-60{% endif %}"
+                      data-project="{{ job.Projekt }}"
+                      data-order="{{ job.Auftrag }}"
+                      data-packed="{{ 'true' if job.Verpackt else 'false' }}"
+                    >
+                      <td>{{ job.Start.strftime('%d.%m.%Y') }}</td>
+                      <td class="order">
+                        {{ job.Auftrag }}<span class="chain">/{{ job.Zustand }}</span>
+                      </td>
+                      <td>{{ job.Teil }}</td>
+                      <td class="wrap" title="{{ job.Bez }}">{{ job.Bez }}</td>
+                      <td
+                        class="number"
+                        title="{{ job.MengenHinweis or 'Gefertigte Menge = Gesamtmenge der A-Zeile minus Restmenge der E-Zeile derselben FA' }}"
+                      >
+                        {% if job.MngGefertigt is not none %}
+                          {{ job.MngGefertigt|round(0)|int }}
+                        {% else %}—{% endif %}/{{ job.Mng|round(0)|int }} St.
+                      </td>
+                      <td class="project wrap" title="{{ job.Projekt or '—' }} {{ job.Projektbezeichnung or '—' }}">
+                        {{ job.Projekt or '—' }}<br>{{ job.Projektbezeichnung or '—' }}
+                      </td>
+                      <td class="serial">
+                        {% if job.SerienNr and job.SerienNrBis %}
+                          {{ job.SerienNr }}-<br>{{ job.SerienNrBis }}
+                        {% else %}
+                          {{ job.SerienNr or job.SerienNrBis or '—' }}
+                        {% endif %}
+                      </td>
+                      <td class="remark">
+                        <span
+                          class="comment-text"
+                          data-comment="{{ job.Kommentar|default('', true)|e }}"
+                          title="{{ job.Kommentar|default('', true)|e }}"
+                        >{{ job.Kommentar|default('', true)|e }}</span>
+                      </td>
+                      {% if block.pmnr == '2440-14' %}
+                        <td class="completion-cell {% if job.Verpackt %}work-status-packed{% elif job.PruefungFertig %}work-status-inspection{% elif job.LinieFertig %}work-status-line{% else %}work-status-open{% endif %}">
+                          <div class="finish-flags">
+                            <label class="finish-flag line-flag{% if job.LinieFertig %} done{% endif %}" title="A-Zeile 2440-14, Status 60">
+                              <input type="checkbox" disabled{% if job.LinieFertig %} checked{% endif %} aria-label="Linie fertig">
+                              <span>Linie</span>
+                            </label>
+                            <label class="finish-flag inspection-flag{% if job.PruefungFertig %} done{% endif %}" title="A-Zeile 2450-11, Status 60">
+                              <input type="checkbox" disabled{% if job.PruefungFertig %} checked{% endif %} aria-label="Prüfung fertig">
+                              <span>Prüfung fertig</span>
+                            </label>
+                            <label class="finish-flag packed-flag{% if job.Verpackt %} done{% endif %}">
+                              <input type="checkbox" disabled{% if job.Verpackt %} checked{% endif %} aria-label="Verpackt">
+                              <span>Verpackt</span>
+                            </label>
+                          </div>
+                        </td>
+                      {% endif %}
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            <p class="empty"{% if block.jobs %} hidden{% endif %}>Keine Aufträge in diesem Block.</p>
+          </div>
+        {% endfor %}
+      </section>
+    {% endfor %}
+
+    <dialog id="remark-dialog" aria-labelledby="remark-order">
+      <form id="remark-form">
+        <h2 id="remark-order"></h2>
+        <br>
+        <label for="remark-input">Bemerkung</label>
+        <textarea id="remark-input" maxlength="2000"></textarea>
+        <label class="completion-info" for="remark-line">
+          <input type="checkbox" id="remark-line" disabled>
+          Linie fertig (Arbeitsgang aus Infra)
+        </label>
+        <label class="completion-info" for="remark-inspection">
+          <input type="checkbox" id="remark-inspection" disabled>
+          Prüfung fertig (Arbeitsgang aus Infra)
+        </label>
+        <label class="packed-setting" for="remark-packed">
+          <input type="checkbox" id="remark-packed">
+          Verpackt
+        </label>
+        <p id="packed-hint" class="packed-hint" hidden>
+          Verpackt kann erst gesetzt werden, wenn Linie und Prüfung fertig sind.
+        </p>
+        <p id="remark-error" class="error" role="alert" hidden></p>
+        <div class="dialog-actions">
+          <button type="button" id="remark-cancel">Abbrechen</button>
+          <button type="submit" class="save" id="remark-save">Speichern</button>
+        </div>
+      </form>
+    </dialog>
+  </main>
+
+  <script>
+    (function () {
+      'use strict';
+
+      const root = document.querySelector('.emob');
+
+      function refresh() {
+        root.querySelectorAll('.cell-block').forEach(function (block) {
+          const count = block.querySelectorAll('.job-row:not([hidden])').length;
+          block.querySelector('.table-wrap').hidden = count === 0;
+          block.querySelector('.empty').hidden = count > 0;
+        });
+      }
+
+      refresh();
+
+      // Bemerkung direkt aus dem data-comment-Attribut setzen.
+      // Das stellt die Anzeige auch in der ersten Zeile jeder Tabelle sicher.
+      root.querySelectorAll('.comment-text').forEach(function (comment) {
+        const value = (comment.dataset.comment || '').trim();
+        comment.textContent = value;
+        comment.classList.toggle('empty', !value);
+      });
+
+      root.querySelector('#jump-week').addEventListener('click', function () {
+        const week = root.querySelector('.week.current');
+        if (!week) return;
+
+        week.scrollIntoView({
+          behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+          block: 'start'
+        });
+      });
+
+      const dialog = root.querySelector('#remark-dialog');
+      const input = root.querySelector('#remark-input');
+      const lineInput = root.querySelector('#remark-line');
+      const inspectionInput = root.querySelector('#remark-inspection');
+      const packedInput = root.querySelector('#remark-packed');
+      const packedHint = root.querySelector('#packed-hint');
+      const error = root.querySelector('#remark-error');
+      const save = root.querySelector('#remark-save');
+      const cancel = root.querySelector('#remark-cancel');
+      let activeOrder = null;
+      let busy = false;
+      let trigger = null;
+
+      function getCompletionFlags(row) {
+        return {
+          lineDone: Boolean(row && row.querySelector('.line-flag input')?.checked),
+          inspectionDone: Boolean(row && row.querySelector('.inspection-flag input')?.checked)
+        };
+      }
+
+      function updateCompletionInfo(row) {
+        const flags = getCompletionFlags(row);
+        lineInput.checked = flags.lineDone;
+        inspectionInput.checked = flags.inspectionDone;
+        return flags;
+      }
+
+      function updatePackedAvailability(row) {
+        const flags = updateCompletionInfo(row);
+        const canPack = flags.lineDone && flags.inspectionDone;
+        packedInput.disabled = !canPack;
+        packedHint.hidden = canPack;
+        return canPack;
+      }
+
+      function open(row, button) {
+        if (busy || !row) return;
+
+        activeOrder = row.dataset.order;
+        trigger = button || null;
+        input.value = row.querySelector('.comment-text').dataset.comment || '';
+        packedInput.checked = row.dataset.packed === 'true';
+        updatePackedAvailability(row);
+        root.querySelector('#remark-order').textContent = 'Bemerkung zu Fertigungsauftrag ' + activeOrder;
+        error.hidden = true;
+        dialog.showModal();
+        input.focus();
+      }
+
+      root.addEventListener('click', function (event) {
+        const button = event.target.closest('.remark-button');
+        if (button) open(button.closest('.job-row'), button);
+      });
+
+      root.addEventListener('dblclick', function (event) {
+        const row = event.target.closest('.job-row');
+        if (row && !event.target.closest('button')) {
+          open(row, row.querySelector('.remark-button'));
+        }
+      });
+
+      function close() {
+        if (busy) return;
+        dialog.close();
+        activeOrder = null;
+        if (trigger) trigger.focus();
+      }
+
+      cancel.addEventListener('click', close);
+      dialog.addEventListener('cancel', function (event) {
+        if (busy) event.preventDefault();
+      });
+
+      root.querySelector('#remark-form').addEventListener('submit', async function (event) {
+        event.preventDefault();
+        if (!activeOrder || busy) return;
+
+        busy = true;
+        save.disabled = true;
+        cancel.disabled = true;
+        save.textContent = 'Speichert …';
+        error.hidden = true;
+
+        const order = activeOrder;
+        const comment = input.value.trim();
+        const packaged = packedInput.checked;
+        const activeRow = Array.from(root.querySelectorAll('.job-row'))
+          .find(function (row) { return row.dataset.order === order; });
+        const flags = getCompletionFlags(activeRow);
+
+        if (packaged && (!flags.lineDone || !flags.inspectionDone)) {
+          error.textContent = 'Verpackt kann erst gesetzt werden, wenn Linie und Prüfung fertig sind.';
+          error.hidden = false;
+          busy = false;
+          save.disabled = false;
+          cancel.disabled = false;
+          save.textContent = 'Speichern';
+          return;
+        }
+
+        try {
+          const response = await fetch({{ url_for('update_emob_remark')|tojson }}, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ fa_nr: order, comment: comment, verpackt: packaged })
+          });
+          const data = await response.json();
+          if (!response.ok || !data.success) {
+            throw new Error(data.error || 'Speichern fehlgeschlagen.');
+          }
+
+          root.querySelectorAll('.job-row').forEach(function (row) {
+            if (row.dataset.order !== order) return;
+
+            row.dataset.packed = packaged ? 'true' : 'false';
+            const target = row.querySelector('.comment-text');
+            target.dataset.comment = comment;
+            target.textContent = comment;
+          target.title = comment;
+            target.classList.toggle('empty', !comment);
+
+            const packedFlag = row.querySelector('.packed-flag');
+            if (packedFlag) {
+              packedFlag.querySelector('input').checked = packaged;
+              packedFlag.classList.toggle('done', packaged);
+            }
+
+            const completion = row.querySelector('.completion-cell');
+            if (completion) {
+              const lineDone = row.querySelector('.line-flag input').checked;
+              const inspectionDone = row.querySelector('.inspection-flag input').checked;
+              const statusClass = packaged
+                ? 'work-status-packed'
+                : inspectionDone
+                  ? 'work-status-inspection'
+                  : lineDone
+                    ? 'work-status-line'
+                    : 'work-status-open';
+              completion.classList.remove(
+                'work-status-open',
+                'work-status-line',
+                'work-status-inspection',
+                'work-status-packed'
+              );
+              completion.classList.add(statusClass);
+            }
+          });
+
+          busy = false;
+          close();
+        } catch (err) {
+          error.textContent = err.message || 'Speichern fehlgeschlagen.';
+          error.hidden = false;
+        } finally {
+          busy = false;
+          save.disabled = false;
+          cancel.disabled = false;
+          save.textContent = 'Speichern';
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

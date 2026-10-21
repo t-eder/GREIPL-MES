@@ -4,9 +4,15 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="7d186514-fd06-41ff-8b8f-744ab137ced3" name="Changes" comment="Bugfix Tabs Vorratsliste">
+    <list default="true" id="7d186514-fd06-41ff-8b8f-744ab137ced3" name="Changes" comment="Bugfix - Personalplanung M1 Anwesend aber mit reduzierten Wochenstunden&#10; Teamleiter können mit 0h&#10; gepfelgt werden">
+      <change afterPath="$PROJECT_DIR$/kapaplanung-emob.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/emob_navigation.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/kapa_emob.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/kapa_emob_mengen.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/kapa_emob_monitor_hak.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/arbeitvorrat.py" beforeDir="false" afterPath="$PROJECT_DIR$/arbeitvorrat.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Kapaplanung.md" beforeDir="false" afterPath="$PROJECT_DIR$/Kapaplanung.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -16,14 +22,17 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
-        <option value="HTML File" />
         <option value="Python Script" />
+        <option value="HTML File" />
       </list>
     </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
     <option name="RESET_MODE" value="MIXED" />
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
   </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 7
@@ -53,10 +62,11 @@
       <recent name="C:\Users\teder\PycharmProjects\MES\.venv" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\teder\PycharmProjects\MES\templates" />
+      <recent name="C:\Users\teder\PycharmProjects\MES" />
       <recent name="C:\Users\teder\PycharmProjects\MES\static" />
       <recent name="C:\Users\teder\PycharmProjects\MES\uploads" />
       <recent name="C:\Users\teder\PycharmProjects\MES\instance" />
-      <recent name="C:\Users\teder\PycharmProjects\MES\templates" />
     </key>
   </component>
   <component name="RunManager" selected="Python.main">
@@ -351,7 +361,63 @@
       <option name="project" value="LOCAL" />
       <updated>1780330460482</updated>
     </task>
-    <option name="localTasksCounter" value="29" />
+    <task id="LOCAL-00029" summary="Vorratsliste auf 6 Wochen begrenzt">
+      <option name="closed" value="true" />
+      <created>1780331991828</created>
+      <option name="number" value="00029" />
+      <option name="presentableId" value="LOCAL-00029" />
+      <option name="project" value="LOCAL" />
+      <updated>1780331991828</updated>
+    </task>
+    <task id="LOCAL-00030" summary="Vorratsliste auf 6 Wochen begrenzt">
+      <option name="closed" value="true" />
+      <created>1787759351283</created>
+      <option name="number" value="00030" />
+      <option name="presentableId" value="LOCAL-00030" />
+      <option name="project" value="LOCAL" />
+      <updated>1787759351284</updated>
+    </task>
+    <task id="LOCAL-00031" summary="Personalplanung M1 Teamleiter Board">
+      <option name="closed" value="true" />
+      <created>1787759609124</created>
+      <option name="number" value="00031" />
+      <option name="presentableId" value="LOCAL-00031" />
+      <option name="project" value="LOCAL" />
+      <updated>1787759609124</updated>
+    </task>
+    <task id="LOCAL-00032" summary="Bugfix - Personalplanung M1 Teamleiter Board">
+      <option name="closed" value="true" />
+      <created>1787830565203</created>
+      <option name="number" value="00032" />
+      <option name="presentableId" value="LOCAL-00032" />
+      <option name="project" value="LOCAL" />
+      <updated>1787830565203</updated>
+    </task>
+    <task id="LOCAL-00033" summary="Bugfix - Personalplanung M1 Teamleiter Board">
+      <option name="closed" value="true" />
+      <created>1787844048007</created>
+      <option name="number" value="00033" />
+      <option name="presentableId" value="LOCAL-00033" />
+      <option name="project" value="LOCAL" />
+      <updated>1787844048007</updated>
+    </task>
+    <task id="LOCAL-00034" summary="Bugfix - Personalplanung M1 Anwesend aber mit reduzierten Wochenstunden&#10; Teamleiter können mit 0h&#10; gepfelgt werden">
+      <option name="closed" value="true" />
+      <created>1787904474287</created>
+      <option name="number" value="00034" />
+      <option name="presentableId" value="LOCAL-00034" />
+      <option name="project" value="LOCAL" />
+      <updated>1787904474287</updated>
+    </task>
+    <task id="LOCAL-00035" summary="Bugfix - Personalplanung M1 Anwesend aber mit reduzierten Wochenstunden&#10; Teamleiter können mit 0h&#10; gepfelgt werden">
+      <option name="closed" value="true" />
+      <created>1788362472611</created>
+      <option name="number" value="00035" />
+      <option name="presentableId" value="LOCAL-00035" />
+      <option name="project" value="LOCAL" />
+      <updated>1788362472611</updated>
+    </task>
+    <option name="localTasksCounter" value="36" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -366,10 +432,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Kennzahlen ergänzt" />
-    <MESSAGE value="Kapazitätsplanung Aufträge 60 jetzt grün" />
-    <MESSAGE value="Kommentarfunktion und Materialicon" />
-    <MESSAGE value="Bugfix job_ahead 3DAOI Nacharbeit" />
     <MESSAGE value="Filterbar ergänzt" />
     <MESSAGE value="Farben nach PPS AA angepasst" />
     <MESSAGE value="bugfix E10 und E20 werden jetzt rausgefiltert" />
@@ -391,6 +453,10 @@
     <MESSAGE value="Änderung Programmierliste &#10;Sortierung nach Datum fix" />
     <MESSAGE value="Bugfix Programmierliste FA Status kleiner oder gleich 50" />
     <MESSAGE value="Bugfix Tabs Vorratsliste" />
-    <option name="LAST_COMMIT_MESSAGE" value="Bugfix Tabs Vorratsliste" />
+    <MESSAGE value="Vorratsliste auf 6 Wochen begrenzt" />
+    <MESSAGE value="Personalplanung M1 Teamleiter Board" />
+    <MESSAGE value="Bugfix - Personalplanung M1 Teamleiter Board" />
+    <MESSAGE value="Bugfix - Personalplanung M1 Anwesend aber mit reduzierten Wochenstunden&#10; Teamleiter können mit 0h&#10; gepfelgt werden" />
+    <option name="LAST_COMMIT_MESSAGE" value="Bugfix - Personalplanung M1 Anwesend aber mit reduzierten Wochenstunden&#10; Teamleiter können mit 0h&#10; gepfelgt werden" />
   </component>
 </project>

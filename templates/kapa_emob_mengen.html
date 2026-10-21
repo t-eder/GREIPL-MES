@@ -1,0 +1,167 @@
+<style>
+  .mengen {
+    --navy: #0b2945;
+    --blue: #1a60a1;
+    --line: #dce5ed;
+    --grid: #c5d3df;
+    --muted: #607384;
+    --sub: #edf3f7;
+    --current: #e8f1fa;
+    --backlog: #fbf3e4;
+    --backlog-border: #c9a46a;
+    --backlog-dark: #79521a;
+    max-width: 1700px;
+    margin: auto;
+    padding: 24px 18px 60px;
+    color: #172b3a;
+    font-family: Arial, sans-serif;
+  }
+  .mengen * { box-sizing: border-box; }
+  .mengen h1 { margin: 0 0 8px; color: var(--navy); }
+  .mengen p { line-height: 1.5; }
+  .mengen .heading { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 18px; }
+  .mengen .toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .mengen button, .mengen .nav-link {
+    width: auto; margin: 0; padding: 9px 12px;
+    border: 1px solid var(--blue); border-radius: 4px; background: #fff; color: var(--blue);
+    font: inherit; text-decoration: none; cursor: pointer;
+  }
+  .mengen button:hover, .mengen .nav-link:hover { background: #edf4fa; }
+  .mengen :focus-visible { outline: 3px solid #e8b64f; outline-offset: 3px; }
+  .mengen .subtitle { margin: 0; color: var(--muted); font-size: .9rem; }
+  .mengen .wrap { overflow: hidden; border: 1px solid var(--line); border-radius: 6px; }
+  .mengen table { width: 100%; border-collapse: collapse; font-size: .82rem; table-layout: fixed; }
+  .mengen th, .mengen td {
+    padding: 4px 6px; border-bottom: 1px solid var(--line); border-right: 1px solid var(--grid);
+    text-align: center; vertical-align: middle; overflow-wrap: anywhere;
+  }
+  .mengen th:last-child, .mengen td:last-child { border-right: none; }
+  .mengen thead th { background: var(--navy); color: #fff; font-weight: bold; text-align: center; }
+  .mengen thead tr.sub-head th {
+    background: var(--sub); color: var(--navy); font-size: .74rem; font-weight: bold;
+    text-transform: uppercase; letter-spacing: .03em; border-bottom: 2px solid var(--navy);
+  }
+  .mengen th.group, .mengen td.group { border-left: 3px solid var(--navy); }
+  .mengen thead th.group { border-left: 3px solid #fff; }
+  .mengen thead th.group + th, .mengen thead th.week + th { border-left: 3px solid #fff; }
+  .mengen td.week, .mengen th.week { text-align: left; background: #fff; border-right: 3px solid var(--navy); width: 13%; }
+  .mengen thead th.week { background: var(--navy); }
+  .mengen thead tr.sub-head th.week { background: var(--sub); }
+  .mengen td.week strong { color: var(--navy); }
+  .mengen td.week small { display: block; color: var(--muted); font-size: .78rem; font-weight: normal; }
+  .mengen tr.current td { background: var(--current); }
+  .mengen tr.current td.week { border-left: 4px solid var(--blue); }
+  .mengen tbody tr:not(:last-child) td { border-bottom: 1px solid var(--line); }
+  .mengen tr.backlog td { background: var(--backlog); border-bottom: 2px solid var(--backlog-border); }
+  .mengen tr.backlog td.week { border-left: 4px solid var(--backlog-dark); }
+  .mengen tr.backlog td.week strong { color: var(--backlog-dark); }
+  .mengen td.empty { color: #9aabb9; }
+  .mengen td.util { font-weight: bold; }
+  .mengen td.util-ok { background: #d9f5e7; color: #08683e; }
+  .mengen td.util-warn { background: #fff1c2; color: #7a5a00; }
+  .mengen td.util-over { background: #f8d7d3; color: #a43124; }
+  .mengen td.util-none { color: #9aabb9; font-weight: normal; }
+  .mengen tr.backlog td.util-none { background: var(--backlog); }
+  .mengen .badge { display: inline-block; margin-left: 6px; padding: 2px 6px; border-radius: 4px; background: var(--blue); color: #fff; font-size: .7rem; vertical-align: middle; }
+  .mengen .legend { margin-top: 12px; color: var(--muted); font-size: .82rem; line-height: 1.5; }
+  @page { size: A4 landscape; margin: 8mm; }
+  @media print {
+    .mengen { padding: 0; max-width: none; }
+    .mengen .toolbar { display: none; }
+    .mengen table { font-size: .72rem; }
+    .mengen th, .mengen td { padding: 3px 2px; }
+  }
+  @media (max-width: 800px) {
+    .mengen { padding: 14px 8px; }
+    .mengen .heading { display: block; }
+    .mengen .toolbar { margin-top: 15px; }
+  }
+  @media (max-width: 650px) {
+    .mengen table { font-size: .7rem; }
+    .mengen th, .mengen td { padding: 4px 2px; }
+    .mengen td.week small { font-size: .66rem; }
+  }
+  @media (prefers-reduced-motion: reduce) { .mengen * { scroll-behavior: auto !important; } }
+  /* Überschreibt globale Regeln aus der externen style.css (td/th/table/tr/button/h1/span), damit das Layout unabhängig davon gleich aussieht. */
+  .mengen h1 { font-size: 40px; margin: 0 0 8px; }
+  .mengen table { margin: 0; min-width: 0; border-collapse: collapse; }
+  .mengen tr { border: 0; height: auto; }
+  .mengen th, .mengen td {
+    border-top: 0; border-left: 0; margin: 0; min-width: 0; height: auto;
+    font-size: .82rem; font-weight: normal; color: inherit; line-height: 1.25;
+  }
+  .mengen thead th { font-size: .95rem; font-weight: bold; color: #fff; }
+  .mengen thead tr.sub-head th { font-size: .8rem; font-weight: bold; color: var(--navy); letter-spacing: 0; padding: 4px 2px; }
+  .mengen th.group, .mengen td.group { border-left: 3px solid var(--navy); }
+  .mengen thead th.group, .mengen thead th.group + th, .mengen thead th.week + th { border-left: 3px solid #fff; }
+  .mengen td.week small { font-size: .78rem; }
+  .mengen button { margin: 0; line-height: normal; border-radius: 4px; }
+  .mengen thead small { font-size: .8rem; }
+  .mengen .badge { margin: 0 0 0 6px; font-size: .7rem; line-height: 1.2; }
+  /* Header über die volle Seitenbreite, unabhängig von einem umgebenden Container (Rahmen/Schatten/Breite entfernt). */
+  .mengen-page-header { position: relative; left: 50%; transform: translateX(-50%); width: 100vw; margin: -20px 0 0 0; padding: 0; border: 0; box-shadow: none; background: none; }
+  .mengen-page-header .header { box-shadow: none; border: 0; margin: 0; }
+  .mengen-page-header .header-content { padding-top: 10px; }
+  .mengen-page-header .navbar a { font-family: Arial, sans-serif; font-size: 16px; font-weight: 500; line-height: normal; letter-spacing: normal; }
+  .mengen-page-header .abteilung-select { font-family: Arial, sans-serif; font-size: 15px; }
+</style>
+
+  <div class="mengen-page-header">
+    {% include 'header.html' %}
+    {% include 'emob_navigation.html' %}
+  </div>
+
+  <main class="mengen">
+
+    <header class="heading">
+      <div>
+        <h1 id="emob-title">Wochenplanung Ladesäulenlinie</h1>
+        <p class="subtitle">E-Mobility · Rückstand, aktuelle Woche und sechs Wochen voraus</p>
+      </div>
+      <div class="toolbar">
+        <button type="button" id="jump-week">Aktuelle KW</button>
+        <a class="nav-link" href="/kapa">Allgemeine Planung</a>
+      </div>
+    </header>
+
+  <div class="wrap">
+    <table>
+      <thead>
+        <tr>
+          <th class="week" rowspan="2">Woche</th>
+          {% for code, name in cells %}
+          <th class="group" colspan="4">{{ name }} <small style="font-weight:normal;opacity:.8">({{ code }})</small>{% if cells_capacity[code] %}<br><small style="font-weight:normal;opacity:.85">Max. {{ '{:,.0f}'.format(cells_capacity[code]).replace(',', '.') }} Stk./Woche</small>{% else %}<br><small style="font-weight:normal;opacity:.85">Kapazität nicht hinterlegt</small>{% endif %}</th>
+          {% endfor %}
+        </tr>
+        <tr class="sub-head">
+          {% for code, name in cells %}
+          <th class="group">Geplant</th>
+          <th>Gefertigt</th>
+          <th>FA</th>
+          <th>Auslastung</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr class="{{ 'backlog' if row.backlog else ('current' if row.current else '') }}">
+          <td class="week"><strong>{{ row.label }}</strong>{% if row.current %}<span class="badge">aktuell</span>{% endif %}<small>{{ row.range }}</small></td>
+          {% for code, name in cells %}
+          {% set c = row.cells[code] %}
+          <td class="group {{ 'empty' if c.qty == 0 }}">{{ '{:,.0f}'.format(c.qty).replace(',', '.') if c.qty else '–' }}</td>
+          <td class="{{ 'empty' if c.done is none or c.done == 0 }}">{% if c.done is none %}n. v.{% elif c.done %}{{ '{:,.0f}'.format(c.done).replace(',', '.') }}{% else %}–{% endif %}</td>
+          <td class="{{ 'empty' if c.fa == 0 }}">{{ c.fa if c.fa else '–' }}</td>
+          <td class="util util-{{ c.util_class }}">{% if c.util is none %}–{% else %}{{ '{:.0f} %'.format(c.util * 100) }}{% endif %}</td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <p class="legend">
+    Geplant: Menge der Fertigungsaufträge nach Starttermin (KW). Gefertigt: Menge abzüglich Restmenge laut Erzeugnis. FA: Anzahl Fertigungsaufträge.
+    „n. v.“: Gefertigt nicht eindeutig ermittelbar (fehlende oder mehrdeutige Erzeugniszeile). „–“: keine Menge.<br>
+    Auslastung: Geplante Stück der KW geteilt durch die maximale Stückzahl der Zelle. Grün bis 85 %, Gelb 85 bis 100 %, Rot über 100 %.
+  </p>
+</main>

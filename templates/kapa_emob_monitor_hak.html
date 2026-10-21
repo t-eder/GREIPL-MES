@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GREIPL-MES | Produktionsmonitor HAK</title>
+  <style>
+    :root {
+      --navy: #0b2945;
+      --blue: #1a60a1;
+      --line: #d9e2ea;
+      --muted: #607384;
+      --green: #187744;
+      --amber: #9a6500;
+      --red: #a43124;
+      --page: #eef3f7;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body { min-height: 100%; }
+
+    body {
+      margin: 0;
+      background: var(--page);
+      color: #172b3a;
+      font-family: Arial, sans-serif;
+    }
+
+    .monitor {
+      width: 100%;
+      max-width: 2200px;
+      margin: 0 auto;
+      padding: 24px 28px 36px;
+    }
+
+    .monitor-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 22px;
+    }
+
+    .eyebrow {
+      margin: 0 0 4px;
+      color: var(--blue);
+      font-size: clamp(.9rem, 1.4vw, 1.3rem);
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      color: var(--navy);
+      font-size: clamp(2rem, 4vw, 4rem);
+      line-height: 1;
+    }
+
+    .subtitle {
+      margin: 9px 0 0;
+      color: var(--muted);
+      font-size: clamp(1rem, 1.5vw, 1.45rem);
+    }
+
+    .monitor-meta {
+      min-width: 250px;
+      padding: 14px 18px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      text-align: right;
+      font-size: clamp(.85rem, 1.2vw, 1.1rem);
+    }
+
+    .monitor-meta strong { color: var(--navy); }
+
+    .connection-status {
+      margin-top: 6px;
+      color: var(--green);
+      font-weight: 700;
+    }
+
+    .connection-status.offline { color: var(--red); }
+
+    .sections {
+      display: grid;
+      gap: 20px;
+    }
+
+    .period {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+      box-shadow: 0 2px 8px #0b294510;
+    }
+
+    .period-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 14px 20px;
+      background: var(--navy);
+      color: #fff;
+    }
+
+    .period.backlog .period-heading { background: #79521a; }
+
+    .period.current .period-heading { background: var(--blue); }
+
+    .period-heading h2 {
+      margin: 0;
+      font-size: clamp(1.35rem, 2.4vw, 2.3rem);
+    }
+
+    .period-heading small {
+      margin-left: 10px;
+      color: #dbe7ef;
+      font-size: .55em;
+      font-weight: normal;
+    }
+
+    .period-summary {
+      display: flex;
+      gap: 22px;
+      flex-wrap: wrap;
+      align-items: center;
+      padding: 10px 20px;
+      border-bottom: 1px solid var(--line);
+      color: var(--muted);
+      font-size: clamp(.95rem, 1.35vw, 1.25rem);
+    }
+
+    .period-summary strong {
+      color: var(--navy);
+      font-size: 1.15em;
+    }
+
+    .table-wrap { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      min-width: 1050px;
+      border-collapse: collapse;
+      table-layout: fixed;
+      font-size: clamp(.85rem, 1.25vw, 1.2rem);
+    }
+
+    th, td {
+      padding: 9px 12px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: middle;
+      line-height: 1.2;
+    }
+
+    th {
+      background: #f5f8fb;
+      color: var(--navy);
+      font-size: .68em;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    tbody tr:last-child td { border-bottom: 0; }
+
+    tbody tr:hover td { background: #f8fbfd; }
+
+    .col-date { width: 9%; }
+    .col-order { width: 11%; }
+    .col-part { width: 10%; }
+    .col-description { width: 21%; }
+    .col-quantity { width: 9%; }
+    .col-project { width: 17%; }
+    .col-serial { width: 12%; }
+    .col-comment { width: 11%; }
+
+    .order { white-space: nowrap; }
+    .status { color: var(--muted); font-size: .8em; }
+    .quantity { text-align: right; white-space: nowrap; }
+    .project-name, .comment { overflow-wrap: anywhere; }
+    .comment { color: var(--blue); font-weight: 700; }
+    .empty-message {
+      padding: 28px 20px;
+      color: var(--muted);
+      font-size: 1.15rem;
+      text-align: center;
+    }
+
+    .error-banner {
+      display: none;
+      margin-bottom: 18px;
+      padding: 12px 16px;
+      border: 1px solid #e5b3ad;
+      border-radius: 7px;
+      background: #fff1ef;
+      color: var(--red);
+      font-weight: 700;
+    }
+
+    .error-banner.visible { display: block; }
+
+    @media (max-width: 900px) {
+      .monitor { padding: 16px 12px 28px; }
+      .monitor-header { display: block; }
+      .monitor-meta { margin-top: 16px; text-align: left; }
+    }
+  </style>
+</head>
+<body>
+  <main class="monitor" aria-labelledby="monitor-title">
+    <header class="monitor-header">
+      <div>
+        <p class="eyebrow">GREIPL-MES · Produktionsmonitor</p>
+        <h1 id="monitor-title">HAK · 2440-18</h1>
+        <p class="subtitle">Rückstand · aktuelle Woche · nächste Woche</p>
+      </div>
+      <div class="monitor-meta">
+        <div>Datenstand: <strong id="generated-at">{{ monitor.generated_at }}</strong></div>
+        <div>Nächste Aktualisierung: <strong id="countdown">--:--</strong></div>
+        <div id="connection-status" class="connection-status">Verbindung aktiv</div>
+      </div>
+    </header>
+
+    <div id="error-banner" class="error-banner" role="status"></div>
+    <section id="sections" class="sections" aria-live="polite">
+      {% for section in monitor.sections %}
+        <article class="period{% if section.is_backlog %} backlog{% elif section.is_current %} current{% endif %}">
+          <div class="period-heading">
+            <h2>{{ section.label }} <small>{{ section.date_range }}</small></h2>
+          </div>
+          <div class="period-summary">
+            <span>Aufträge: <strong>{{ section.order_count }}</strong></span>
+            <span>Menge: <strong>{% if section.quantity_done is not none %}{{ section.quantity_done }}{% else %}—{% endif %}/{{ section.quantity_total }} St.</strong></span>
+          </div>
+          {% if section.jobs %}
+            <div class="table-wrap">
+              <table>
+                <colgroup>
+                  <col class="col-date">
+                  <col class="col-order">
+                  <col class="col-part">
+                  <col class="col-description">
+                  <col class="col-quantity">
+                  <col class="col-project">
+                  <col class="col-serial">
+                  <col class="col-comment">
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th>Startdatum</th>
+                    <th>FA / Status</th>
+                    <th>GREIPL-Nr</th>
+                    <th>Bezeichnung</th>
+                    <th>Menge</th>
+                    <th>Projekt</th>
+                    <th>Seriennr.</th>
+                    <th>Bemerkung</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for job in section.jobs %}
+                    <tr>
+                      <td>{{ job.start }}</td>
+                      <td class="order">{{ job.order }} <span class="status">/{{ job.status }}</span></td>
+                      <td>{{ job.part }}</td>
+                      <td title="{{ job.description }}">{{ job.description }}</td>
+                      <td class="quantity">{% if job.quantity_done is not none %}{{ job.quantity_done }}{% else %}—{% endif %}/{{ job.quantity_total }} St.</td>
+                      <td class="project-name">{{ job.project }}<br>{{ job.project_name }}</td>
+                      <td>{{ job.serial }}</td>
+                      <td class="comment" title="{{ job.comment }}">{{ job.comment }}</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="empty-message">Keine HAK-Aufträge in diesem Zeitraum.</div>
+          {% endif %}
+        </article>
+      {% endfor %}
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      'use strict';
+
+      const apiUrl = {{ url_for('kapa_emob_monitor_hak_api')|tojson }};
+      const refreshSeconds = {{ monitor.refresh_seconds|int }};
+      const sectionsElement = document.querySelector('#sections');
+      const generatedAtElement = document.querySelector('#generated-at');
+      const countdownElement = document.querySelector('#countdown');
+      const connectionElement = document.querySelector('#connection-status');
+      const errorElement = document.querySelector('#error-banner');
+      let nextRefresh = Date.now() + refreshSeconds * 1000;
+      let loading = false;
+
+      function escapeHtml(value) {
+        return String(value ?? '')
+          .replaceAll('&', '&amp;')
+          .replaceAll('<', '&lt;')
+          .replaceAll('>', '&gt;')
+          .replaceAll('"', '&quot;')
+          .replaceAll("'", '&#039;');
+      }
+
+      function quantity(done, total) {
+        return `${done == null ? '—' : done}/${total} St.`;
+      }
+
+      function renderSections(sections) {
+        sectionsElement.innerHTML = sections.map(function (section) {
+          const periodClass = section.is_backlog ? ' backlog' : (section.is_current ? ' current' : '');
+          const jobs = section.jobs || [];
+          const body = jobs.length
+            ? `<div class="table-wrap"><table>
+                <colgroup>
+                  <col class="col-date"><col class="col-order"><col class="col-part"><col class="col-description">
+                  <col class="col-quantity"><col class="col-project"><col class="col-serial"><col class="col-comment">
+                </colgroup>
+                <thead><tr>
+                  <th>Startdatum</th><th>FA / Status</th><th>GREIPL-Nr</th><th>Bezeichnung</th>
+                  <th>Menge</th><th>Projekt</th><th>Seriennr.</th><th>Bemerkung</th>
+                </tr></thead>
+                <tbody>${jobs.map(function (job) {
+                  return `<tr>
+                    <td>${escapeHtml(job.start)}</td>
+                    <td class="order">${escapeHtml(job.order)} <span class="status">/${escapeHtml(job.status)}</span></td>
+                    <td>${escapeHtml(job.part)}</td>
+                    <td title="${escapeHtml(job.description)}">${escapeHtml(job.description)}</td>
+                    <td class="quantity">${quantity(job.quantity_done, job.quantity_total)}</td>
+                    <td class="project-name">${escapeHtml(job.project)}<br>${escapeHtml(job.project_name)}</td>
+                    <td>${escapeHtml(job.serial)}</td>
+                    <td class="comment" title="${escapeHtml(job.comment)}">${escapeHtml(job.comment)}</td>
+                  </tr>`;
+                }).join('')}</tbody>
+              </table></div>`
+            : '<div class="empty-message">Keine HAK-Aufträge in diesem Zeitraum.</div>';
+
+          return `<article class="period${periodClass}">
+            <div class="period-heading"><h2>${escapeHtml(section.label)} <small>${escapeHtml(section.date_range)}</small></h2></div>
+            <div class="period-summary">
+              <span>Aufträge: <strong>${section.order_count}</strong></span>
+              <span>Menge: <strong>${quantity(section.quantity_done, section.quantity_total)}</strong></span>
+            </div>${body}
+          </article>`;
+        }).join('');
+      }
+
+      function setOnline() {
+        connectionElement.textContent = 'Verbindung aktiv';
+        connectionElement.classList.remove('offline');
+        errorElement.classList.remove('visible');
+      }
+
+      function setOffline(message) {
+        connectionElement.textContent = 'Verbindung unterbrochen';
+        connectionElement.classList.add('offline');
+        errorElement.textContent = message + ' Der letzte erfolgreiche Datenstand bleibt sichtbar.';
+        errorElement.classList.add('visible');
+      }
+
+      async function refresh() {
+        if (loading) return;
+        loading = true;
+        try {
+          const response = await fetch(apiUrl + '?_=' + Date.now(), {
+            cache: 'no-store',
+            headers: { 'Accept': 'application/json' }
+          });
+          if (!response.ok) throw new Error('HTTP ' + response.status);
+          const data = await response.json();
+          renderSections(data.sections || []);
+          generatedAtElement.textContent = data.generated_at || 'unbekannt';
+          nextRefresh = Date.now() + (Number(data.refresh_seconds) || refreshSeconds) * 1000;
+          setOnline();
+        } catch (error) {
+          setOffline('Aktualisierung fehlgeschlagen.');
+          nextRefresh = Date.now() + refreshSeconds * 1000;
+        } finally {
+          loading = false;
+        }
+      }
+
+      function updateCountdown() {
+        const seconds = Math.max(0, Math.ceil((nextRefresh - Date.now()) / 1000));
+        const minutes = String(Math.floor(seconds / 60)).padStart(2, '0');
+        const remainder = String(seconds % 60).padStart(2, '0');
+        countdownElement.textContent = minutes + ':' + remainder;
+        if (seconds === 0) refresh();
+      }
+
+      setInterval(updateCountdown, 1000);
+      updateCountdown();
+      setInterval(refresh, refreshSeconds * 1000);
+    })();
+  </script>
+</body>
+</html>

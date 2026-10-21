@@ -17,7 +17,27 @@
     ## + Bermekungsspalte
     ## - Projektbezeichnung einblenden
 
-# Level3
+# Level3 Abteilungsdashboard
+    ## - Wöchtenliche Zustandsberichte für das jeweilige Team
+    ## - Vergleich der Rückgemeldeten Zeiten zu Anwesendestunden je Team auf Basis Personalnummer
 
 
+# Ladesäulen Kapaplanung
 
+    Offen für Startversion:
+    [ ] Stundenrechnung je Woche mit IST-Personal
+    [ ] Ansicht splitten in EM/HAK/LM und seperat Planung um Ladezeiten zu kürzen
+
+    Offen:
+    - Versandhinweise (Stele, Bodenplatte etc.) -> In Bemerkung
+    - AB Nummern?
+    - Automatische Versandmails
+    - Material vollständig gebucht Symbol
+    - Automatischer M3 Forecast?
+    - Produktionsmonitor je Zelle (Vorrat)
+
+    Erledigt:
+    [X] Projektnummer und Bezeichnung
+    [X] Seriennummern
+    [X] Mengen 12/20St.
+    [X] Verpackt Status Checkfeld und Linie fertig über AG

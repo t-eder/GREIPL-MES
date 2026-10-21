@@ -1,0 +1,122 @@
+<nav class="emob-subnav" aria-label="E-Mobility Produktion">
+  <div class="emob-subnav__inner">
+    <span class="emob-subnav__title">E-Mobility Produktion</span>
+    <div class="emob-subnav__links">
+      <a
+        class="emob-subnav__link{% if request.path == '/kapa-emob' %} is-active{% endif %}"
+        href="/kapa-emob"
+      >
+        Wochenübersicht
+      </a>
+      <a
+        class="emob-subnav__link{% if request.path == '/kapa-emob-mengen' %} is-active{% endif %}"
+        href="/kapa-emob-mengen"
+      >
+        PPS-Planer
+      </a>
+      <a
+        class="emob-subnav__link{% if request.path == '/2440-18' %} is-active{% endif %}"
+        href="/2440-18"
+      >
+        Produktionsmonitore
+      </a>
+    </div>
+  </div>
+</nav>
+
+<style>
+  .emob-subnav {
+    width: 100%;
+    border-top: 1px solid #31516b;
+    border-bottom: 1px solid #071d31;
+    background: #0b2945;
+    color: #fff;
+    font-family: Arial, sans-serif;
+  }
+
+  .emob-subnav__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    width: 100%;
+    max-width: 1440px;
+    min-height: 46px;
+    margin: 0 auto;
+    padding: 0 50px;
+  }
+
+  .emob-subnav__title {
+    color: #cbd9e4;
+    font-size: .78rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .emob-subnav__links {
+    display: flex;
+    align-items: stretch;
+    justify-content: flex-end;
+    gap: 4px;
+    min-height: 46px;
+  }
+
+  .emob-subnav__link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 46px;
+    padding: 0 15px;
+    border-bottom: 3px solid transparent;
+    color: #fff;
+    font-size: .9rem;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background-color .15s ease, border-color .15s ease;
+  }
+
+  .emob-subnav__link:hover,
+  .emob-subnav__link:focus-visible {
+    background: #153f60;
+    color: #fff;
+  }
+
+  .emob-subnav__link.is-active {
+    border-bottom-color: #e8b64f;
+    background: #1a60a1;
+    color: #fff;
+  }
+
+  .emob-subnav__link:focus-visible {
+    outline: 3px solid #e8b64f;
+    outline-offset: -3px;
+  }
+
+  @media (max-width: 900px) {
+    .emob-subnav__inner {
+      align-items: stretch;
+      display: block;
+      overflow-x: auto;
+      padding: 8px 20px 10px;
+    }
+
+    .emob-subnav__title {
+      display: block;
+      padding-bottom: 5px;
+      font-size: .7rem;
+    }
+
+    .emob-subnav__links {
+      justify-content: flex-start;
+      min-width: max-content;
+    }
+
+    .emob-subnav__link {
+      min-height: 40px;
+      padding: 0 11px;
+      font-size: .82rem;
+    }
+  }
+</style>
