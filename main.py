@@ -2,7 +2,7 @@ import importlib.util
 import sys
 from pathlib import Path
 
-import auftragsliste, arbeitvorrat, lieferliste, programmierliste, tempcheck, kpi, fehlteilliste, auslastung, linie
+import auftragsliste, arbeitvorrat, lieferliste, programmierliste, tempcheck, kpi, fehlteilliste, auslastung, linie, kapaplanung
 from model import app, db, Personal
 from flask import render_template, session, redirect, request, jsonify
 
