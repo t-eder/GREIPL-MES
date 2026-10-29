@@ -64,6 +64,9 @@
   .mengen tr.backlog td.util-none { background: var(--backlog); }
   .mengen .badge { display: inline-block; margin-left: 6px; padding: 2px 6px; border-radius: 4px; background: var(--blue); color: #fff; font-size: .7rem; vertical-align: middle; }
   .mengen .legend { margin-top: 12px; color: var(--muted); font-size: .82rem; line-height: 1.5; }
+  .mengen .chart { border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px 8px; margin-bottom: 18px; background: #fff; }
+  .mengen .chart svg text { font-family: Arial, sans-serif; }
+  .mengen tr.past td { color: #4b5b6b; }
   @page { size: A4 landscape; margin: 8mm; }
   @media print {
     .mengen { padding: 0; max-width: none; }
@@ -115,14 +118,18 @@
 
     <header class="heading">
       <div>
-        <h1 id="emob-title">Wochenplanung Ladesäulenlinie</h1>
-        <p class="subtitle">E-Mobility · Rückstand, aktuelle Woche und sechs Wochen voraus</p>
+        <h1 id="emob-title">PPS Dashboard - E-Mobility</h1>
+        <p class="subtitle">Es werden alle FAs ab Status 20 dargestellt.</p>
       </div>
       <div class="toolbar">
         <button type="button" id="jump-week">Aktuelle KW</button>
         <a class="nav-link" href="/kapa">Allgemeine Planung</a>
       </div>
     </header>
+
+    <section class="chart" aria-label="Diagramm geplante Mengen je Montagezelle und Woche">
+      {{ chart_svg|safe }}
+    </section>
 
   <div class="wrap">
     <table>
@@ -144,7 +151,7 @@
       </thead>
       <tbody>
         {% for row in rows %}
-        <tr class="{{ 'backlog' if row.backlog else ('current' if row.current else '') }}">
+        <tr class="{{ 'backlog' if row.backlog else ('current' if row.current else ('past' if row.past else '')) }}">
           <td class="week"><strong>{{ row.label }}</strong>{% if row.current %}<span class="badge">aktuell</span>{% endif %}<small>{{ row.range }}</small></td>
           {% for code, name in cells %}
           {% set c = row.cells[code] %}

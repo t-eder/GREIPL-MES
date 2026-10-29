@@ -553,7 +553,7 @@
         text-transform: uppercase;
       }
 
-      .emob tbody td:nth-child(1)::before { content: "Startdatum"; }
+      .emob tbody td:nth-child(1)::before { content: attr(data-label); }
       .emob tbody td:nth-child(2)::before { content: "FA / Status"; }
       .emob tbody td:nth-child(3)::before { content: "GREIPL-Nr"; }
       .emob tbody td:nth-child(4)::before { content: "Bezeichnung"; }
@@ -660,7 +660,7 @@
                 </colgroup>
                 <thead>
                   <tr>
-                    <th scope="col">Startdatum</th>
+                    <th scope="col">{% if block.pmnr == '2440-14' %}Enddatum{% else %}Startdatum{% endif %}</th>
                     <th scope="col">FA / Status</th>
                     <th scope="col">GREIPL-Nr</th>
                     <th scope="col">Bezeichnung</th>
@@ -681,7 +681,7 @@
                       data-order="{{ job.Auftrag }}"
                       data-packed="{{ 'true' if job.Verpackt else 'false' }}"
                     >
-                      <td>{{ job.Start.strftime('%d.%m.%Y') }}</td>
+                      <td data-label="{% if block.pmnr == '2440-14' %}Enddatum{% else %}Startdatum{% endif %}">{% if block.pmnr == '2440-14' %}{{ job.Ende.strftime('%d.%m.%y') }}{% else %}{{ job.Start.strftime('%d.%m.%y') }}{% endif %}</td>
                       <td class="order">
                         {{ job.Auftrag }}<span class="chain">/{{ job.Zustand }}</span>
                       </td>

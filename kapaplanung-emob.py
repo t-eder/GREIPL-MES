@@ -1,4 +1,4 @@
-"""Eigenstaendige Wochenplanung /kapa-emob: Zuordnung nur nach StartTermPlan.
+"""Eigenstaendige Wochenplanung /kapa-emob: Vormontage nach Starttermin, Endmontage nach Endtermin.
 
 Keine Importe aus kapaplanung.py. Keine projektbedingten Terminverschiebungen.
 Direkte Registrierung mit @app.route beim Import im Flask-App-Start.
@@ -230,7 +230,7 @@ def get_planning_weeks(reference=None, before=6, after=6):
     return keys
 
 
-def get_emob_jobs(gruppe, date_min, date_max):
+def get_emob_jobs(gruppe, date_min, date_max, durchlauf=False):
     """Liest passende Montagezeilen und Erzeugnisdaten effizient je FA."""
     placeholders = ', '.join('?' for _ in MACHINE_GROUPS)
     if date_min is None:
@@ -239,6 +239,10 @@ def get_emob_jobs(gruppe, date_min, date_max):
         lower_bound = datetime.fromisocalendar(int(iso[0]), int(iso[1]), 1)
         start_filter = 'AND (FAPOS.StartTermPlan >= ? OR FAPOS.Zustand < 60)'
         start_params = (lower_bound,)
+        if durchlauf:
+            # Endmontage wird nach Endtermin eingeplant: Zeilen mit Endtermin ab aktueller KW mitladen.
+            start_filter = 'AND (FAPOS.StartTermPlan >= ? OR FAPOS.Zustand < 60 OR FAPOS.EndTermPlan >= ?)'
+            start_params = (lower_bound, lower_bound)
     else:
         start_filter = 'AND FAPOS.StartTermPlan >= ?'
         start_params = (date_min,)
@@ -352,7 +356,35 @@ def get_emob_jobs(gruppe, date_min, date_max):
 
 
 
-def build_emob_week_plan(records, auftrag_info, week_keys, capacities=None, reference=None, packing_states=None):
+# Einplanung der Wochenuebersicht: Vormontage (HAK, Anschlussmodul) nach
+# Starttermin, Endmontage nach Endtermin (KW, in der der Endtermin liegt).
+ENDMONTAGE_CODE = '2440-14'
+
+
+def berechne_durchlauf_daten(records):
+    """Frueheste Start- und Endtermine je (FA, PmNr) aus den Zeilen."""
+    starts, ends = {}, {}
+    for record in records:
+        order = _fa_key(record[1])
+        pmnr = _text(record[8])
+        if not order or pmnr not in MACHINE_GROUPS:
+            continue
+        start, end = record[5], record[6]
+        if hasattr(start, 'isocalendar') and ((order, pmnr) not in starts or start < starts[(order, pmnr)]):
+            starts[(order, pmnr)] = start
+        if hasattr(end, 'isocalendar') and ((order, pmnr) not in ends or end < ends[(order, pmnr)]):
+            ends[(order, pmnr)] = end
+    return starts, ends
+
+
+def planungs_datum(pmnr, order, starts, ends):
+    """Datum fuer die KW-Zuordnung: Endmontage nach Endtermin, Vormontage nach Starttermin."""
+    if pmnr == ENDMONTAGE_CODE:
+        return ends[(order, pmnr)]
+    return starts[(order, pmnr)]
+
+
+def build_emob_week_plan(records, auftrag_info, week_keys, capacities=None, reference=None, packing_states=None, durchlauf=False):
     """Rueckstand vor der aktuellen KW, danach Einplanung allein nach Startdatum.
 
     Mengen je FA/Montagezelle nicht doppelt zaehlen. Proj und Enddatum
@@ -375,6 +407,7 @@ def build_emob_week_plan(records, auftrag_info, week_keys, capacities=None, refe
         if comment or key not in info:
             info[key] = comment
     packing_states = packing_states or {}
+    durchlauf_starts, durchlauf_ends = berechne_durchlauf_daten(records)
     grouped = defaultdict(dict)
     visible = set(week_keys)
     for index, record in enumerate(records):
@@ -401,7 +434,10 @@ def build_emob_week_plan(records, auftrag_info, week_keys, capacities=None, refe
         pmnr = _text(pmnr)
         if pmnr not in MACHINE_GROUPS or not hasattr(start, 'isocalendar'):
             continue
-        iso = start.isocalendar()
+        plan_date = start
+        if durchlauf:
+            plan_date = planungs_datum(pmnr, _fa_key(order), durchlauf_starts, durchlauf_ends)
+        iso = plan_date.isocalendar()
         key = (int(iso[0]), int(iso[1]))
         if key < current_key:
             # Status 60 nur im Rueckstand ausblenden, auch aus dessen Summen.
@@ -422,7 +458,7 @@ def build_emob_week_plan(records, auftrag_info, week_keys, capacities=None, refe
                                                if remaining_quantity is not None else None),
                               'MengenHinweis': quantity_note,
                               'SerienNr': serial_number, 'SerienNrBis': serial_number_to,
-                              'Start': start, 'PmNr': pmnr,
+                              'Start': start, 'Ende': durchlauf_ends.get((_fa_key(order), pmnr)), 'PmNr': pmnr,
                               'ZeitStunden': _number(minutes) / 60,
                               'LinieFertig': line_done,
                               'PruefungFertig': inspection_done,
@@ -492,12 +528,12 @@ def kapa_emob_index():
     now = datetime.now()
     weeks = get_planning_weeks(now, before=0, after=6)
     date_max = datetime.fromisocalendar(*weeks[-1], 1) + timedelta(weeks=1)
-    records = get_emob_jobs(session.get('abteilung', 'M1'), None, date_max)
+    records = get_emob_jobs(session.get('abteilung', 'M1'), None, date_max, durchlauf=True)
     _debug_emob(f"Rohdaten fuer Wochenplanung geladen: {len(records)} Zeilen nach {time.perf_counter() - route_started:.2f} s.")
     packing_states = _get_emob_packing_states()
     plan = build_emob_week_plan(
         records, AuftragInfo.query.all(), weeks, get_emob_capacity(weeks),
-        reference=now, packing_states=packing_states
+        reference=now, packing_states=packing_states, durchlauf=True
     )
     _debug_emob(f"Wochenplan aufgebaut; rendere Seite. Laufzeit bisher {time.perf_counter() - route_started:.2f} s.")
     page = render_template('kapa_emob.html', week_plan=plan,
@@ -580,8 +616,9 @@ def update_emob_remark():
 # ---------------------------------------------------------------------------
 # Mengenuebersicht je Montagezelle und Woche (/kapa-emob-mengen)
 # Eigene, schlanke Abfrage: je Fertigungsauftrag und Zelle nur eine Zeile (GROUP BY),
-# nur Status 10 bis 60, keine Projekt-, Fertigstatus- oder Textjoins.
-# Einplanung nach StartTermPlan (ISO-KW). Gefertigt = Menge minus Restmenge der E-Zeile.
+# nur Status 20 bis 60 (wie Wochenuebersicht), keine Projekt-, Fertigstatus- oder Textjoins.
+# Erzeugniszeilen (Typ E) ohne Statusfilter, wie in der Wochenuebersicht.
+# Einplanung: Vormontage nach StartTermPlan, Endmontage nach EndTermPlan (ISO-KW). Gefertigt = Menge minus Restmenge der E-Zeile.
 # ---------------------------------------------------------------------------
 MENGEN_CELLS = [
     ('2440-18', 'HAK'),
@@ -589,7 +626,8 @@ MENGEN_CELLS = [
     ('2440-14', 'Endmontage'),
 ]
 MENGEN_WEEKS_AHEAD = 24
-MENGEN_STATUS_MIN = 10
+MENGEN_WEEKS_BACK = 8
+MENGEN_STATUS_MIN = 20
 MENGEN_STATUS_MAX = 60
 
 # Maximale Stueckzahl je Montagezelle und Woche (fester Wert fuer alle Wochen).
@@ -618,7 +656,8 @@ WITH A_ZEILEN AS (
            F.PmNr,
            MIN(F.Zustand)       AS Zustand,
            MAX(F.Mng)           AS Mng,
-           MIN(F.StartTermPlan) AS StartTermPlan
+           MIN(F.StartTermPlan) AS StartTermPlan,
+           MIN(F.EndTermPlan)   AS EndTermPlan
     FROM INFRADB.dbo.FAPOS AS F WITH (NOLOCK)
     JOIN INFRADB.dbo.TEILE AS T WITH (NOLOCK)
       ON T.Teil = F.Teil
@@ -628,7 +667,7 @@ WITH A_ZEILEN AS (
       AND F.PmNr IN (?, ?, ?)
       AND F.Zustand BETWEEN ? AND ?
       AND F.StartTermPlan < ?
-      AND (F.StartTermPlan >= ? OR F.Zustand < ?)
+      AND (F.StartTermPlan >= ? OR F.Zustand < ? OR F.EndTermPlan >= ?)
     GROUP BY F.Auftrag, F.PmNr
 ),
 E_ZEILEN AS (
@@ -637,11 +676,10 @@ E_ZEILEN AS (
            MAX(E.MngRest)  AS Restmenge
     FROM INFRADB.dbo.FAPOS AS E WITH (NOLOCK)
     WHERE E.Typ = 'E'
-      AND E.Zustand BETWEEN ? AND ?
       AND E.Auftrag IN (SELECT Auftrag FROM A_ZEILEN)
     GROUP BY E.Auftrag
 )
-SELECT A.Auftrag, A.PmNr, A.Zustand, A.Mng, A.StartTermPlan,
+SELECT A.Auftrag, A.PmNr, A.Zustand, A.Mng, A.StartTermPlan, A.EndTermPlan,
        E.EZeilen, E.Restmenge
 FROM A_ZEILEN AS A
 LEFT JOIN E_ZEILEN AS E
@@ -649,13 +687,13 @@ LEFT JOIN E_ZEILEN AS E
 """
 
 
-def get_mengen_weeks(reference=None, ahead=MENGEN_WEEKS_AHEAD):
-    """Aktuelle KW plus die naechsten `ahead` Wochen als (Jahr, KW)."""
+def get_mengen_weeks(reference=None, ahead=MENGEN_WEEKS_AHEAD, back=0):
+    """Die `back` vergangenen Wochen, die aktuelle KW und die naechsten `ahead` Wochen als (Jahr, KW)."""
     reference = reference or datetime.now()
     iso = reference.isocalendar()
     monday = datetime.fromisocalendar(int(iso[0]), int(iso[1]), 1)
     keys = []
-    for offset in range(ahead + 1):
+    for offset in range(-back, ahead + 1):
         y, w, _ = (monday + timedelta(weeks=offset)).isocalendar()
         keys.append((int(y), int(w)))
     return keys
@@ -669,8 +707,7 @@ def get_mengen_records(gruppe, current_monday, date_max):
         *codes,
         MENGEN_STATUS_MIN, MENGEN_STATUS_MAX,   # A-Zeilen Status
         date_max,                               # Starttermin unter Horizont
-        current_monday, 60,                     # ab aktueller KW oder noch offen
-        MENGEN_STATUS_MIN, MENGEN_STATUS_MAX,   # E-Zeilen Status
+        current_monday, 60, current_monday,     # ab aktueller KW oder noch offen bzw. Endtermin ab aktueller KW
     )
     started = time.perf_counter()
     conn = None
@@ -694,24 +731,25 @@ def build_mengen_overview(rows, weeks, reference=None):
     cell_codes = {code for code, _ in MENGEN_CELLS}
     visible_set = set(weeks)
     current_key = get_mengen_weeks(reference, 0)[0]
-    backlog_monday = datetime.fromisocalendar(*current_key, 1)
+    backlog_monday = datetime.fromisocalendar(*weeks[0], 1)
 
     agg = defaultdict(lambda: {code: {'qty': 0.0, 'done': 0.0, 'done_known': True, 'fa': 0}
                                for code, _ in MENGEN_CELLS})
     for row in rows:
         pmnr = _text(row.get('PmNr'))
-        start = row.get('StartTermPlan')
         order = _fa_key(row.get('Auftrag'))
-        if pmnr not in cell_codes or not hasattr(start, 'isocalendar') or not order:
+        plan_date = row.get('EndTermPlan') if pmnr == ENDMONTAGE_CODE else row.get('StartTermPlan')
+        if pmnr not in cell_codes or not hasattr(plan_date, 'isocalendar') or not order:
             continue
-        y, w, _ = start.isocalendar()
+        y, w, _ = plan_date.isocalendar()
         key = (int(y), int(w))
-        if key < current_key:
+        if key in visible_set:
+            bucket = key
+        elif key < current_key:
+            # Aelter als der Betrachtungszeitraum: nur offene Auftraege im Rueckstand.
             if _number(row.get('Zustand'), -1) == 60:
                 continue
             bucket = 'backlog'
-        elif key in visible_set:
-            bucket = key
         else:
             continue
 
@@ -759,22 +797,104 @@ def build_mengen_overview(rows, weeks, reference=None):
             'year': year,
             'range': f'{monday:%d.%m.} - {monday + timedelta(days=6):%d.%m.%Y}',
             'current': key == current_key,
+            'past': key < current_key,
             'backlog': False,
             'cells': make_cells(key),
         })
     return result
 
 
+MENGEN_CHART_COLORS = {'2440-18': '#2563eb', '2440-17': '#16a34a', '2440-14': '#dc2626'}
+
+
+def _nice_axis(value, intervals=5):
+    """Liefert (Achsenmaximum, Schrittweite) mit glatten Schritten (1, 2, 2.5, 5 x 10^n)."""
+    if value <= 0:
+        return intervals, 1
+    steps = sorted(factor * 10 ** exponent for exponent in range(-1, 8) for factor in (1, 2, 2.5, 5))
+    for step in steps:
+        count = math.ceil(round(value / step, 9))
+        if count <= intervals:
+            return round(count * step, 9), step
+    return value, value / intervals
+
+
+def build_mengen_chart_svg(rows, cells):
+    """Liniendiagramm der geplanten Mengen je Montagezelle und KW (SVG, ohne externe Skripte)."""
+    week_rows = [row for row in rows if not row['backlog']]
+    if not week_rows:
+        return ''
+    width, height = 960, 180
+    left, right, top, bottom = 56, 16, 36, 44
+    plot_w = width - left - right
+    plot_h = height - top - bottom
+    raw_max = max([cell['qty'] for row in week_rows for cell in row['cells'].values()] + [1])
+    max_val, tick_step = _nice_axis(raw_max)  # Y-Achse endet knapp ueber dem hoechsten Wert
+    count = len(week_rows)
+
+    def x_pos(index):
+        return left + (plot_w * index / (count - 1) if count > 1 else plot_w / 2)
+
+    def y_pos(value):
+        return top + plot_h * (1 - value / max_val)
+
+    parts = [f'<svg viewBox="0 0 {width} {height}" role="img" '
+             f'aria-label="Geplante Mengen je Montagezelle und Woche" class="mengen-chart" '
+             f'style="width:100%;height:auto">']
+    # Legende
+    legend_x = left
+    for code, name in cells:
+        color = MENGEN_CHART_COLORS.get(code, '#374151')
+        parts.append(f'<line x1="{legend_x}" x2="{legend_x + 22}" y1="10" y2="10" stroke="{color}" stroke-width="3"/>')
+        parts.append(f'<text x="{legend_x + 28}" y="14" font-size="12" fill="#111827">{name}</text>')
+        legend_x += 150
+    # Gitter und Y-Achse
+    tick_count = round(max_val / tick_step)
+    for k in range(tick_count + 1):
+        value = tick_step * k
+        y = y_pos(value)
+        parts.append(f'<line x1="{left}" x2="{width - right}" y1="{y:.1f}" y2="{y:.1f}" stroke="#e5e7eb"/>')
+        parts.append(f'<text x="{left - 8}" y="{y + 4:.1f}" text-anchor="end" font-size="11" fill="#6b7280">{round(value)}</text>')
+    # Aktuelle Woche markieren
+    for index, row in enumerate(week_rows):
+        if row['current']:
+            x = x_pos(index)
+            parts.append(f'<line x1="{x:.1f}" x2="{x:.1f}" y1="{top}" y2="{top + plot_h}" stroke="#9ca3af" stroke-dasharray="4 4"/>')
+            parts.append(f'<text x="{x:.1f}" y="{top - 8}" text-anchor="middle" font-size="11" fill="#111827">aktuell</text>')
+    # X-Achse
+    for index, row in enumerate(week_rows):
+        x = x_pos(index)
+        weight = '700' if row['current'] else '400'
+        color = '#111827' if not row['past'] else '#6b7280'
+        anchor_y = top + plot_h + 8
+        parts.append(f'<text x="{x:.1f}" y="{anchor_y}" transform="rotate(-90 {x:.1f} {anchor_y})" '
+                     f'text-anchor="end" dominant-baseline="middle" font-size="11" '
+                     f'font-weight="{weight}" fill="{color}">{row["label"]}</text>')
+    # Linien je Zelle
+    for code, name in cells:
+        color = MENGEN_CHART_COLORS.get(code, '#374151')
+        points = [(x_pos(i), y_pos(row['cells'][code]['qty'])) for i, row in enumerate(week_rows)]
+        path = ' '.join(f'{px:.1f},{py:.1f}' for px, py in points)
+        parts.append(f'<polyline points="{path}" fill="none" stroke="{color}" stroke-width="2"/>')
+        for i, (px, py) in enumerate(points):
+            qty = week_rows[i]['cells'][code]['qty']
+            parts.append(f'<circle cx="{px:.1f}" cy="{py:.1f}" r="3.5" fill="{color}">'
+                         f'<title>{name} {week_rows[i]["label"]}: {round(qty)} St.</title></circle>')
+    parts.append('</svg>')
+    return ''.join(parts)
+
+
 @app.route('/kapa-emob-mengen', methods=['GET'])
 def kapa_emob_mengen_index():
     now = datetime.now()
-    weeks = get_mengen_weeks(now, MENGEN_WEEKS_AHEAD)
-    current_monday = datetime.fromisocalendar(*weeks[0], 1)
+    weeks = get_mengen_weeks(now, MENGEN_WEEKS_AHEAD, MENGEN_WEEKS_BACK)
+    lookback_monday = datetime.fromisocalendar(*weeks[0], 1)
     date_max = datetime.fromisocalendar(*weeks[-1], 1) + timedelta(weeks=1)
-    records = get_mengen_records(session.get('abteilung', 'M1'), current_monday, date_max)
+    records = get_mengen_records(session.get('abteilung', 'M1'), lookback_monday, date_max)
     rows = build_mengen_overview(records, weeks, reference=now)
+    chart_svg = build_mengen_chart_svg(rows, MENGEN_CELLS)
     return render_template('kapa_emob_mengen.html', rows=rows, cells=MENGEN_CELLS,
-                           cells_capacity=MENGEN_CAPACITY_PCS,
+                           cells_capacity=MENGEN_CAPACITY_PCS, chart_svg=chart_svg,
                            generated=now, first_week=weeks[0], last_week=weeks[-1])
 
 # ---------------------------------------------------------------------------
@@ -814,7 +934,7 @@ def _get_hak_monitor_payload(now=None):
     weeks = get_planning_weeks(now, before=0, after=1)
     date_max = datetime.fromisocalendar(*weeks[-1], 1) + timedelta(weeks=1)
 
-    records = get_emob_jobs(session.get('abteilung', 'M1'), None, date_max)
+    records = get_emob_jobs(session.get('abteilung', 'M1'), None, date_max, durchlauf=True)
     plan = build_emob_week_plan(
         records,
         AuftragInfo.query.all(),
@@ -822,6 +942,7 @@ def _get_hak_monitor_payload(now=None):
         capacities={},
         reference=now,
         packing_states=_get_emob_packing_states(),
+        durchlauf=True,
     )
 
     sections = []

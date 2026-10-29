@@ -21,9 +21,7 @@
     ## - Wöchtenliche Zustandsberichte für das jeweilige Team
     ## - Vergleich der Rückgemeldeten Zeiten zu Anwesendestunden je Team auf Basis Personalnummer
 
-
 # Ladesäulen Kapaplanung
-
     Offen für Startversion:
     [ ] Stundenrechnung je Woche mit IST-Personal
     [ ] Ansicht splitten in EM/HAK/LM und seperat Planung um Ladezeiten zu kürzen
